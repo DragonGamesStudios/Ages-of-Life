@@ -1,0 +1,6 @@
+﻿  Proto.cpp
+C:\AOL\AOL\lib\Proto\Proto.cpp(124,17): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\AOL\AOL\lib\Proto\Proto.cpp(547,27): warning C4018: ">=": niezgodność typu ze znakiem/bez znaku
+  test.cpp
+  Generowanie kodu...
+LINK : fatal error LNK1104: nie można otworzyć pliku "libboost_serialization-vc142-mt-gd-x32-1_72.lib"
