@@ -7,7 +7,8 @@
 #include <fmt/format.h>
 #include <algorithm>
 #include <filesystem>
-#include <Windows.h>
+#include <ShlObj.h>
+#include <Shlwapi.h>
 
 namespace fs = std::filesystem;
 
@@ -21,6 +22,8 @@ Proto::Proto()
 	lastTime = al_get_time();
 
 	loaded_images = {};
+	registered_buttons = {};
+	registered_labels = {};
 }
 
 Proto::~Proto()
@@ -96,6 +99,16 @@ void Proto::registerImage(Image* image)
 	this->loaded_images.push_back(image);
 }
 
+void Proto::registerButton(Button* btn)
+{
+	this->registered_buttons.push_back(btn);
+}
+
+void Proto::registerLabel(Label* lbl)
+{
+	this->registered_labels.push_back(lbl);
+}
+
 void Proto::updateButton(Button* btn)
 {
 	btn->setMousePos(this->mouse.x, this->mouse.y);
@@ -119,10 +132,17 @@ std::pair<float, float> Proto::getScale(Image img, int w, int h)
 	return std::make_pair((float)w/(float)img.width, (float)h/(float)img.height);
 }
 
+std::pair<int, int> Proto::getWindowDimensions()
+{
+	int w = al_get_display_width(this->display);
+	int h = al_get_display_height(this->display);
+
+	return std::make_pair(w, h);
+}
+
 void Proto::quit()
 {
 	for (int i=0; i<this->loaded_images.size();i++) if (this->loaded_images[i]->image) al_destroy_bitmap(this->loaded_images[i]->image);
-
 	if (this->display) al_destroy_display(this->display);
 	if (this->queue) al_destroy_event_queue(this->queue);
 }
@@ -160,6 +180,11 @@ double Proto::step()
 	this->lastTime = time;
 
 
+	for (std::vector<Button*>::iterator btn = this->registered_buttons.begin(); btn != this->registered_buttons.end(); btn++) {
+		this->updateButton(*btn);
+	}
+
+
 	return dt;
 }
 
@@ -168,20 +193,47 @@ void Proto::finish_frame()
 	this->mousereleased = false;
 }
 
-void Proto::setAppDataDir(std::string name)
+void Proto::setAppDataDir(LPCWSTR name)
 {
-	char* path;
+	/*char* path;
 	size_t len;
 	_dupenv_s(&path, &len, "APPDATA");
 	this->AppDataPath = path;
-	this->AppDataPath += "\\"+name;
+	this->AppDataPath += "\\"+name;*/
 
-	this->createDir(this->AppDataPath.c_str());
+	PWSTR path;
+	SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &path);
+
+	PathCombineW(this->AppDataPath, path, name);
+
+	//MessageBoxW(0, PathCombineW(this->AppDataPath, path, name) , L"ee", 0);
+
+	this->createDir(this->AppDataPath);
 }
 
-void Proto::createDir(const char* path)
+void Proto::createDir(LPCWSTR path)
 {
-	assert(CreateDirectoryA(path, NULL) || ERROR_ALREADY_EXISTS == GetLastError());
+	assert(CreateDirectoryW(path, NULL) || ERROR_ALREADY_EXISTS == GetLastError());
+}
+
+void Proto::openAppDataFile(LPCWSTR filepath, std::ofstream* ofs)
+{
+	TCHAR target_path[MAX_PATH+2];
+	PathCombine(target_path, this->AppDataPath, filepath);
+
+	ofs->open(target_path);
+
+	assert(ofs->is_open());
+}
+
+void Proto::openAppDataFile(LPCWSTR filepath, std::ifstream* ifs)
+{
+	TCHAR target_path[MAX_PATH + 2];
+	PathCombine(target_path, this->AppDataPath, filepath);
+
+	ifs->open(target_path);
+
+	assert(ifs->is_open());
 }
 
 
@@ -325,7 +377,7 @@ bool HoverShape::collides(int x, int y)
 }
 
 
-Button::Button(int x, int y, int height, int width, Image image, void(*onclick)(), void (*onhover)())
+Button::Button(int x, int y, int width, int height, Image image, void(*onclick)(), void (*onhover)())
 {
 	this->x = x;
 	this->y = y;
@@ -386,8 +438,17 @@ void Button::setMousePos(int mx, int my)
 	this->my = my;
 }
 
+void Button::setPosition(int x, int y)
+{
+	this->x = x;
+	this->y = y;
+	this->imgdata.x = x;
+	this->imgdata.y = y;
+}
+
 void Button::update()
 {
+	al_get_mouse_cursor_position(&this->mx, &this->my);
 	if (this->hovermap.collides(mx - this->x, this->my - this->y)) {
 		this->hover = true;
 		if (this->onhover) this->onhover();
@@ -557,6 +618,11 @@ void TransformAnimation::update(double dt)
 	}
 }
 
+Font::Font()
+{
+	this->fonts = {};
+}
+
 Font::Font(const char* filepath, int sizes[], int sizes_size)
 {
 	this->fonts = {};
@@ -577,13 +643,15 @@ int Font::getWidth(int size, const char* str)
 	return al_get_text_width(this->fonts[size], str);
 }
 
-Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COLOR> colormap, std::map<std::string, Font*> fontmap, std::string color, std::string font, int fontsize)
+Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COLOR> colormap, std::map<std::string, Font*> fontmap, std::string color, std::string font, int fontsize, int offset)
 {
 	this->data = dData;
 	this->chunks = {};
 	this->fontmap = fontmap;
 	this->colormap = colormap;
 	this->text = text;
+	this->is_dict = false;
+
 	std::string chunk;
 	std::string::iterator c;
 
@@ -593,6 +661,7 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 	std::string textcolor = color;
 	std::string textfont = font;
 	int textsize = fontsize;
+	int maxlineheight = 0;
 	int chunkX = 0;
 	for (c = text.begin(); c != text.end(); c++) {
 		char ch = *c;
@@ -605,6 +674,7 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 				//colormap[textcolor.c_str()];
 				this->chunks.push_back(TextChunk{ colormap[textcolor], fontmap[textfont]->fonts[textsize], chunk, chunkX, 0 });
 				chunkX += al_get_text_width(fontmap[textfont]->fonts[textsize], chunk.c_str());
+				maxlineheight = max(maxlineheight, al_get_font_line_height(fontmap[textfont]->fonts[textsize]));
 				chunk = "";
 				reading_tag = true;
 			}
@@ -634,9 +704,17 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 	}
 
 	this->chunks.push_back(TextChunk{colormap[textcolor], fontmap[textfont]->fonts[textsize], chunk, chunkX, 0});
+	chunkX += al_get_text_width(fontmap[textfont]->fonts[textsize], chunk.c_str());
+	maxlineheight = max(maxlineheight, al_get_font_line_height(fontmap[textfont]->fonts[textsize]));
+
+	if (offset == PROTO_OFFSET_CENTER) {
+		this->data.x -= chunkX / 2;
+		this->data.y -= maxlineheight / 2;
+		this->data.create_transform();
+	}
 }
 
-Label::Label(std::string text, DrawData dData, ALLEGRO_COLOR color, Font* font, int fontsize)
+Label::Label(std::string text, DrawData dData, ALLEGRO_COLOR color, Font* font, int fontsize, int offset)
 {
 	this->data = dData;
 	this->chunks = {};
@@ -645,6 +723,12 @@ Label::Label(std::string text, DrawData dData, ALLEGRO_COLOR color, Font* font, 
 	this->text = text;
 
 	this->chunks.push_back(TextChunk{ color, font->fonts[fontsize], text, 0, 0 });
+
+	if (offset == PROTO_OFFSET_CENTER) {
+		this->data.x -= al_get_text_width(font->fonts[fontsize], text.c_str()) / 2;
+		this->data.y -= al_get_font_line_height(font->fonts[fontsize])/2;
+		this->data.create_transform();
+	}
 }
 
 void Label::draw()
@@ -671,6 +755,12 @@ void Label::draw()
 	}
 
 	al_use_transform(T1);
+}
+
+void Label::setKey(std::string key)
+{
+	this->dictkey = key;
+	this->is_dict = true;
 }
 
 ElementSet::ElementSet(std::vector<Label> labels, std::vector<Button> buttons, std::vector<Image> images)
@@ -763,9 +853,8 @@ void GUIPanel::setPosition(int x, int y)
 {
 	for (std::vector<GUIElement>::iterator elem = this->elements.begin(); elem != this->elements.end(); elem++) {
 		if (elem->type == PROTO_GUI_BUTTON) {
-			this->buttons[elem->index].data.x += x;
-			this->buttons[elem->index].data.y += y;
-			this->buttons[elem->index].data.create_transform();
+			this->buttons[elem->index].setPosition(this->buttons[elem->index].x + x, this->buttons[elem->index].y + y);
+			this->buttons[elem->index].imgdata.create_transform();
 		}
 		else if (elem->type == PROTO_GUI_LABEL) {
 			this->labels[elem->index].data.x += x;
@@ -824,6 +913,16 @@ GUI::GUI(int layout, std::vector<GUIPanel> panels, int x, int y, int width, int 
 	this->calculatePanels();
 }
 
+GUI::GUI()
+{
+	this->layout = 0;
+	this->panels = {};
+	this->height = 0;
+	this->width = 0;
+	this->x = 0;
+	this->y = 0;
+}
+
 void GUI::calculatePanels()
 {
 	int drawx = this->x, drawy = this->y;
@@ -876,9 +975,132 @@ void GUI::update()
 	}
 }
 
-
-
-const char* serializeData(DataCell cell)
+template<typename T>
+void writetype(DataCell cell, char type, std::ofstream* ofs)
 {
-	return nullptr;
+	ofs->write(&type, sizeof(char));
+	ofs->write(reinterpret_cast<char*>(&cell), sizeof(T));
+}
+
+void serializeData(DataCell cell, std::ofstream* ofs)
+{
+	std::string val;
+	std::vector<DataCell> val2;
+	char booltype = 0x01;
+	char inttype = 0x02;
+	char floattype = 0x03;
+	char doubletype = 0x04;
+	char chartype = 0x05;
+	char strbegin = 0x06;
+	char strend = 0x07;
+	char vecbegin = 0x08;
+	char vecend = 0x09;
+	std::cout << cell.index() << "\n";
+	switch (cell.index()) {
+	case 0:
+		std::cout << "Hello?";
+		writetype<bool>(cell, booltype, ofs);
+		break;
+	case 1:
+		writetype<int>(cell, inttype, ofs);
+		break;
+	case 2:
+		writetype<float>(cell, floattype, ofs);
+		break;
+	case 3:
+		writetype<double>(cell, doubletype, ofs);
+		break;
+	case 4:
+		writetype<char>(cell, chartype, ofs);
+		break;
+	case 5:
+		ofs->write(&strbegin, sizeof(char));
+		val = std::get<std::string>(cell);
+		for (std::string::iterator c = val.begin(); c != val.end(); c++) {
+			ofs->write(reinterpret_cast<char*>(&(*c)), sizeof(char));
+		}
+		ofs->write(&strend, sizeof(char));
+		break;
+	case 6:
+		ofs->write(&vecbegin, sizeof(char));
+		val2 = std::get<std::vector<DataCell>>(cell);
+		for (std::vector<DataCell>::iterator el = val2.begin(); el != val2.end(); el++) {
+			serializeData(*el, ofs);
+		}
+		ofs->write(&vecend, sizeof(char));
+		break;
+	default:
+		std::cout << "Not supported";
+		throw "Unsupported type";
+	}
+}
+
+DataCell deserializeData(std::ifstream* ifs)
+{
+	std::vector<std::vector<DataCell>> vecstack = { std::vector<DataCell>() };
+	int vecsize = 1;
+	int intval;
+	bool boolval;
+	float floatval;
+	double doubleval;
+	std::string strval;
+	char charval;
+
+	int byte = 0;
+
+	bool reading_string = false;
+	while (byte = ifs->get()) {
+		if (byte == -1)
+			break;
+		if (!reading_string) {
+			switch (byte) {
+			case 1:
+				ifs->read(reinterpret_cast<char*>(&boolval), sizeof(bool));
+				vecstack[vecsize - 1].push_back(boolval);
+				break;
+			case 2:
+				ifs->read(reinterpret_cast<char*>(&intval), sizeof(int));
+				vecstack[vecsize - 1].push_back(intval);
+				break;
+			case 3:
+				ifs->read(reinterpret_cast<char*>(&floatval), sizeof(float));
+				vecstack[vecsize - 1].push_back(floatval);
+				break;
+			case 4:
+				ifs->read(reinterpret_cast<char*>(&doubleval), sizeof(double));
+				vecstack[vecsize - 1].push_back(doubleval);
+				break;
+			case 5:
+				ifs->read(reinterpret_cast<char*>(&charval), sizeof(char));
+				vecstack[vecsize - 1].push_back(charval);
+				break;
+			case 6:
+				reading_string = true;
+				break;
+			case 8:
+				vecstack.push_back(std::vector<DataCell>{});
+				vecsize++;
+				break;
+			case 9:
+				vecstack[vecsize - 2].push_back(vecstack[vecsize - 1]);
+				vecstack.pop_back();
+				vecsize--;
+				break;
+			default:
+				throw "Unsupported";
+			}
+		}
+		else {
+			if (byte != 7) {
+				strval.push_back(byte);
+			}
+			else {
+				vecstack[vecsize - 1].push_back(strval);
+				strval = "";
+				reading_string = false;
+			}
+		}
+	}
+
+	return vecstack[vecsize-1][0];
 }

@@ -20,17 +20,20 @@
 #include <iostream>
 #include <variant>
 #include <map>
+#include <Windows.h>
+#include <fstream>
 
 
 #define PROTO_WINDOW_FULLSCREEN 0b1
-#define PROTO_OFFSET_TOPLEFT 0b1
-#define PROTO_OFFSET_CENTER 0b10
+#define PROTO_OFFSET_TOPLEFT 0
+#define PROTO_OFFSET_CENTER 1
 #define PROTO_GUI_BUTTON 0
 #define PROTO_GUI_LABEL 1
 #define PROTO_GUI_IMAGE 2
 #define PROTO_GUI_LAYOUT_PANELS 0
 #define PROTO_GUIPANEL_PERCENTDIMS 0b1
 #define PROTO_GUIPANEL_BGCOLOR 0b10
+#define PROTO_LABEL_USES_DICT 0b1
 
 using json = nlohmann::json;
 
@@ -103,6 +106,7 @@ public:
 class Font
 {
 public:
+	Font();
 	Font(const char* filepath, int sizes[], int size_amount);
 
 	std::map<int, ALLEGRO_FONT*> fonts;
@@ -164,7 +168,7 @@ public:
 	void (*onclick)();
 	void (*onhover)();
 
-	Button(int x, int y, int height, int width, Image image, void (*onclick)()=NULL, void (*onhover)()=NULL);
+	Button(int x, int y, int width, int height, Image image, void (*onclick)()=NULL, void (*onhover)()=NULL);
 
 	void setHoverData(int x, int y, int width, int height);
 	void setHoverData(Hovermap hovermap);
@@ -179,6 +183,7 @@ public:
 	void setImageDisplayParameters(DrawData dData);
 
 	void setMousePos(int mx, int my);
+	void setPosition(int x, int y);
 	void update();
 	void draw();
 };
@@ -186,8 +191,8 @@ public:
 class Label : public Drawable
 {
 public:
-	Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COLOR> colormap, std::map<std::string, Font*> fontmap, std::string color, std::string font, int fontsize);
-	Label(std::string text, DrawData dData, ALLEGRO_COLOR color, Font* font, int fontsize);
+	Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COLOR> colormap, std::map<std::string, Font*> fontmap, std::string color, std::string font, int fontsize, int offset);
+	Label(std::string text, DrawData dData, ALLEGRO_COLOR color, Font* font, int fontsize, int offset);
 
 	std::string text;
 	DrawData data;
@@ -195,8 +200,11 @@ public:
 	std::map <std::string, ALLEGRO_COLOR> colormap;
 	std::map <std::string, Font*> fontmap;
 	int offset;
+	bool is_dict;
+	std::string dictkey;
 
 	void draw();
+	void setKey(std::string key);
 
 private:
 
@@ -256,61 +264,24 @@ public:
 
 struct GUIElement {
 	int type;
-	int z_index = 0;
 	int index;
+	int z_index = 0;
 };
 
-
-class GUIPanel {
-public:
-	GUIPanel(std::vector<GUIElement> elements, imgvec images, lblvec labels, btnvec buttons, float width, float height, bool attached, ALLEGRO_COLOR bgcolor, int flags);
-	GUIPanel();
-
-	std::vector<GUIElement> elements;
-	imgvec images;
-	btnvec buttons;
-	lblvec labels;
-	int x, y, flags;
-	float width, height;
-	float calculated_width, calculated_height;
-	
-	bool attach, percentDims, usebgcol;
-
-	ALLEGRO_COLOR bgcolor;
-
-	ALLEGRO_TRANSFORM deftrans;
-
-	void setPosition(int x, int y);
-	void draw();
-	void update();
-};
-
-class GUI
-{
-public:
-	GUI(int layout, std::vector <GUIPanel>panels, int x, int y, int width, int height );
-
-	int layout;
-	int x, y, width, height;
-	std::vector<GUIPanel> panels;
-
-	void calculatePanels();
-
-	void draw();
-	void update();
-};
 
 
 class DataCell;
-class DataCell : public std::variant <bool, int, float, double, const char*, std::vector <DataCell>> {
+class DataCell : public std::variant <bool, int, float, double, char, std::string, std::vector <DataCell>> {
 public:
-	using base = std::variant <bool, int, float, double, const char*, std::vector <DataCell>>;
+	using base = std::variant <bool, int, float, double, char, std::string, std::vector <DataCell>>;
 	using base::base;
 	using base::operator=;
 };
 
-const char* serializeData(DataCell cell);
+void serializeData(DataCell cell, std::ofstream* ofs);
+DataCell deserializeData(std::ifstream* ifs);
 
+typedef std::vector<DataCell> datvec;
 
 class Proto
 {
@@ -326,9 +297,11 @@ public:
 	double lastTime;
 	bool mousereleased;
 
-	std::string AppDataPath;
+	TCHAR AppDataPath[MAX_PATH+2];
 
 	std::vector<Image*> loaded_images;
+	std::vector<Button*> registered_buttons;
+	std::vector<Label*> registered_labels;
 
 	json dictionary;
 
@@ -337,6 +310,8 @@ public:
 
 	void createWindow(int width, int height, ALLEGRO_BITMAP* icon, const char* title, int flags);
 	void registerImage(Image* image);
+	void registerButton(Button* btn);
+	void registerLabel(Label* lbl);
 	void updateButton(Button* btn);
 	void loadDictionary(const char* path);
 	std::string dict(std::string value);
@@ -345,6 +320,7 @@ public:
 	template <std::size_t N>
 	inline std::string dict(const std::string& format, const std::vector<std::string>& v);
 	std::pair <float, float> getScale(Image img, int w, int h);
+	std::pair <int, int> getWindowDimensions();
 
 	void quit();
 	std::pair <bool, bool> update();
@@ -352,12 +328,54 @@ public:
 	double step();
 	void finish_frame();
 
-	void setAppDataDir(std::string name);
-	void createDir(const char* path);
+	void setAppDataDir(LPCWSTR name);
+	void createDir(LPCWSTR path);
+	void openAppDataFile(LPCWSTR filepath, std::ofstream* ofs);
+	void openAppDataFile(LPCWSTR filepath, std::ifstream* ifs);
 
 	template <typename ...T>
 	void log(const T& ... args);
 
+};
+
+class GUIPanel {
+public:
+	GUIPanel(std::vector<GUIElement> elements, imgvec images, lblvec labels, btnvec buttons, float width, float height, bool attached, ALLEGRO_COLOR bgcolor, int flags);
+	GUIPanel();
+
+	std::vector<GUIElement> elements;
+	imgvec images;
+	btnvec buttons;
+	lblvec labels;
+	int x, y, flags;
+	float width, height;
+	float calculated_width, calculated_height;
+
+	bool attach, percentDims, usebgcol;
+
+	ALLEGRO_COLOR bgcolor;
+
+	ALLEGRO_TRANSFORM deftrans;
+
+	void setPosition(int x, int y);
+	void draw();
+	void update();
+};
+
+class GUI
+{
+public:
+	GUI(int layout, std::vector <GUIPanel>panels, int x, int y, int width, int height);
+	GUI();
+
+	int layout;
+	int x, y, width, height;
+	std::vector<GUIPanel> panels;
+
+	void calculatePanels();
+
+	void draw();
+	void update();
 };
 
 class Timeout
