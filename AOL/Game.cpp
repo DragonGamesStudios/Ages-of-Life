@@ -3,19 +3,26 @@
 Game::Game()
 {
 	this->proto = Proto();
+	this->script = Script();
 
 	AOLicon = al_load_bitmap("base/graphics/AOLIcon.png");
 
-	proto.createWindow(500, 500, AOLicon, "Ages of Life", PROTO_WINDOW_FULLSCREEN);
+	proto.createWindow(1900, 1180, AOLicon, "Ages of Life", 0);
 
 	proto.setAppDataDir(L"AOL");
+
+
+	proto.loadDictionary("base/locale/en.json");
 
 	auto dims = proto.getWindowDimensions();
 	screenw = dims.first;
 	screenh = dims.second;
 
-	int sizes[1] = { 56 };
-	segoeuib = Font("base/fonts/segoeuib.ttf", sizes, 1);
+	const int szm = 5;
+	int sizes[szm] = { 18, 24, 27, 36, 56 };
+	segoeuib = Font("base/fonts/segoeuib.ttf", sizes, szm);
+
+	this->lastmwpos = 0;
 }
 
 void Game::run()
@@ -42,6 +49,16 @@ void Game::run()
 	}
 }
 
+void Game::close()
+{
+	proto.close();
+}
+
+void Game::scroll(int amt)
+{
+	std::cout << amt << "\n";
+}
+
 void Game::quit()
 {
 	al_destroy_bitmap(AOLicon);
@@ -51,12 +68,20 @@ void Game::draw()
 {
 	if (menu) {
 		mainmenuBg.draw();
-		mainmenu.draw();
+	}
+
+	for (std::vector<GUI*>::iterator gui = script.guis.begin(); gui != script.guis.end(); gui++) {
+		(*gui)->draw();
 	}
 }
 
 void Game::update(double dt)
 {
-	if (menu)
-		mainmenu.update();
+	scroll(proto.mouse.z - lastmwpos);
+	lastmwpos = proto.mouse.z;
+
+	for (int i = 0; i < script.opened_guis_amount; i++) {
+		GUI* gui = script.guis[i];
+		gui->update();
+	}
 }

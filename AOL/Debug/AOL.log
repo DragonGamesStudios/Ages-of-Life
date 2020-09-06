@@ -1,4 +1,3 @@
-﻿  Proto.cpp
-C:\AOL\AOL\lib\Proto\Proto.cpp(145,17): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
-C:\AOL\AOL\lib\Proto\Proto.cpp(608,27): warning C4018: ">=": niezgodność typu ze znakiem/bez znaku
+﻿  Game.cpp
+C:\AOL\AOL\Game.cpp(83,20): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
   AOL.vcxproj -> C:\AOL\Debug\AOL.exe

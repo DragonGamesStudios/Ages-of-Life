@@ -12,6 +12,8 @@
 
 namespace fs = std::filesystem;
 
+std::vector<ALLEGRO_BITMAP*> loaded_bitmaps = {};
+
 Proto::Proto()
 {
 	display = NULL;
@@ -24,6 +26,7 @@ Proto::Proto()
 	loaded_images = {};
 	registered_buttons = {};
 	registered_labels = {};
+	shouldClose = false;
 }
 
 Proto::~Proto()
@@ -124,7 +127,11 @@ void Proto::loadDictionary(const char* path)
 
 std::string Proto::dict(std::string value)
 {
-	return this->dictionary[value];
+	std::string res = "Unknown key: " + value;
+	if (this->dictionary.find(value) != this->dictionary.end())
+		res = this->dictionary[value];
+
+	return res;
 }
 
 std::pair<float, float> Proto::getScale(Image img, int w, int h)
@@ -142,9 +149,14 @@ std::pair<int, int> Proto::getWindowDimensions()
 
 void Proto::quit()
 {
-	for (int i=0; i<this->loaded_images.size();i++) if (this->loaded_images[i]->image) al_destroy_bitmap(this->loaded_images[i]->image);
+	//for (int i=0; i<this->loaded_images.size();i++) if (this->loaded_images[i]->image) al_destroy_bitmap(this->loaded_images[i]->image);
+	for (auto bitmap = loaded_bitmaps.begin(); bitmap != loaded_bitmaps.end(); bitmap++) al_destroy_bitmap(*bitmap);
 	if (this->display) al_destroy_display(this->display);
 	if (this->queue) al_destroy_event_queue(this->queue);
+}
+
+void Proto::close() {
+	this->shouldClose = true;
 }
 
 std::pair <bool, bool> Proto::update()
@@ -152,7 +164,7 @@ std::pair <bool, bool> Proto::update()
 	ALLEGRO_EVENT event;
 	bool ticked = false;
 	al_wait_for_event(this->queue, &event);
-	if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+	if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE || this->shouldClose) {
 		this->quit();
 		return std::make_pair(false, false);
 	}
@@ -252,6 +264,8 @@ Image::Image(const char* filepath, DrawData dData)
 	this->image = al_load_bitmap(filepath);
 
 	assert(this->image);
+
+	loaded_bitmaps.push_back(this->image);
 
 	if (!dData.transformCreated) dData.create_transform();
 	this->data = dData;
@@ -377,7 +391,7 @@ bool HoverShape::collides(int x, int y)
 }
 
 
-Button::Button(int x, int y, int width, int height, Image image, void(*onclick)(), void (*onhover)())
+Button::Button(int x, int y, int width, int height, Image image, std::function<void()>onclick, std::function<void()>onhover)
 {
 	this->x = x;
 	this->y = y;
@@ -448,16 +462,24 @@ void Button::setPosition(int x, int y)
 
 void Button::update()
 {
-	al_get_mouse_cursor_position(&this->mx, &this->my);
+	al_get_mouse_state(&this->mouse);
+	this->mx = this->mouse.x;
+	this->my = this->mouse.y;
+	int btns = this->mouse.buttons;
+
 	if (this->hovermap.collides(mx - this->x, this->my - this->y)) {
 		this->hover = true;
-		if (this->onhover) this->onhover();
-		if (this->mreleased) {
+		if (btns & 1)
+		{
+			this->mreleased = true;
+		}
+		else if (!(btns & 1) && this->mreleased) {
 			if (this->onclick) this->onclick();
 			this->mreleased = false;
 		}
+		if (this->onhover) this->onhover();
 	}
-	else this->hover = false;
+	else { this->hover = false; this->mreleased = false; }
 }
 
 void Button::draw()
@@ -731,6 +753,92 @@ Label::Label(std::string text, DrawData dData, ALLEGRO_COLOR color, Font* font, 
 	}
 }
 
+Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COLOR> colormap, std::map<std::string, Font*> fontmap, std::string color, std::string font, int fontsize, int offset, int maxwidth, int line_interval, int adjust_type)
+{
+	this->data = dData;
+	this->chunks = {};
+	this->fontmap = fontmap;
+	this->colormap = colormap;
+	this->text = text;
+	this->is_dict = false;
+
+	std::string chunk;
+	std::string::iterator c;
+
+	bool next_unimportant = false;
+	bool reading_tag = false;
+	std::vector<std::string> tagargs = {};
+	std::string textcolor = color;
+	std::string textfont = font;
+	int textsize = fontsize;
+	int maxlineheight = 0;
+	int chunkX = 0;
+	int chunkY = 0;
+	for (c = text.begin(); c != text.end(); c++) {
+		char ch = *c;
+
+		if (!next_unimportant) {
+			if (ch == '/') next_unimportant = true;
+			else if (ch == '<') {
+				this->chunks.push_back(TextChunk{ colormap[textcolor], fontmap[textfont]->fonts[textsize], chunk, chunkX, chunkY });
+				chunkX += al_get_text_width(fontmap[textfont]->fonts[textsize], chunk.c_str());
+				maxlineheight = max(maxlineheight, al_get_font_line_height(fontmap[textfont]->fonts[textsize]));
+				chunk = "";
+				reading_tag = true;
+			}
+			else if (ch == '>') {
+				tagargs.push_back(chunk);
+				chunk = "";
+
+				if (tagargs[0] == "style") {
+					assert(tagargs.size() == 4);
+					textcolor = tagargs[1];
+					textfont = tagargs[2];
+					textsize = std::stoi(tagargs[3]);
+				}
+				else if (tagargs[0] == "br") {
+					assert(tagargs.size() == 1);
+					this->chunks.push_back(TextChunk{ colormap[textcolor], fontmap[textfont]->fonts[textsize], chunk, chunkX, chunkY });
+					chunkX = 0;
+					maxlineheight = max(maxlineheight, fontmap[textfont]->getHeight(textsize));
+					chunkY += maxlineheight + line_interval;
+					maxlineheight = 0;
+					chunk = "";
+				}
+
+				reading_tag = false;
+				tagargs.clear();
+			}
+			else if (ch == ':' && reading_tag) {
+				tagargs.push_back(chunk);
+				chunk = "";
+			}
+			else if (ch == ' ' && !reading_tag) {
+				chunk.push_back(ch);
+				if (chunkX + fontmap[textfont]->getWidth(textsize, chunk.c_str()) > maxwidth) {
+					chunkX = 0;
+					chunkY += maxlineheight + line_interval;
+					maxlineheight = 0;
+				}
+				this->chunks.push_back(TextChunk{ colormap[textcolor], fontmap[textfont]->fonts[textsize], chunk, chunkX, chunkY });
+				maxlineheight = max( maxlineheight, fontmap[textfont]->getHeight(textsize));
+				chunkX += fontmap[textfont]->getWidth(textsize, chunk.c_str());
+				chunk = "";
+			}
+			else chunk.push_back(ch);
+		}
+		else {
+			chunk.push_back(ch);
+			next_unimportant = false;
+		}
+	}
+	if (chunkX + fontmap[textfont]->getWidth(textsize, chunk.c_str()) > maxwidth) {
+		chunkX = 0;
+		chunkY += maxlineheight + line_interval;
+	}
+	this->chunks.push_back(TextChunk{ colormap[textcolor], fontmap[textfont]->fonts[textsize], chunk, chunkX, chunkY });
+}
+
 void Label::draw()
 {
 	ALLEGRO_TRANSFORM T2;
@@ -818,6 +926,22 @@ GUIPanel::GUIPanel(std::vector<GUIElement> elements, imgvec images, lblvec label
 	this->flags = flags;
 	this->percentDims = (flags & PROTO_GUIPANEL_PERCENTDIMS) == PROTO_GUIPANEL_PERCENTDIMS;
 	this->usebgcol = (flags & PROTO_GUIPANEL_BGCOLOR) == PROTO_GUIPANEL_BGCOLOR;
+	this->scroll = 0;
+	this->btn_originals = {};
+	this->lbl_originals = {};
+	this->img_originals = {};
+
+	for (btnvec::iterator elem = this->buttons.begin(); elem != this->buttons.end(); elem++) {
+		btn_originals.push_back(DrawData{elem->x, elem->y});
+	}
+
+	for (lblvec::iterator elem = this->labels.begin(); elem != this->labels.end(); elem++) {
+		lbl_originals.push_back(elem->data);
+	}
+
+	for (imgvec::iterator elem = this->images.begin(); elem != this->images.end(); elem++) {
+		img_originals.push_back(elem->data);
+	}
 
 	this->bgcolor = bgcolor;
 
@@ -826,6 +950,7 @@ GUIPanel::GUIPanel(std::vector<GUIElement> elements, imgvec images, lblvec label
 	this->calculated_height = 0;
 	this->calculated_width = 0;
 	al_identity_transform(&deftrans);
+	this->hide_overflow = (flags & PROTO_GUIPANEL_SCROLLABLE) == PROTO_GUIPANEL_SCROLLABLE;
 
 	std::sort(this->elements.begin(), this->elements.end(), &element_sorter);
 }
@@ -846,6 +971,8 @@ GUIPanel::GUIPanel()
 	this->usebgcol = false;
 	this->calculated_height = 0;
 	this->calculated_width = 0;
+	this->hide_overflow = false;
+	this->scroll = 0;
 	al_identity_transform(&deftrans);
 }
 
@@ -853,17 +980,17 @@ void GUIPanel::setPosition(int x, int y)
 {
 	for (std::vector<GUIElement>::iterator elem = this->elements.begin(); elem != this->elements.end(); elem++) {
 		if (elem->type == PROTO_GUI_BUTTON) {
-			this->buttons[elem->index].setPosition(this->buttons[elem->index].x + x, this->buttons[elem->index].y + y);
+			this->buttons[elem->index].setPosition(this->btn_originals[elem->index].x + x, this->btn_originals[elem->index].y + y);
 			this->buttons[elem->index].imgdata.create_transform();
 		}
 		else if (elem->type == PROTO_GUI_LABEL) {
-			this->labels[elem->index].data.x += x;
-			this->labels[elem->index].data.y += y;
+			this->labels[elem->index].data.x = this->lbl_originals[elem->index].x + x;
+			this->labels[elem->index].data.y = this->lbl_originals[elem->index].y + y;
 			this->labels[elem->index].data.create_transform();
 		}
 		else if (elem->type == PROTO_GUI_IMAGE) {
-			this->images[elem->index].data.x += x;
-			this->images[elem->index].data.y += y;
+			this->images[elem->index].data.x = this->img_originals[elem->index].x + x;
+			this->images[elem->index].data.y = this->img_originals[elem->index].y + y;
 			this->images[elem->index].data.create_transform();
 			//std::cout << "Image coords set to "
 		}
@@ -872,8 +999,19 @@ void GUIPanel::setPosition(int x, int y)
 	this->y = y;
 }
 
+void GUIPanel::setCalculatedSize(int width, int height)
+{
+	this->calculated_width = width;
+	this->calculated_height = height;
+}
+
 void GUIPanel::draw()
 {
+	int rx, ry, rw, rh;
+	al_get_clipping_rectangle(&rx, &ry, &rw, &rh);
+	if (this->hide_overflow) {
+		al_set_clipping_rectangle(this->x, this->y, this->calculated_width, this->calculated_height);
+	}
 	al_use_transform(&deftrans);
 	if (this->usebgcol) al_draw_filled_rectangle(this->x, this->y, this->x + this->calculated_width, this->y + this->calculated_height, this->bgcolor);
 	for (std::vector<GUIElement>::iterator elem = this->elements.begin(); elem != this->elements.end(); elem++) {
@@ -885,6 +1023,29 @@ void GUIPanel::draw()
 		}
 		else if (elem->type == PROTO_GUI_IMAGE) {
 			this->images[elem->index].draw();
+		}
+	}
+	if (this->hide_overflow) {
+		al_set_clipping_rectangle(rx, ry, rw, rh);
+	}
+}
+
+void GUIPanel::setScroll(int scroll)
+{
+	this->scroll = scroll;
+	for (std::vector<GUIElement>::iterator elem = this->elements.begin(); elem != this->elements.end(); elem++) {
+		if (elem->type == PROTO_GUI_BUTTON) {
+			this->buttons[elem->index].setPosition(this->buttons[elem->index].x, this->btn_originals[elem->index].y - scroll);
+			this->buttons[elem->index].imgdata.create_transform();
+		}
+		else if (elem->type == PROTO_GUI_LABEL) {
+			this->labels[elem->index].data.y = this->lbl_originals[elem->index].y - scroll;
+			this->labels[elem->index].data.create_transform();
+		}
+		else if (elem->type == PROTO_GUI_IMAGE) {
+			this->images[elem->index].data.y = this->img_originals[elem->index].y - scroll;
+			this->images[elem->index].data.create_transform();
+			//std::cout << "Image coords set to "
 		}
 	}
 }
@@ -909,6 +1070,7 @@ GUI::GUI(int layout, std::vector<GUIPanel> panels, int x, int y, int width, int 
 	this->y = y;
 	this->width = width;
 	this->height = height;
+	this->usesBg = 0;
 
 	this->calculatePanels();
 }
@@ -921,6 +1083,7 @@ GUI::GUI()
 	this->width = 0;
 	this->x = 0;
 	this->y = 0;
+	this->usesBg = 0;
 }
 
 void GUI::calculatePanels()
@@ -959,6 +1122,10 @@ void GUI::calculatePanels()
 
 void GUI::draw()
 {
+	if (this->usesBg) {
+		this->bgimg.draw(this->bgdata);
+	}
+
 	if (this->layout == PROTO_GUI_LAYOUT_PANELS) {
 		for (std::vector<GUIPanel>::iterator panel = this->panels.begin(); panel != this->panels.end(); panel++) {
 			panel->draw();
@@ -973,6 +1140,16 @@ void GUI::update()
 			panel->update();
 		}
 	}
+}
+
+void GUI::setBackgroundImage(Image bgimg, DrawData bgdata)
+{
+	this->usesBg = true;
+	this->bgdata = bgdata;
+	this->bgimg = bgimg;
+	this->bgdata.x += this->x;
+	this->bgdata.y += this->y;
+	this->bgdata.create_transform();
 }
 
 template<typename T>
@@ -1103,4 +1280,16 @@ DataCell deserializeData(std::ifstream* ifs)
 	}
 
 	return vecstack[vecsize-1][0];
+}
+
+std::wstring s2ws(const std::string& s)
+{
+	int len;
+	int slength = (int)s.length() + 1;
+	len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, 0, 0);
+	wchar_t* buf = new wchar_t[len];
+	MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, buf, len);
+	std::wstring r(buf);
+	delete[] buf;
+	return r;
 }

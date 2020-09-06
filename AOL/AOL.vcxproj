@@ -156,6 +156,7 @@
     <ClCompile Include="globals.h" />
     <ClCompile Include="lib\Proto\Proto.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Script.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allegrolib.h" />

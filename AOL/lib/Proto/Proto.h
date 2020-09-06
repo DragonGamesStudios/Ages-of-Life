@@ -22,6 +22,7 @@
 #include <map>
 #include <Windows.h>
 #include <fstream>
+#include <functional>
 
 
 #define PROTO_WINDOW_FULLSCREEN 0b1
@@ -33,9 +34,14 @@
 #define PROTO_GUI_LAYOUT_PANELS 0
 #define PROTO_GUIPANEL_PERCENTDIMS 0b1
 #define PROTO_GUIPANEL_BGCOLOR 0b10
+#define PROTO_GUIPANEL_SCROLLABLE 0b100
 #define PROTO_LABEL_USES_DICT 0b1
+#define PROTO_LABEL_ADJUST_FONSIZE 0b1;
+#define PROTO_LABEL_ADJUST_NEWLINE = 0b0;
 
 using json = nlohmann::json;
+
+extern std::vector<ALLEGRO_BITMAP*> loaded_bitmaps;
 
 struct DrawData {
 	int x = 0;
@@ -156,6 +162,7 @@ public:
 	Image image;
 	Image hoverImage;
 	ALLEGRO_COLOR hoverTint;
+	ALLEGRO_MOUSE_STATE mouse;
 
 	int mx;
 	int my;
@@ -165,10 +172,10 @@ public:
 
 	bool hover;
 
-	void (*onclick)();
-	void (*onhover)();
+	std::function<void()> onclick;
+	std::function<void()> onhover;
 
-	Button(int x, int y, int width, int height, Image image, void (*onclick)()=NULL, void (*onhover)()=NULL);
+	Button(int x, int y, int width, int height, Image image, std::function<void()>onclick = NULL, std::function<void()>onhover = NULL);
 
 	void setHoverData(int x, int y, int width, int height);
 	void setHoverData(Hovermap hovermap);
@@ -193,6 +200,8 @@ class Label : public Drawable
 public:
 	Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COLOR> colormap, std::map<std::string, Font*> fontmap, std::string color, std::string font, int fontsize, int offset);
 	Label(std::string text, DrawData dData, ALLEGRO_COLOR color, Font* font, int fontsize, int offset);
+	Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COLOR> colormap, std::map<std::string, Font*> fontmap, std::string color, std::string font, int fontsize, int offset, int maxwidth, int line_interval, int adjust_type);
+	Label(std::string text, DrawData dData, ALLEGRO_COLOR color, Font* font, int fontsize, int offset, int maxwidth, int line_interval, int adjust_type);
 
 	std::string text;
 	DrawData data;
@@ -305,6 +314,8 @@ public:
 
 	json dictionary;
 
+	bool shouldClose;
+
 	static std::vector<std::vector<Quad>> loadSpritesheet(int rows, int rowlength, int quadwidth, int quadheight, int offsetX, int offsetY, int intervalX, int intervalY);
 	static std::vector<Quad> loadSpritesheet(int rowlength, int quadwidth, int quadheight, int offsetX, int offsetY, int interval);
 
@@ -324,6 +335,7 @@ public:
 
 	void quit();
 	std::pair <bool, bool> update();
+	void close();
 	void draw();
 	double step();
 	void finish_frame();
@@ -344,6 +356,9 @@ public:
 	GUIPanel();
 
 	std::vector<GUIElement> elements;
+	std::vector<DrawData> btn_originals;
+	std::vector<DrawData> lbl_originals;
+	std::vector<DrawData> img_originals;
 	imgvec images;
 	btnvec buttons;
 	lblvec labels;
@@ -351,14 +366,17 @@ public:
 	float width, height;
 	float calculated_width, calculated_height;
 
-	bool attach, percentDims, usebgcol;
+	bool attach, percentDims, usebgcol, hide_overflow;
+	int scroll;
 
 	ALLEGRO_COLOR bgcolor;
 
 	ALLEGRO_TRANSFORM deftrans;
 
 	void setPosition(int x, int y);
+	void setCalculatedSize(int width, int height);
 	void draw();
+	void setScroll(int scroll);
 	void update();
 };
 
@@ -370,12 +388,16 @@ public:
 
 	int layout;
 	int x, y, width, height;
+	bool usesBg;
+	DrawData bgdata;
+	Image bgimg;
 	std::vector<GUIPanel> panels;
 
 	void calculatePanels();
 
 	void draw();
 	void update();
+	void setBackgroundImage(Image bgimg, DrawData bgdata);
 };
 
 class Timeout
@@ -417,3 +439,5 @@ inline void Proto::log(const T& ... args)
 {
 	(std::cout << ... << args) << '\n';
 }
+
+std::wstring s2ws(const std::string& s);
