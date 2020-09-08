@@ -12,7 +12,8 @@ void Game::createguis()
 
 	mainmenuBg = Image("base/graphics/background.png", DrawData{});
 	menubutton = Image("base/graphics/gui/mainmenubutton.png", DrawData{});
-	defaultguiImage = Image("base/graphics/gui/defaultgui.png", DrawData{});
+	defaultguiImage.reload("base/graphics/gui/defaultgui.png", DrawData{});
+	closssssebutton.reload("base/graphics/gui/closeAge0.png", DrawData{});
 
 
 	std::pair<float,float> s1, s2;
@@ -38,7 +39,7 @@ void Game::createguis()
 				"    2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.<br>"
 				"    3. This notice may not be removed or altered from any source distribution.<br><br>";
 
-			license_str += "MIT License<br><br>"
+			license_str += "Nlohmann Json<br><br>MIT License<br><br>"
 
 				"Copyright(c) 2013 - 2020 Niels Lohmann<br><br>"
 
@@ -60,7 +61,7 @@ void Game::createguis()
 				"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE "
 				"SOFTWARE.<br><br>";
 
-			license_str += "Copyright (c) 2012 - present, Victor Zverovich<br><br>"
+			license_str += "FMT<br><br>Copyright (c) 2012 - present, Victor Zverovich<br><br>"
 
 				"Permission is hereby granted, free of charge, to any person obtaining a copy "
 				"of this softwareand associated documentation files (the \"Software\"), to deal "
@@ -135,6 +136,8 @@ void Game::createguis()
 		creatorsgui = GUI(PROTO_GUI_LAYOUT_PANELS, { creators_gp }, screenw / 3 - defguiW / 2 + 50, screenh / 8 + 3*defguiH/20 + 50, defguiW-100, 16*defguiH/20 - 50);
 		licensesgui = GUI(PROTO_GUI_LAYOUT_PANELS, { licenses_gp }, screenw / 3 - defguiW / 2 + 50, screenh / 8 + 3 * defguiH / 20 + 50, defguiW-100, 16*defguiH/20 - 50);
 
+		licensesgui.panels[0].setScrollLimits(0, licenses_l.height - licensesgui.panels[0].calculated_height);
+
 		script.register_open_gui_function(&creatorsgui, std::bind(&Script::close_gui, &this->script, &licensesgui));
 		script.register_open_gui_function(&licensesgui, std::bind(&Script::close_gui, &this->script, &creatorsgui));
 	}
@@ -148,6 +151,7 @@ void Game::createguis()
 
 		Button creatorsButton = Button(100, 0, defguiW / 2 - 100, defguiH/15, menubutton, std::bind(&Script::open_gui, &this->script, &creatorsgui));
 		Button licensesButton = Button(defguiW/2, 0, defguiW / 2 - 100, defguiH/15, menubutton, std::bind(&Script::open_gui, &this->script, &licensesgui));
+		Button closeB = Button(defguiW - 100, 30, 70, 70, closssssebutton, std::bind(&Script::close_gui, &this->script, &aboutgui));
 
 		Label creatorsLabel = Label(proto.dict("label-creators"), DrawData{ defguiW / 4 + 50, defguiH / 30 }, menutxtcol, &segoeuib, 27, PROTO_OFFSET_CENTER);
 		Label licensesLabel = Label(proto.dict("label-licenses"), DrawData{ 3*defguiW / 4 - 50, defguiH / 30 }, menutxtcol, &segoeuib, 27, PROTO_OFFSET_CENTER);
@@ -159,10 +163,10 @@ void Game::createguis()
 		licensesButton.setImageDisplayParameters(DrawData{ 0, 0, 0, btns.first, btns.second });
 
 		GUIPanel titlepanel = GUIPanel(
-			{ GUIElement{PROTO_GUI_LABEL, 0} },
-			{},
+			{ GUIElement{PROTO_GUI_LABEL, 0}, GUIElement{PROTO_GUI_BUTTON, 0} },
+			{  },
 			{ title },
-			{},
+			{ closeB },
 			1,
 			0.1,
 			false,
@@ -184,6 +188,7 @@ void Game::createguis()
 
 		aboutgui = GUI(PROTO_GUI_LAYOUT_PANELS, { titlepanel, buttonspanel }, screenw/3 - defguiW/2, screenh/8, defguiW, defguiH);
 		aboutgui.setBackgroundImage(defaultguiImage, DrawData{ 0,0,0,s2.first,s2.second });
+		script.register_close_gui_function(&aboutgui, [this]() {script.close_gui(&licensesgui); script.close_gui(&creatorsgui); });
 	}
 
 	// play menu gui

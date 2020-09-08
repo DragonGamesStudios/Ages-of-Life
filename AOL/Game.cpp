@@ -20,7 +20,7 @@ Game::Game()
 
 	const int szm = 5;
 	int sizes[szm] = { 18, 24, 27, 36, 56 };
-	segoeuib = Font("base/fonts/segoeuib.ttf", sizes, szm);
+	segoeuib.loadSizes("base/fonts/segoeuib.ttf", sizes, szm);
 
 	this->lastmwpos = 0;
 }
@@ -56,7 +56,9 @@ void Game::close()
 
 void Game::scroll(int amt)
 {
-	std::cout << amt << "\n";
+	if (script.get_gui_opened(&licensesgui)) {
+		licensesgui.panels[0].setScroll(licensesgui.panels[0].scroll - amt*100);
+	}
 }
 
 void Game::quit()
@@ -77,8 +79,10 @@ void Game::draw()
 
 void Game::update(double dt)
 {
-	scroll(proto.mouse.z - lastmwpos);
-	lastmwpos = proto.mouse.z;
+	if (proto.mouse.z - lastmwpos) {
+		scroll(proto.mouse.z - lastmwpos);
+		lastmwpos = proto.mouse.z;
+	}
 
 	for (int i = 0; i < script.opened_guis_amount; i++) {
 		GUI* gui = script.guis[i];

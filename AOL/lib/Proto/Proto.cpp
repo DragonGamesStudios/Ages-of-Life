@@ -96,22 +96,6 @@ void Proto::createWindow(int width, int height, ALLEGRO_BITMAP* icon, const char
 	al_start_timer(this->timer);
 }
 
-void Proto::registerImage(Image* image)
-{
-
-	this->loaded_images.push_back(image);
-}
-
-void Proto::registerButton(Button* btn)
-{
-	this->registered_buttons.push_back(btn);
-}
-
-void Proto::registerLabel(Label* lbl)
-{
-	this->registered_labels.push_back(lbl);
-}
-
 void Proto::updateButton(Button* btn)
 {
 	btn->setMousePos(this->mouse.x, this->mouse.y);
@@ -190,11 +174,6 @@ double Proto::step()
 	double time = al_get_time();
 	double dt = time - this->lastTime;
 	this->lastTime = time;
-
-
-	for (std::vector<Button*>::iterator btn = this->registered_buttons.begin(); btn != this->registered_buttons.end(); btn++) {
-		this->updateButton(*btn);
-	}
 
 
 	return dt;
@@ -318,6 +297,23 @@ void Image::setTint(unsigned char r, unsigned char g, unsigned char b, unsigned 
 void Image::setTint(ALLEGRO_COLOR color)
 {
 	this->tint = color;
+}
+
+void Image::reload(const char* filepath, DrawData dData)
+{
+	this->image = NULL;
+	this->image = al_load_bitmap(filepath);
+
+	assert(this->image);
+
+	loaded_bitmaps.push_back(this->image);
+
+	if (!dData.transformCreated) dData.create_transform();
+	this->data = dData;
+	this->tint = al_map_rgb(255, 255, 255);
+
+	this->width = al_get_bitmap_width(this->image);
+	this->height = al_get_bitmap_height(this->image);
 }
 
 void Image::draw()
@@ -665,6 +661,14 @@ int Font::getWidth(int size, const char* str)
 	return al_get_text_width(this->fonts[size], str);
 }
 
+void Font::loadSizes(const char* filepath, int sizes[], int sizes_size)
+{
+	for (int i = 0; i < sizes_size; i++) {
+		this->fonts.insert({ sizes[i], al_load_ttf_font(filepath, sizes[i], 0) });
+		assert(this->fonts[sizes[i]]);
+	}
+}
+
 Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COLOR> colormap, std::map<std::string, Font*> fontmap, std::string color, std::string font, int fontsize, int offset)
 {
 	this->data = dData;
@@ -728,6 +732,7 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 	this->chunks.push_back(TextChunk{colormap[textcolor], fontmap[textfont]->fonts[textsize], chunk, chunkX, 0});
 	chunkX += al_get_text_width(fontmap[textfont]->fonts[textsize], chunk.c_str());
 	maxlineheight = max(maxlineheight, al_get_font_line_height(fontmap[textfont]->fonts[textsize]));
+	this->height = maxlineheight;
 
 	if (offset == PROTO_OFFSET_CENTER) {
 		this->data.x -= chunkX / 2;
@@ -743,6 +748,7 @@ Label::Label(std::string text, DrawData dData, ALLEGRO_COLOR color, Font* font, 
 	this->fontmap = { {"default", font} };
 	this->colormap = { {"default", color} };
 	this->text = text;
+	this->height = al_get_font_line_height(font->fonts[fontsize]);
 
 	this->chunks.push_back(TextChunk{ color, font->fonts[fontsize], text, 0, 0 });
 
@@ -761,6 +767,7 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 	this->colormap = colormap;
 	this->text = text;
 	this->is_dict = false;
+	this->height = 0;
 
 	std::string chunk;
 	std::string::iterator c;
@@ -837,6 +844,13 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 		chunkY += maxlineheight + line_interval;
 	}
 	this->chunks.push_back(TextChunk{ colormap[textcolor], fontmap[textfont]->fonts[textsize], chunk, chunkX, chunkY });
+	maxlineheight = max(maxlineheight, fontmap[textfont]->getHeight(textsize));
+	chunkY += maxlineheight;
+	this->height = chunkY;
+}
+
+Label::Label(std::string text, DrawData dData, ALLEGRO_COLOR color, Font* font, int fontsize, int offset, int maxwidth, int line_interval, int adjust_type)
+{
 }
 
 void Label::draw()
@@ -930,6 +944,8 @@ GUIPanel::GUIPanel(std::vector<GUIElement> elements, imgvec images, lblvec label
 	this->btn_originals = {};
 	this->lbl_originals = {};
 	this->img_originals = {};
+	this->scrollHighBound = 500;
+	this->scrollLowBound = 0;
 
 	for (btnvec::iterator elem = this->buttons.begin(); elem != this->buttons.end(); elem++) {
 		btn_originals.push_back(DrawData{elem->x, elem->y});
@@ -973,6 +989,8 @@ GUIPanel::GUIPanel()
 	this->calculated_width = 0;
 	this->hide_overflow = false;
 	this->scroll = 0;
+	this->scrollHighBound = 500;
+	this->scrollLowBound = 0;
 	al_identity_transform(&deftrans);
 }
 
@@ -1032,22 +1050,29 @@ void GUIPanel::draw()
 
 void GUIPanel::setScroll(int scroll)
 {
-	this->scroll = scroll;
+	this->scroll = max(scroll, this->scrollLowBound);
+	this->scroll = min(this->scroll, this->scrollHighBound);
 	for (std::vector<GUIElement>::iterator elem = this->elements.begin(); elem != this->elements.end(); elem++) {
 		if (elem->type == PROTO_GUI_BUTTON) {
-			this->buttons[elem->index].setPosition(this->buttons[elem->index].x, this->btn_originals[elem->index].y - scroll);
+			this->buttons[elem->index].setPosition(this->buttons[elem->index].x, this->y + this->btn_originals[elem->index].y - this->scroll);
 			this->buttons[elem->index].imgdata.create_transform();
 		}
 		else if (elem->type == PROTO_GUI_LABEL) {
-			this->labels[elem->index].data.y = this->lbl_originals[elem->index].y - scroll;
+			this->labels[elem->index].data.y = this->y + this->lbl_originals[elem->index].y - this->scroll;
 			this->labels[elem->index].data.create_transform();
 		}
 		else if (elem->type == PROTO_GUI_IMAGE) {
-			this->images[elem->index].data.y = this->img_originals[elem->index].y - scroll;
+			this->images[elem->index].data.y = this->y + this->img_originals[elem->index].y - this->scroll;
 			this->images[elem->index].data.create_transform();
 			//std::cout << "Image coords set to "
 		}
 	}
+}
+
+void GUIPanel::setScrollLimits(int minlim, int maxlim)
+{
+	this->scrollLowBound = minlim;
+	this->scrollHighBound = maxlim;
 }
 
 void GUIPanel::update()

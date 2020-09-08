@@ -40,6 +40,7 @@ protected:
 	Image mainmenuBg;
 	Image menubutton;
 	Image defaultguiImage;
+	Image closssssebutton;
 	ALLEGRO_BITMAP* AOLicon;
 
 	Font segoeuib;

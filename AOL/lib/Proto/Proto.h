@@ -119,6 +119,7 @@ public:
 
 	int getHeight(int size);
 	int getWidth(int size, const char* str);
+	void loadSizes(const char* filepath, int sizes[], int size_amount);
 };
 
 
@@ -141,6 +142,7 @@ public:
 	void setTint(unsigned char r, unsigned char g, unsigned char b);
 	void setTint(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 	void setTint(ALLEGRO_COLOR color);
+	void reload(const char* filepath, DrawData dData);
 
 	void draw();
 	void draw(DrawData dData);
@@ -211,6 +213,7 @@ public:
 	int offset;
 	bool is_dict;
 	std::string dictkey;
+	int height;
 
 	void draw();
 	void setKey(std::string key);
@@ -368,6 +371,7 @@ public:
 
 	bool attach, percentDims, usebgcol, hide_overflow;
 	int scroll;
+	int scrollLowBound, scrollHighBound;
 
 	ALLEGRO_COLOR bgcolor;
 
@@ -377,6 +381,7 @@ public:
 	void setCalculatedSize(int width, int height);
 	void draw();
 	void setScroll(int scroll);
+	void setScrollLimits(int minlim, int maxlim);
 	void update();
 };
 
