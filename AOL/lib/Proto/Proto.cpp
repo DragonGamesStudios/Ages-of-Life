@@ -12,7 +12,13 @@
 
 namespace fs = std::filesystem;
 
+#ifndef max
+#define max std::max;
+#endif // !max
+
+
 std::vector<ALLEGRO_BITMAP*> loaded_bitmaps = {};
+std::vector<ALLEGRO_FONT*> loaded_fonts = {};
 
 Proto::Proto()
 {
@@ -20,6 +26,7 @@ Proto::Proto()
 	queue = NULL;
 	timer = NULL;
 	al_get_mouse_state(&mouse);
+	al_get_keyboard_state(&keyboard);
 
 	lastTime = al_get_time();
 
@@ -27,6 +34,8 @@ Proto::Proto()
 	registered_buttons = {};
 	registered_labels = {};
 	shouldClose = false;
+
+	this->keyboard_callback = NULL;
 }
 
 Proto::~Proto()
@@ -92,6 +101,7 @@ void Proto::createWindow(int width, int height, ALLEGRO_BITMAP* icon, const char
 	al_register_event_source(this->queue, al_get_display_event_source(this->display));
 	al_register_event_source(this->queue, al_get_timer_event_source(this->timer));
 	al_register_event_source(this->queue, al_get_mouse_event_source());
+	al_register_event_source(this->queue, al_get_keyboard_event_source());
 
 	al_start_timer(this->timer);
 }
@@ -102,7 +112,7 @@ void Proto::updateButton(Button* btn)
 	btn->mreleased = this->mousereleased;
 }
 
-void Proto::loadDictionary(const char* path)
+void Proto::loadDictionary(fs::path path)
 {
 	std::ifstream i(path);
 	i >> this->dictionary;
@@ -123,6 +133,11 @@ std::pair<float, float> Proto::getScale(Image img, int w, int h)
 	return std::make_pair((float)w/(float)img.width, (float)h/(float)img.height);
 }
 
+std::pair<float, float> Proto::getScale(Image* img, int w, int h)
+{
+	return std::make_pair((float)w / (float)img->width, (float)h / (float)img->height);
+}
+
 std::pair<int, int> Proto::getWindowDimensions()
 {
 	int w = al_get_display_width(this->display);
@@ -135,6 +150,7 @@ void Proto::quit()
 {
 	//for (int i=0; i<this->loaded_images.size();i++) if (this->loaded_images[i]->image) al_destroy_bitmap(this->loaded_images[i]->image);
 	for (auto bitmap = loaded_bitmaps.begin(); bitmap != loaded_bitmaps.end(); bitmap++) al_destroy_bitmap(*bitmap);
+	for (auto font = loaded_fonts.begin(); font != loaded_fonts.end(); font++) al_destroy_font(*font);
 	if (this->display) al_destroy_display(this->display);
 	if (this->queue) al_destroy_event_queue(this->queue);
 }
@@ -162,6 +178,16 @@ std::pair <bool, bool> Proto::update()
 	if (event.type == ALLEGRO_EVENT_MOUSE_AXES || event.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP || event.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
 		al_get_mouse_state(&mouse);
 	}
+
+	if (event.type == ALLEGRO_EVENT_KEY_UP || event.type == ALLEGRO_EVENT_KEY_DOWN) {
+		if (this->keyboard_callback) this->keyboard_callback(event.keyboard.keycode, event.type == ALLEGRO_EVENT_KEY_DOWN);
+		al_get_keyboard_state(&this->keyboard);
+	}
+
+	if (event.type == ALLEGRO_EVENT_KEY_CHAR) {
+		if (this->input_callback) this->input_callback(event.keyboard.keycode, event.keyboard.unichar);
+	}
+
 	return std::make_pair(true, ticked);
 }
 
@@ -184,7 +210,7 @@ void Proto::finish_frame()
 	this->mousereleased = false;
 }
 
-void Proto::setAppDataDir(LPCWSTR name)
+void Proto::setAppDataDir(std::string name)
 {
 	/*char* path;
 	size_t len;
@@ -192,39 +218,84 @@ void Proto::setAppDataDir(LPCWSTR name)
 	this->AppDataPath = path;
 	this->AppDataPath += "\\"+name;*/
 
-	PWSTR path;
+	/*PWSTR path;
 	SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, NULL, &path);
 
-	PathCombineW(this->AppDataPath, path, name);
+	PathCombineW(this->AppDataPath, path, name);*/
 
-	//MessageBoxW(0, PathCombineW(this->AppDataPath, path, name) , L"ee", 0);
+	char* appbuff;
+	size_t len;
+	_dupenv_s(&appbuff, &len, "APPDATA");
+
+	this->AppDataPath = (fs::path)appbuff;
+	this->AppDataPath /= name;
 
 	this->createDir(this->AppDataPath);
 }
 
-void Proto::createDir(LPCWSTR path)
+void Proto::createDir(std::string path)
 {
-	assert(CreateDirectoryW(path, NULL) || ERROR_ALREADY_EXISTS == GetLastError());
+	assert(al_make_directory(path.c_str()));
 }
 
-void Proto::openAppDataFile(LPCWSTR filepath, std::ofstream* ofs)
+void Proto::createDir(fs::path path)
 {
-	TCHAR target_path[MAX_PATH+2];
-	PathCombine(target_path, this->AppDataPath, filepath);
+	assert(al_make_directory(path.string().c_str()));
+}
+
+void Proto::openAppDataFile(std::string filepath, std::ofstream* ofs)
+{
+	std::string target_path = (this->AppDataPath / filepath).string();
 
 	ofs->open(target_path);
 
 	assert(ofs->is_open());
 }
 
-void Proto::openAppDataFile(LPCWSTR filepath, std::ifstream* ifs)
+bool Proto::openAppDataFile(std::string filepath, std::ifstream* ifs)
 {
-	TCHAR target_path[MAX_PATH + 2];
-	PathCombine(target_path, this->AppDataPath, filepath);
+	std::string target_path = (this->AppDataPath / filepath).string();
 
 	ifs->open(target_path);
 
-	assert(ifs->is_open());
+	return ifs->is_open();
+}
+
+void Proto::destroyRecursively(fs::path path)
+{
+	int mode;
+	std::string name;
+	ALLEGRO_FS_ENTRY* dir = al_create_fs_entry(path.string().c_str());
+	if (al_open_directory(dir)) {
+		ALLEGRO_FS_ENTRY* file;
+		while (file = al_read_directory(dir)) {
+			mode = al_get_fs_entry_mode(file);
+			name = al_get_fs_entry_name(file);
+			if (mode & ALLEGRO_FILEMODE_ISDIR) {
+				//std::cout << "Calling myself\n";
+				destroyRecursively(path / name);
+			}
+			else {
+				//std::cout << "Removing file " << path / name << "\n";
+				al_remove_filename((path / name).string().c_str());
+			}
+			al_destroy_fs_entry(file);
+		}
+	}
+	//std::cout << "Removing directory " << path / name << "\n";
+	al_remove_filename(path.string().c_str());
+	al_destroy_fs_entry(dir);
+
+}
+
+void Proto::setKeyboardCallback(std::function<void(int, bool)> callback)
+{
+	this->keyboard_callback = callback;
+}
+
+void Proto::setInputCallback(std::function<void(int, int)> callback)
+{
+	this->input_callback = callback;
 }
 
 
@@ -424,12 +495,12 @@ void Button::setHoverData(Hovermap hovermap)
 	this->hovermap = hovermap;
 }
 
-void Button::setHoverFunction(void(*onhover)())
+void Button::setHoverFunction(std::function<void()> onhover)
 {
 	this->onhover = onhover;
 }
 
-void Button::setClickFunction(void(*onclick)())
+void Button::setClickFunction(std::function<void()> onclick)
 {
 	this->onclick = onclick;
 }
@@ -646,8 +717,10 @@ Font::Font(const char* filepath, int sizes[], int sizes_size)
 	this->fonts = {};
 
 	for (int i = 0; i < sizes_size; i++) {
-		this->fonts.insert({ sizes[i], al_load_ttf_font(filepath, sizes[i], 0) });
+		ALLEGRO_FONT* newfont = al_load_ttf_font(filepath, sizes[i], 0);
+		this->fonts.insert({ sizes[i],  newfont });
 		assert(this->fonts[sizes[i]]);
+		loaded_fonts.push_back(newfont);
 	}
 }
 
@@ -656,17 +729,28 @@ int Font::getHeight(int size)
 	return al_get_font_line_height(this->fonts[size]);
 }
 
-int Font::getWidth(int size, const char* str)
+int Font::getWidth(int size, std::string str)
 {
-	return al_get_text_width(this->fonts[size], str);
+	return al_get_text_width(this->fonts[size], str.c_str());
 }
 
 void Font::loadSizes(const char* filepath, int sizes[], int sizes_size)
 {
 	for (int i = 0; i < sizes_size; i++) {
-		this->fonts.insert({ sizes[i], al_load_ttf_font(filepath, sizes[i], 0) });
+		ALLEGRO_FONT* newfont = al_load_ttf_font(filepath, sizes[i], 0);
+		this->fonts.insert({ sizes[i],  newfont });
 		assert(this->fonts[sizes[i]]);
+		loaded_fonts.push_back(newfont);
 	}
+}
+
+Label::Label()
+{
+	this->defsize = 0;
+	this->height = 0;
+	this->is_dict = false;
+	this->offset = 0;
+	this->width = 0;
 }
 
 Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COLOR> colormap, std::map<std::string, Font*> fontmap, std::string color, std::string font, int fontsize, int offset)
@@ -677,6 +761,7 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 	this->colormap = colormap;
 	this->text = text;
 	this->is_dict = false;
+	this->defsize = fontsize;
 
 	std::string chunk;
 	std::string::iterator c;
@@ -733,6 +818,7 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 	chunkX += al_get_text_width(fontmap[textfont]->fonts[textsize], chunk.c_str());
 	maxlineheight = max(maxlineheight, al_get_font_line_height(fontmap[textfont]->fonts[textsize]));
 	this->height = maxlineheight;
+	this->width = chunkX;
 
 	if (offset == PROTO_OFFSET_CENTER) {
 		this->data.x -= chunkX / 2;
@@ -748,7 +834,9 @@ Label::Label(std::string text, DrawData dData, ALLEGRO_COLOR color, Font* font, 
 	this->fontmap = { {"default", font} };
 	this->colormap = { {"default", color} };
 	this->text = text;
+	this->defsize = fontsize;
 	this->height = al_get_font_line_height(font->fonts[fontsize]);
+	this->width = font->getWidth(fontsize, text.c_str());
 
 	this->chunks.push_back(TextChunk{ color, font->fonts[fontsize], text, 0, 0 });
 
@@ -768,6 +856,8 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 	this->text = text;
 	this->is_dict = false;
 	this->height = 0;
+	this->width = maxwidth;
+	this->defsize = fontsize;
 
 	std::string chunk;
 	std::string::iterator c;
@@ -851,6 +941,11 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 
 Label::Label(std::string text, DrawData dData, ALLEGRO_COLOR color, Font* font, int fontsize, int offset, int maxwidth, int line_interval, int adjust_type)
 {
+	this->defsize = 0;
+	this->height = 0;
+	this->is_dict = false;
+	this->offset = 0;
+	this->width = 0;
 }
 
 void Label::draw()
@@ -883,6 +978,19 @@ void Label::setKey(std::string key)
 {
 	this->dictkey = key;
 	this->is_dict = true;
+}
+
+void Label::setTextChunk(std::string text)
+{
+	this->chunks.clear();
+	this->chunks.push_back(TextChunk{ this->colormap["default"], this->fontmap["default"]->fonts[this->defsize], text, 0, 0 });
+	this->text = text;
+	this->width = this->fontmap["default"]->getWidth(this->defsize, text.c_str());
+	this->height = this->fontmap["default"]->getHeight(this->defsize);
+}
+
+void Label::setText(std::string text)
+{
 }
 
 ElementSet::ElementSet(std::vector<Label> labels, std::vector<Button> buttons, std::vector<Image> images)
@@ -1077,8 +1185,8 @@ void GUIPanel::setScrollLimits(int minlim, int maxlim)
 
 void GUIPanel::update()
 {
-	for (btnvec::iterator btn = this->buttons.begin(); btn != this->buttons.end(); btn++) {
-		btn->update();
+	for (int btn = 0; btn < this->buttons.size(); btn++) {
+		this->buttons[btn].update();
 	}
 }
 
@@ -1197,10 +1305,8 @@ void serializeData(DataCell cell, std::ofstream* ofs)
 	char strend = 0x07;
 	char vecbegin = 0x08;
 	char vecend = 0x09;
-	std::cout << cell.index() << "\n";
 	switch (cell.index()) {
 	case 0:
-		std::cout << "Hello?";
 		writetype<bool>(cell, booltype, ofs);
 		break;
 	case 1:

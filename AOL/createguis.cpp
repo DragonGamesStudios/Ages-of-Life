@@ -1,26 +1,35 @@
 #include "globals.h"
-
+#include <new>
 
 
 void Game::createguis()
 {
+	change_loading_screen(proto.dict("loading-guis1"));
+
 	ALLEGRO_COLOR black = al_map_rgb(0, 0, 0);
 	ALLEGRO_COLOR highlight1 = al_map_rgb(255, 255, 200);
 	ALLEGRO_COLOR menutxtcol = al_map_rgb(238, 226, 93);
 	ALLEGRO_COLOR menu_orange = al_map_rgb(255, 50, 40);
 	ALLEGRO_COLOR lightyellow = al_map_rgb(247, 252, 200);
 
-	mainmenuBg = Image("base/graphics/background.png", DrawData{});
-	menubutton = Image("base/graphics/gui/mainmenubutton.png", DrawData{});
-	defaultguiImage.reload("base/graphics/gui/defaultgui.png", DrawData{});
-	closssssebutton.reload("base/graphics/gui/closeAge0.png", DrawData{});
+	mainmenuBg = new Image("base/graphics/background.png", DrawData{});
+	menubutton = new Image("base/graphics/gui/mainmenubutton.png", DrawData{});
+	defaultguiImage = new Image("base/graphics/gui/defaultgui.png", DrawData{});
+	closebutton = new Image("base/graphics/gui/closeAge0.png", DrawData{});
+	inputbutton = new Image("base/graphics/gui/input.png", DrawData{});
+
+
+	auto sc = proto.getScale(this->closebutton, 25, 25);
+	this->displayed_save_scale.sx = sc.first;
+	this->displayed_save_scale.sy = sc.second;
+	this->displayed_save_scale.create_transform();
 
 
 	std::pair<float,float> s1, s2;
 
 	s1 = proto.getScale(mainmenuBg, screenw, screenh);
 
-	mainmenuBg.setScale(s1.first, s1.second);
+	mainmenuBg->setScale(s1.first, s1.second);
 
 	int defguiW = .5 * screenw, defguiH = .75 * screenh;
 
@@ -106,13 +115,13 @@ void Game::createguis()
 		}
 
 
-		Label creators_l = Label(creatorstext, DrawData{ 0, 0 }, { {"col1", menutxtcol}, {"col2", menu_orange } }, { {"segoe", &segoeuib} }, "col1", "segoe", 24, 0, defguiW - 100, 2, 0);
-		Label licenses_l = Label(license_str, DrawData{ 0, 0 }, { {"col1", menutxtcol} }, { {"segoe", &segoeuib} }, "col1", "segoe", 18, 0, defguiW - 200, 2, 0);
+		Label* creators_l = new Label(creatorstext, DrawData{ 0, 0 }, { {"col1", menutxtcol}, {"col2", menu_orange } }, { {"segoe", segoeuib} }, "col1", "segoe", 24, 0, defguiW - 100, 2, 0);
+		Label* licenses_l = new Label(license_str, DrawData{ 0, 0 }, { {"col1", menutxtcol} }, { {"segoe", segoeuib} }, "col1", "segoe", 18, 0, defguiW - 200, 2, 0);
 		
-		GUIPanel creators_gp = GUIPanel(
+		GUIPanel* creators_gp = new GUIPanel(
 			{ GUIElement{PROTO_GUI_LABEL, 0} },
 			{},
-			{ creators_l },
+			{ *creators_l },
 			{},
 			1,
 			1,
@@ -121,10 +130,10 @@ void Game::createguis()
 			PROTO_GUIPANEL_PERCENTDIMS
 		);
 
-		GUIPanel licenses_gp = GUIPanel(
+		GUIPanel* licenses_gp = new GUIPanel(
 			{ GUIElement{PROTO_GUI_LABEL, 0} },
 			{},
-			{ licenses_l },
+			{ *licenses_l },
 			{},
 			1,
 			1,
@@ -133,40 +142,40 @@ void Game::createguis()
 			PROTO_GUIPANEL_PERCENTDIMS | PROTO_GUIPANEL_SCROLLABLE
 		);
 
-		creatorsgui = GUI(PROTO_GUI_LAYOUT_PANELS, { creators_gp }, screenw / 3 - defguiW / 2 + 50, screenh / 8 + 3*defguiH/20 + 50, defguiW-100, 16*defguiH/20 - 50);
-		licensesgui = GUI(PROTO_GUI_LAYOUT_PANELS, { licenses_gp }, screenw / 3 - defguiW / 2 + 50, screenh / 8 + 3 * defguiH / 20 + 50, defguiW-100, 16*defguiH/20 - 50);
+		creatorsgui = new GUI(PROTO_GUI_LAYOUT_PANELS, { *creators_gp }, screenw / 3 - defguiW / 2 + 50, screenh / 8 + 3*defguiH/20 + 50, defguiW-100, 16*defguiH/20 - 50);
+		licensesgui = new GUI(PROTO_GUI_LAYOUT_PANELS, { *licenses_gp }, screenw / 3 - defguiW / 2 + 50, screenh / 8 + 3 * defguiH / 20 + 50, defguiW-100, 16*defguiH/20 - 50);
 
-		licensesgui.panels[0].setScrollLimits(0, licenses_l.height - licensesgui.panels[0].calculated_height);
+		licensesgui->panels[0].setScrollLimits(0, licenses_l->height - licensesgui->panels[0].calculated_height);
 
-		script.register_open_gui_function(&creatorsgui, std::bind(&Script::close_gui, &this->script, &licensesgui));
-		script.register_open_gui_function(&licensesgui, std::bind(&Script::close_gui, &this->script, &creatorsgui));
+		script.register_open_gui_function(creatorsgui, std::bind(&Script::close_gui, &this->script, licensesgui));
+		script.register_open_gui_function(licensesgui, std::bind(&Script::close_gui, &this->script, creatorsgui));
 	}
+
 
 	// about gui
 	{
-
 		auto btns = proto.getScale(menubutton, defguiW / 2 - 100, defguiH / 15);
 
-		Label title = Label(proto.dict("mainlabel-about"), DrawData{defguiW/2, defguiH/20}, menutxtcol, &segoeuib, 36, PROTO_OFFSET_CENTER);
+		Label* title = new Label(proto.dict("label-about"), DrawData{defguiW/2, defguiH/20}, menutxtcol, segoeuib, 36, PROTO_OFFSET_CENTER);
 
-		Button creatorsButton = Button(100, 0, defguiW / 2 - 100, defguiH/15, menubutton, std::bind(&Script::open_gui, &this->script, &creatorsgui));
-		Button licensesButton = Button(defguiW/2, 0, defguiW / 2 - 100, defguiH/15, menubutton, std::bind(&Script::open_gui, &this->script, &licensesgui));
-		Button closeB = Button(defguiW - 100, 30, 70, 70, closssssebutton, std::bind(&Script::close_gui, &this->script, &aboutgui));
+		Button* creatorsButton = new Button(100, 0, defguiW / 2 - 100, defguiH/15, *menubutton, std::bind(&Script::open_gui, &this->script, creatorsgui));
+		Button* licensesButton = new Button(defguiW/2, 0, defguiW / 2 - 100, defguiH/15, *menubutton, std::bind(&Script::open_gui, &this->script, licensesgui));
+		Button* closeB = new Button(defguiW - 100, 30, 70, 70, *closebutton);
 
-		Label creatorsLabel = Label(proto.dict("label-creators"), DrawData{ defguiW / 4 + 50, defguiH / 30 }, menutxtcol, &segoeuib, 27, PROTO_OFFSET_CENTER);
-		Label licensesLabel = Label(proto.dict("label-licenses"), DrawData{ 3*defguiW / 4 - 50, defguiH / 30 }, menutxtcol, &segoeuib, 27, PROTO_OFFSET_CENTER);
+		Label* creatorsLabel = new Label(proto.dict("label-creators"), DrawData{ defguiW / 4 + 50, defguiH / 30 }, menutxtcol, segoeuib, 27, PROTO_OFFSET_CENTER);
+		Label* licensesLabel = new Label(proto.dict("label-licenses"), DrawData{ 3*defguiW / 4 - 50, defguiH / 30 }, menutxtcol, segoeuib, 27, PROTO_OFFSET_CENTER);
 
-		creatorsButton.setHoverEffect(highlight1);
-		licensesButton.setHoverEffect(highlight1);
+		creatorsButton->setHoverEffect(highlight1);
+		licensesButton->setHoverEffect(highlight1);
 
-		creatorsButton.setImageDisplayParameters(DrawData{ 0, 0, 0, btns.first, btns.second });
-		licensesButton.setImageDisplayParameters(DrawData{ 0, 0, 0, btns.first, btns.second });
+		creatorsButton->setImageDisplayParameters(DrawData{ 0, 0, 0, btns.first, btns.second });
+		licensesButton->setImageDisplayParameters(DrawData{ 0, 0, 0, btns.first, btns.second });
 
-		GUIPanel titlepanel = GUIPanel(
+		GUIPanel* titlepanel = new GUIPanel(
 			{ GUIElement{PROTO_GUI_LABEL, 0}, GUIElement{PROTO_GUI_BUTTON, 0} },
 			{  },
-			{ title },
-			{ closeB },
+			{ *title },
+			{ *closeB },
 			1,
 			0.1,
 			false,
@@ -174,11 +183,11 @@ void Game::createguis()
 			PROTO_GUIPANEL_PERCENTDIMS
 		);
 
-		GUIPanel buttonspanel = GUIPanel(
+		GUIPanel* buttonspanel = new GUIPanel(
 			{ GUIElement{PROTO_GUI_BUTTON, 0}, GUIElement{PROTO_GUI_BUTTON, 1}, GUIElement{PROTO_GUI_LABEL, 0}, GUIElement{PROTO_GUI_LABEL, 1} },
 			{},
-			{ creatorsLabel, licensesLabel },
-			{ creatorsButton, licensesButton },
+			{ *creatorsLabel, *licensesLabel },
+			{ *creatorsButton, *licensesButton },
 			1,
 			0.05,
 			false,
@@ -186,14 +195,99 @@ void Game::createguis()
 			PROTO_GUIPANEL_PERCENTDIMS
 		);
 
-		aboutgui = GUI(PROTO_GUI_LAYOUT_PANELS, { titlepanel, buttonspanel }, screenw/3 - defguiW/2, screenh/8, defguiW, defguiH);
-		aboutgui.setBackgroundImage(defaultguiImage, DrawData{ 0,0,0,s2.first,s2.second });
-		script.register_close_gui_function(&aboutgui, [this]() {script.close_gui(&licensesgui); script.close_gui(&creatorsgui); });
+		aboutgui = new GUI(PROTO_GUI_LAYOUT_PANELS, { *titlepanel, *buttonspanel }, screenw/3 - defguiW/2, screenh/8, defguiW, defguiH);
+		aboutgui->setBackgroundImage(*defaultguiImage, DrawData{ 0,0,0,s2.first,s2.second });
+		aboutgui->panels[0].buttons[0].setClickFunction(std::bind(&Script::close_gui, &this->script, aboutgui));
+		script.register_open_gui_function(aboutgui, std::bind(&Game::close_all_menu_guis, this));
+		script.register_close_gui_function(aboutgui, [this]() {script.close_gui(licensesgui); script.close_gui(creatorsgui);});
+
+		delete title, creatorsButton, licensesButton, closeB, creatorsLabel, licensesLabel, titlepanel, buttonspanel;
 	}
 
 	// play menu gui
 	{
+		auto input_s = proto.getScale(inputbutton, 240, 50);
+		auto div_s = proto.getScale(inputbutton, 4, 4 * defguiH / 5);
 
+		Image* divider = new Image(*inputbutton);
+		divider->setScale(div_s.first, div_s.second);
+		divider->setPosition(-2, 0);
+
+		Label* title = new Label(proto.dict("label-play"), DrawData{ defguiW / 2, defguiH / 20 }, menutxtcol, segoeuib, 36, PROTO_OFFSET_CENTER);
+		Label* loadtitle = new Label(proto.dict("label-load-game"), DrawData{ defguiW / 4, defguiH / 20 }, menutxtcol, segoeuib, 24, PROTO_OFFSET_CENTER);
+		Label* createtitle = new Label(proto.dict("label-create-game"), DrawData{ defguiW / 4, defguiH / 20 }, menutxtcol, segoeuib, 24, PROTO_OFFSET_CENTER);
+
+		Button* closeB = new Button(defguiW - 100, 30, 70, 70, *closebutton);
+
+		Label* newname = new Label(proto.dict("label-name"), DrawData{ 30, defguiH / 10 + 10 }, menutxtcol, segoeuib, 24, 0);
+		Label* local_name_input_label = new Label("", DrawData{ defguiW / 2 - 260, defguiH / 10 + 14 }, black, segoeuib, 18, 0);
+		Label* newsubmit_l = new Label(proto.dict("label-create"), DrawData{ defguiW / 4, defguiH / 10 + 115 }, menutxtcol, segoeuib, 24, PROTO_OFFSET_CENTER);
+
+		Button* newinput = new Button(defguiW / 2 - 270, defguiH / 10 + 5, 240, 50, *inputbutton);
+		Button* newsubmit = new Button(defguiW / 4 - 125, defguiH / 10 + 80, 250, 70, *menubutton, std::bind(&Game::create_save, this));
+
+		newsubmit->setHoverEffect(highlight1);
+
+		auto btns = proto.getScale(menubutton, 250, 70);
+
+		DrawData btnscale = { 0, 0, 0, btns.first, btns.second };
+
+		newinput->setImageDisplayParameters(DrawData{ 0, 0, 0, input_s.first, input_s.second });
+		newsubmit->setImageDisplayParameters(btnscale);
+
+		GUIPanel* titlepanel = new GUIPanel(
+			{ GUIElement{PROTO_GUI_LABEL, 0}, GUIElement{PROTO_GUI_BUTTON, 0} },
+			{},
+			{ *title },
+			{ *closeB },
+			1.f,
+			0.1f,
+			false,
+			black,
+			PROTO_GUIPANEL_PERCENTDIMS
+		);
+
+		GUIPanel* loadpanel = new GUIPanel(
+			{ GUIElement{PROTO_GUI_LABEL, 0} },
+			{},
+			{ *loadtitle },
+			{},
+			.5f,
+			0.9f,
+			false,
+			black,
+			PROTO_GUIPANEL_PERCENTDIMS
+		);
+
+		GUIPanel* createpanel = new GUIPanel(
+			{
+				GUIElement{PROTO_GUI_IMAGE, 0},
+				GUIElement{PROTO_GUI_LABEL, 0},
+				GUIElement{PROTO_GUI_BUTTON, 0},
+				GUIElement{PROTO_GUI_LABEL, 1},
+				GUIElement{PROTO_GUI_LABEL, 2},
+				GUIElement{PROTO_GUI_BUTTON, 1},
+				GUIElement{PROTO_GUI_LABEL, 3}
+			},
+			{ *divider },
+			{ *createtitle, *newname, *local_name_input_label, *newsubmit_l },
+			{ *newinput, *newsubmit },
+			.5f,
+			0.9f,
+			false,
+			black,
+			PROTO_GUIPANEL_PERCENTDIMS
+		);
+
+		playgui = new GUI(PROTO_GUI_LAYOUT_PANELS, { *titlepanel, *loadpanel, *createpanel }, screenw / 3 - defguiW / 2, screenh / 8, defguiW, defguiH);
+		playgui->setBackgroundImage(*defaultguiImage, DrawData{ 0, 0, 0, s2.first, s2.second });
+		this->name_input_label = &playgui->panels[2].labels[2];
+		playgui->panels[2].buttons[0].setClickFunction(std::bind(&Script::activate_input, &this->script, this->name_input_label));
+		playgui->panels[0].buttons[0].setClickFunction(std::bind(&Script::close_gui, &this->script, playgui));
+		script.register_close_gui_function(playgui, std::bind(&Script::activate_input, &this->script, (Label*)NULL));
+		script.register_open_gui_function(playgui, std::bind(&Game::close_all_menu_guis, this));
+
+		delete createpanel, loadpanel, divider, title, loadtitle, createtitle, closeB, newname, local_name_input_label, newinput, newsubmit, newsubmit_l;
 	}
 
 	// main menu gui
@@ -206,106 +300,111 @@ void Game::createguis()
 		int btnwidth = 250;
 		int btnheight = 70;
 
-		Button playbutton(0, 0, btnwidth, btnheight, menubutton);
-		Button optionsbutton(0, 0, btnwidth, btnheight, menubutton);
-		Button modsbutton(0, 0, btnwidth, btnheight, menubutton);
-		Button updatebutton(0, 0, btnwidth, btnheight, menubutton);
-		Button aboutbutton(0, 0, btnwidth, btnheight, menubutton, std::bind(&Script::open_gui, &this->script, &aboutgui));
-		Button quitbutton(0, 0, btnwidth, btnheight, menubutton, std::bind(&Game::close, this));
+		Button* playbutton = new Button(0, 0, btnwidth, btnheight, *menubutton, std::bind(&Script::open_gui, &this->script, playgui));
+		Button* optionsbutton = new Button(0, 0, btnwidth, btnheight, *menubutton);
+		Button* modsbutton = new Button(0, 0, btnwidth, btnheight, *menubutton);
+		Button* updatebutton = new Button(0, 0, btnwidth, btnheight, *menubutton);
+		Button* aboutbutton = new Button(0, 0, btnwidth, btnheight, *menubutton, std::bind(&Script::open_gui, &this->script, aboutgui));
+		Button* quitbutton = new Button(0, 0, btnwidth, btnheight, *menubutton, std::bind(&Game::close, this));
 
-		playbutton.setHoverEffect(highlight1);
-		optionsbutton.setHoverEffect(highlight1);
-		modsbutton.setHoverEffect(highlight1);
-		updatebutton.setHoverEffect(highlight1);
-		aboutbutton.setHoverEffect(highlight1);
-		quitbutton.setHoverEffect(highlight1);
+		playbutton->setHoverEffect(highlight1);
+		optionsbutton->setHoverEffect(highlight1);
+		modsbutton->setHoverEffect(highlight1);
+		updatebutton->setHoverEffect(highlight1);
+		aboutbutton->setHoverEffect(highlight1);
+		quitbutton->setHoverEffect(highlight1);
 
 		auto btns = proto.getScale(menubutton, btnwidth, btnheight);
 
 		DrawData btnscale = { 0, 0, 0, btns.first, btns.second };
 
-		playbutton.setImageDisplayParameters(btnscale);
-		optionsbutton.setImageDisplayParameters(btnscale);
-		modsbutton.setImageDisplayParameters(btnscale);
-		updatebutton.setImageDisplayParameters(btnscale);
-		aboutbutton.setImageDisplayParameters(btnscale);
-		quitbutton.setImageDisplayParameters(btnscale);
+		playbutton->setImageDisplayParameters(btnscale);
+		optionsbutton->setImageDisplayParameters(btnscale);
+		modsbutton->setImageDisplayParameters(btnscale);
+		updatebutton->setImageDisplayParameters(btnscale);
+		aboutbutton->setImageDisplayParameters(btnscale);
+		quitbutton->setImageDisplayParameters(btnscale);
 
 		DrawData labelpos = { btnwidth / 2, btnheight / 2 };
 		int labsize = 36;
 
-		Label playlabel(proto.dict("label-play"), labelpos, menutxtcol, &segoeuib, labsize, PROTO_OFFSET_CENTER);
-		Label optionslabel(proto.dict("label-options"), labelpos, menutxtcol, &segoeuib, labsize, PROTO_OFFSET_CENTER);
-		Label modslabel(proto.dict("label-mods"), labelpos, menutxtcol, &segoeuib, labsize, PROTO_OFFSET_CENTER);
-		Label updatelabel(proto.dict("label-updatelog"), labelpos, menutxtcol, &segoeuib, labsize, PROTO_OFFSET_CENTER);
-		Label aboutlabel(proto.dict("label-about"), labelpos, menutxtcol, &segoeuib, labsize, PROTO_OFFSET_CENTER);
-		Label quitlabel(proto.dict("label-quit"), labelpos, menutxtcol, &segoeuib, labsize, PROTO_OFFSET_CENTER);
+		Label* playlabel = new Label(proto.dict("label-play"), labelpos, menutxtcol, segoeuib, labsize, PROTO_OFFSET_CENTER);
+		Label* optionslabel = new Label(proto.dict("label-options"), labelpos, menutxtcol, segoeuib, labsize, PROTO_OFFSET_CENTER);
+		Label* modslabel = new Label(proto.dict("label-mods"), labelpos, menutxtcol, segoeuib, labsize, PROTO_OFFSET_CENTER);
+		Label* updatelabel = new Label(proto.dict("label-updatelog"), labelpos, menutxtcol, segoeuib, labsize, PROTO_OFFSET_CENTER);
+		Label* aboutlabel = new Label(proto.dict("label-about"), labelpos, menutxtcol, segoeuib, labsize, PROTO_OFFSET_CENTER);
+		Label* quitlabel = new Label(proto.dict("label-quit"), labelpos, menutxtcol, segoeuib, labsize, PROTO_OFFSET_CENTER);
 
-		GUIPanel playpanel(
+		GUIPanel* playpanel = new GUIPanel(
 			std::vector<GUIElement> {
 			GUIElement{ PROTO_GUI_BUTTON, 0 },
 				GUIElement{ PROTO_GUI_LABEL, 0 }
 		},
 			{},
-			{playlabel},
-			{ playbutton },
+			{*playlabel},
+			{ *playbutton },
 				1, 1.f / panel_amount, false, black, PROTO_GUIPANEL_PERCENTDIMS
 				);
 
-		GUIPanel optionspanel(
+		GUIPanel* optionspanel = new GUIPanel(
 			std::vector<GUIElement> {
 			GUIElement{ PROTO_GUI_BUTTON, 0 },
 				GUIElement{ PROTO_GUI_LABEL, 0 }
 		},
 			{},
-			{optionslabel},
-			{ optionsbutton },
+			{*optionslabel},
+			{ *optionsbutton },
 				1, 1.f / panel_amount, false, black, PROTO_GUIPANEL_PERCENTDIMS
 				);
-		GUIPanel modspanel(
+		GUIPanel* modspanel = new GUIPanel(
 			std::vector<GUIElement> {
 			GUIElement{ PROTO_GUI_BUTTON, 0 },
 				GUIElement{ PROTO_GUI_LABEL, 0 }
 		},
 			{},
-			{ modslabel },
-			{ modsbutton },
+			{ *modslabel },
+			{ *modsbutton },
 				1, 1.f / panel_amount, false, black, PROTO_GUIPANEL_PERCENTDIMS
 				);
-		GUIPanel updatepanel(
+		GUIPanel* updatepanel = new GUIPanel(
 			std::vector<GUIElement> {
 			GUIElement{ PROTO_GUI_BUTTON, 0 },
 				GUIElement{ PROTO_GUI_LABEL, 0 }
 		},
 			{},
-			{updatelabel},
-			{ updatebutton },
+			{*updatelabel},
+			{ *updatebutton },
 				1, 1.f / panel_amount, false, black, PROTO_GUIPANEL_PERCENTDIMS
 				);
-		GUIPanel aboutpanel(
+		GUIPanel* aboutpanel = new GUIPanel(
 			std::vector<GUIElement> {
 			GUIElement{ PROTO_GUI_BUTTON, 0 },
 				GUIElement{ PROTO_GUI_LABEL, 0 }
 		},
 			{},
-			{aboutlabel},
-			{ aboutbutton },
+			{*aboutlabel},
+			{ *aboutbutton },
 				1, 1.f / panel_amount, false, black, PROTO_GUIPANEL_PERCENTDIMS
 				);
-		GUIPanel quitpanel(
+		GUIPanel* quitpanel = new GUIPanel(
 			std::vector<GUIElement> {
 				GUIElement{ PROTO_GUI_BUTTON, 0 },
 				GUIElement{PROTO_GUI_LABEL, 0}
 			},
 			{},
-			{quitlabel},
-			{ quitbutton },
+			{*quitlabel},
+			{ *quitbutton },
 			1, 1.f / panel_amount, false, black, PROTO_GUIPANEL_PERCENTDIMS
 		);
 
 
-		mainmenu = GUI(PROTO_GUI_LAYOUT_PANELS, std::vector<GUIPanel>{playpanel, optionspanel, modspanel, updatepanel, aboutpanel, quitpanel}, mbx, mby, btnwidth, btnheight*panel_amount);
+		mainmenu = new GUI(PROTO_GUI_LAYOUT_PANELS, std::vector<GUIPanel>{*playpanel, *optionspanel, *modspanel, *updatepanel, *aboutpanel, *quitpanel}, mbx, mby, btnwidth, btnheight*panel_amount);
+
+		delete playbutton, optionsbutton, modsbutton, aboutbutton, updatebutton, quitbutton, playlabel, optionslabel, modslabel, aboutlabel, updatelabel, quitlabel;
+		delete playpanel, optionspanel, modspanel, aboutpanel, quitpanel;
 	}
 
-	script.open_gui(&mainmenu);
+	script.open_gui(mainmenu);
+
+	this->get_displayed_saves();
 }

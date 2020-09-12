@@ -1,2 +1,12 @@
-﻿  createguis.cpp
+﻿  Technology.cpp
+  createguis.cpp
+  Game.cpp
+C:\AOL\AOL\Game.cpp(255,20): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+  globals.h
+  Proto.cpp
+C:\AOL\AOL\lib\Proto\Proto.cpp(697,27): warning C4018: ">=": niezgodność typu ze znakiem/bez znaku
+C:\AOL\AOL\lib\Proto\Proto.cpp(1188,24): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+  main.cpp
+  Script.cpp
+  Generowanie kodu...
   AOL.vcxproj -> C:\AOL\Debug\AOL.exe

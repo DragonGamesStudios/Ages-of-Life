@@ -11,6 +11,7 @@ int main()
 	al_init_primitives_addon();
 
 	al_install_mouse();
+	al_install_keyboard();
 
 	bool AOLok = false;
 	std::string err;
@@ -53,4 +54,5 @@ int main()
 	}
 
 	al_uninstall_mouse();
+	al_uninstall_keyboard();
 }

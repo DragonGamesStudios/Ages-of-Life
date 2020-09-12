@@ -7,6 +7,10 @@
     "label-quit": "Quit",
     "label-creators": "Creators",
     "label-licenses": "Licenses",
+    "label-load-game": "Load game",
+    "label-create-game": "Create game",
+    "label-name": "Name",
+    "label-create": "Create",
 
-    "mainlabel-about": "About"
+    "loading-guis1": "Loading guis..."
 }

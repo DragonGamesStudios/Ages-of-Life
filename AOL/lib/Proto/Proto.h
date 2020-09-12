@@ -23,6 +23,7 @@
 #include <Windows.h>
 #include <fstream>
 #include <functional>
+#include <filesystem>
 
 
 #define PROTO_WINDOW_FULLSCREEN 0b1
@@ -40,8 +41,10 @@
 #define PROTO_LABEL_ADJUST_NEWLINE = 0b0;
 
 using json = nlohmann::json;
+namespace fs = std::filesystem;
 
 extern std::vector<ALLEGRO_BITMAP*> loaded_bitmaps;
+extern std::vector<ALLEGRO_FONT*> loaded_fonts;
 
 struct DrawData {
 	int x = 0;
@@ -118,7 +121,7 @@ public:
 	std::map<int, ALLEGRO_FONT*> fonts;
 
 	int getHeight(int size);
-	int getWidth(int size, const char* str);
+	int getWidth(int size, std::string str);
 	void loadSizes(const char* filepath, int sizes[], int size_amount);
 };
 
@@ -186,8 +189,8 @@ public:
 	void setHoverEffect(Image hoverImage);
 	void setHoverEffect(ALLEGRO_COLOR tint);
 
-	void setHoverFunction(void (*onhover)());
-	void setClickFunction(void (*onclick)());
+	void setHoverFunction(std::function<void()> onhover);
+	void setClickFunction(std::function<void()> onclick);
 
 	void setImageDisplayParameters(DrawData dData);
 
@@ -200,6 +203,7 @@ public:
 class Label : public Drawable
 {
 public:
+	Label();
 	Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COLOR> colormap, std::map<std::string, Font*> fontmap, std::string color, std::string font, int fontsize, int offset);
 	Label(std::string text, DrawData dData, ALLEGRO_COLOR color, Font* font, int fontsize, int offset);
 	Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COLOR> colormap, std::map<std::string, Font*> fontmap, std::string color, std::string font, int fontsize, int offset, int maxwidth, int line_interval, int adjust_type);
@@ -214,9 +218,14 @@ public:
 	bool is_dict;
 	std::string dictkey;
 	int height;
+	int width;
+	int defsize;
 
 	void draw();
 	void setKey(std::string key);
+
+	void setTextChunk(std::string text);
+	void setText(std::string text);
 
 private:
 
@@ -305,15 +314,19 @@ public:
 	ALLEGRO_EVENT_QUEUE* queue;
 	ALLEGRO_TIMER* timer;
 	ALLEGRO_MOUSE_STATE mouse;
+	ALLEGRO_KEYBOARD_STATE keyboard;
 
 	double lastTime;
 	bool mousereleased;
 
-	TCHAR AppDataPath[MAX_PATH+2];
+	fs::path AppDataPath;
 
 	std::vector<Image*> loaded_images;
 	std::vector<Button*> registered_buttons;
 	std::vector<Label*> registered_labels;
+
+	std::function<void(int, bool)> keyboard_callback;
+	std::function<void(int, int)> input_callback;
 
 	json dictionary;
 
@@ -323,17 +336,15 @@ public:
 	static std::vector<Quad> loadSpritesheet(int rowlength, int quadwidth, int quadheight, int offsetX, int offsetY, int interval);
 
 	void createWindow(int width, int height, ALLEGRO_BITMAP* icon, const char* title, int flags);
-	void registerImage(Image* image);
-	void registerButton(Button* btn);
-	void registerLabel(Label* lbl);
 	void updateButton(Button* btn);
-	void loadDictionary(const char* path);
+	void loadDictionary(fs::path path);
 	std::string dict(std::string value);
 	template <std::size_t ... Is>
 	inline std::string dict(const std::string& format, const std::vector<std::string>& v, std::index_sequence<Is...>);
 	template <std::size_t N>
 	inline std::string dict(const std::string& format, const std::vector<std::string>& v);
 	std::pair <float, float> getScale(Image img, int w, int h);
+	std::pair <float, float> getScale(Image* img, int w, int h);
 	std::pair <int, int> getWindowDimensions();
 
 	void quit();
@@ -343,10 +354,15 @@ public:
 	double step();
 	void finish_frame();
 
-	void setAppDataDir(LPCWSTR name);
-	void createDir(LPCWSTR path);
-	void openAppDataFile(LPCWSTR filepath, std::ofstream* ofs);
-	void openAppDataFile(LPCWSTR filepath, std::ifstream* ifs);
+	void setAppDataDir(std::string name);
+	void createDir(std::string path);
+	void createDir(fs::path path);
+	void openAppDataFile(std::string filepath, std::ofstream* ofs);
+	bool openAppDataFile(std::string filepath, std::ifstream* ifs);
+	void destroyRecursively(fs::path path);
+
+	void setKeyboardCallback(std::function<void(int, bool)> callback);
+	void setInputCallback(std::function<void(int, int)> callback);
 
 	template <typename ...T>
 	void log(const T& ... args);
