@@ -6,12 +6,6 @@ void Game::createguis()
 {
 	change_loading_screen(proto.dict("loading-guis1"));
 
-	ALLEGRO_COLOR black = al_map_rgb(0, 0, 0);
-	ALLEGRO_COLOR highlight1 = al_map_rgb(255, 255, 200);
-	ALLEGRO_COLOR menutxtcol = al_map_rgb(238, 226, 93);
-	ALLEGRO_COLOR menu_orange = al_map_rgb(255, 50, 40);
-	ALLEGRO_COLOR lightyellow = al_map_rgb(247, 252, 200);
-
 	mainmenuBg = new Image("base/graphics/background.png", DrawData{});
 	menubutton = new Image("base/graphics/gui/mainmenubutton.png", DrawData{});
 	defaultguiImage = new Image("base/graphics/gui/defaultgui.png", DrawData{});

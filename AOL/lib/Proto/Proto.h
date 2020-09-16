@@ -130,7 +130,7 @@ class Image : public Drawable
 {
 public:
 	Image();
-	Image(const char* filepath, DrawData dData);
+	Image(std::string filepath, DrawData dData);
 
 	ALLEGRO_BITMAP* image;
 	

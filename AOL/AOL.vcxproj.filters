@@ -22,6 +22,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="..\Debug\testmod.lua" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\Proto\Proto.cpp">
@@ -45,6 +46,21 @@
     <ClCompile Include="classes\Technology.cpp">
       <Filter>classes</Filter>
     </ClCompile>
+    <ClCompile Include="classes\Age.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="classes\GameObject.cpp">
+      <Filter>classes</Filter>
+    </ClCompile>
+    <ClCompile Include="setup.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="independent-globals.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="modding-api.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allegrolib.h">
@@ -55,6 +71,15 @@
     </ClInclude>
     <ClInclude Include="classes\Technology.h">
       <Filter>classes</Filter>
+    </ClInclude>
+    <ClInclude Include="classes\Age.h">
+      <Filter>classes</Filter>
+    </ClInclude>
+    <ClInclude Include="classes\GameObject.h">
+      <Filter>classes</Filter>
+    </ClInclude>
+    <ClInclude Include="independent-globals.h">
+      <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,4 +1,6 @@
 #include "globals.h"
+#include "classes/GameObject.h"
+#include "classes/Age.h"
 #include <atlstr.h>
 #include <lua.hpp>
 
@@ -12,8 +14,6 @@ Game::Game()
 	proto.createWindow(1900, 1180, AOLicon, "Ages of Life", PROTO_WINDOW_FULLSCREEN);
 
 	proto.setAppDataDir("AOL");
-
-
 
 	auto dims = proto.getWindowDimensions();
 	screenw = dims.first;
@@ -41,6 +41,18 @@ Game::Game()
 
 	load_basedata();
 	proto.loadDictionary((fs::path)"base" / "locale" / (this->basedata.language + ".json"));
+
+	script.load_colors();
+
+	this->object_tree = {
+		{"age", {}},
+		{"technologies", {}}
+	};
+
+	this->prototype_tree = {
+		{"age", {}},
+		{"technologies", {}}
+	};
 }
 
 Game::~Game()
@@ -65,11 +77,33 @@ Game::~Game()
 	delete
 		loadbutton.normal,
 		loadbutton.hover;
+
+	for (auto const& [key, value] : this->prototype_tree["ages"])
+		delete this->prototype_tree["ages"][key];
+
+	for (auto const& [key, value] : this->object_tree["ages"])
+		delete this->object_tree["ages"][key];
 }
 
 void Game::run()
 {
-	ALLEGRO_COLOR black = al_map_rgb(0, 0, 0);
+	this->load();
+
+	std::cout << "Prototypes:\n";
+	for (const auto& [key, value] : this->prototype_tree["age"]) {
+		std::cout << key << " (" << ((AgePrototype*)value)->neighbor_specifier << "): " << ((AgePrototype*)value)->neighbor_age << "\n";
+	}
+
+	std::cout << "\nObjects:\n";
+	for (const auto& [key, value] : this->object_tree["age"]) {
+		Age* fixed = (Age*)value;
+		std::cout << key << ": {\n";
+		for (const auto& [field, fval] : fixed->dumped) {
+			std::cout << "    " << fval.first << " " << field << " = " << fval.second << ",\n";
+		}
+		std::cout << "}\n";
+	}
+
 	this->menu = true;
 	while (true) {
 		std::pair <bool, bool> rundata = proto.update();
@@ -224,6 +258,40 @@ void Game::delete_save(int index)
 	get_displayed_saves();
 }
 
+void Game::register_prototype(GameObjectPrototype* prototype, std::string group)
+{
+	this->prototype_tree[group].insert(std::make_pair(prototype->name, prototype));
+}
+
+void Game::load()
+{
+	load_prototypes();
+	apply_changes();
+	initialize_prototypes();
+
+	createguis();
+}
+
+void Game::load_prototypes()
+{
+	setup_ages();
+}
+
+void Game::apply_changes()
+{
+}
+
+void Game::initialize_prototypes()
+{
+	for (const auto& [key, value] : this->prototype_tree["age"]) {
+		this->object_tree["age"].insert({ key, new Age((AgePrototype*)value) });
+	}
+
+	for (const auto& [key, value] : this->object_tree["age"]) {
+		((Age*)value)->fill_dependencies(&this->object_tree);
+	}
+}
+
 void Game::quit()
 {
 	this->save_basedata();
@@ -260,8 +328,7 @@ void Game::update(double dt)
 
 void Game::change_loading_screen(std::string mes, float per)
 {
-	ALLEGRO_COLOR white = al_map_rgb(255, 255, 255);
-	al_clear_to_color(al_map_rgb(13, 13, 13));
+	al_clear_to_color(loading_screen_bg);
 	ALLEGRO_TRANSFORM def;
 	al_identity_transform(&def);
 	int py = 3 * screenh / 4;
@@ -279,8 +346,7 @@ void Game::change_loading_screen(std::string mes, float per)
 
 void Game::change_loading_screen(std::string mes)
 {
-	ALLEGRO_COLOR white = al_map_rgb(255, 255, 255);
-	al_clear_to_color(al_map_rgb(13, 13, 13));
+	al_clear_to_color(loading_screen_bg);
 	ALLEGRO_TRANSFORM def;
 	al_identity_transform(&def);
 	int py = 3 * screenh / 4;

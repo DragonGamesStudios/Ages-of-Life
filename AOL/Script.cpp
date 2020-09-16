@@ -1,5 +1,13 @@
 #include "globals.h"
 
+ALLEGRO_COLOR black;
+ALLEGRO_COLOR white;
+ALLEGRO_COLOR loading_screen_bg;
+ALLEGRO_COLOR menutxtcol;
+ALLEGRO_COLOR menu_orange;
+ALLEGRO_COLOR lightyellow;
+ALLEGRO_COLOR highlight1;
+
 Script::Script()
 {
 	guis = {};
@@ -84,4 +92,15 @@ bool Script::validate_savename(std::string savename)
 		if (std::find(this->valid_chars.begin(), this->valid_chars.end(), *svc) == this->valid_chars.end()) return false;
 	}
 	return true;
+}
+
+void Script::load_colors()
+{
+	black = al_map_rgb(0, 0, 0);
+	white = al_map_rgb(255, 255, 255);
+	loading_screen_bg = al_map_rgb(13, 13, 13);
+	menutxtcol = al_map_rgb(238, 226, 93);
+	menu_orange = al_map_rgb(255, 50, 40);
+	lightyellow = al_map_rgb(247, 252, 200);
+	highlight1 = al_map_rgb(255, 255, 200);
 }

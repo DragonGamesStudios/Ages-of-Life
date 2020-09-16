@@ -1,11 +1,20 @@
 #include "lib/Proto/Proto.h"
 #include "allegrolib.h"
+#include "classes/GameObject.h"
 
 typedef unsigned int uint;
 typedef const char* ccptr;
 typedef unsigned char uchar;
 typedef std::function<void()> fn00;
 typedef std::pair<float, float> spair;
+
+extern ALLEGRO_COLOR black;
+extern ALLEGRO_COLOR white;
+extern ALLEGRO_COLOR loading_screen_bg;
+extern ALLEGRO_COLOR menutxtcol;
+extern ALLEGRO_COLOR menu_orange;
+extern ALLEGRO_COLOR lightyellow;
+extern ALLEGRO_COLOR highlight1;
 
 struct basedata_struct {
 	std::vector<std::string> saves = {};
@@ -38,6 +47,8 @@ public:
 
 	void activate_input(Label* lbl = NULL);
 	bool validate_savename(std::string savename);
+
+	void load_colors();
 };
 
 class Game {
@@ -49,12 +60,14 @@ public:
 	void run();
 	void quit();
 
+	Proto proto;
+	std::map<std::string, std::map<std::string, GameObject*>> object_tree;
+	std::map<std::string, std::map<std::string, GameObjectPrototype*>> prototype_tree;
+
 protected:
 	int screenw, screenh;
 
 	int lastmwpos;
-
-	Proto proto;
 	Script script;
 
 	Image* mainmenuBg;
@@ -99,4 +112,15 @@ protected:
 
 	void create_save();
 	void delete_save(int index);
+
+	void register_prototype(GameObjectPrototype* prototype, std::string group);
+
+	void load();
+	void load_prototypes();
+	void apply_changes();
+	void initialize_prototypes();
+	
+	void setup_ages();
+
+	void api_load_datafile(std::string path);
 };

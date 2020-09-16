@@ -308,10 +308,10 @@ Image::Image()
 	this->height = 0;
 }
 
-Image::Image(const char* filepath, DrawData dData)
+Image::Image(std::string filepath, DrawData dData)
 {
 	this->image = NULL;
-	this->image = al_load_bitmap(filepath);
+	this->image = al_load_bitmap(filepath.c_str());
 
 	assert(this->image);
 

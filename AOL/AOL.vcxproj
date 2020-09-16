@@ -149,20 +149,29 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="..\Debug\testmod.lua" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="classes\Age.cpp" />
+    <ClCompile Include="classes\GameObject.cpp" />
     <ClCompile Include="classes\Technology.cpp" />
     <ClCompile Include="createguis.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="globals.h" />
+    <ClCompile Include="independent-globals.cpp" />
     <ClCompile Include="lib\Proto\Proto.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="modding-api.cpp" />
     <ClCompile Include="Script.cpp" />
+    <ClCompile Include="setup.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allegrolib.h" />
+    <ClInclude Include="classes\Age.h" />
+    <ClInclude Include="classes\GameObject.h" />
     <ClInclude Include="classes\Technology.h" />
+    <ClInclude Include="independent-globals.h" />
     <ClInclude Include="lib\Proto\Proto.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

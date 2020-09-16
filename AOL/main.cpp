@@ -20,8 +20,6 @@ int main()
 
 		Game game;
 
-		game.createguis();
-
 		game.run();
 
 		game.quit();
