@@ -2,6 +2,7 @@
 #include <string>
 #include "..\allegrolib.h"
 #include "..\lib\Proto\Proto.h"
+#include "..\independent-globals.h"
 
 struct color {
 	unsigned char r = 255;

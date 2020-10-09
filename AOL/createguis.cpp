@@ -335,7 +335,7 @@ void Game::createguis()
 				GUIElement{ PROTO_GUI_LABEL, 0 }
 		},
 			{},
-			{*playlabel},
+			{ *playlabel },
 			{ *playbutton },
 				1, 1.f / panel_amount, false, black, PROTO_GUIPANEL_PERCENTDIMS
 				);
@@ -346,7 +346,7 @@ void Game::createguis()
 				GUIElement{ PROTO_GUI_LABEL, 0 }
 		},
 			{},
-			{*optionslabel},
+			{ *optionslabel },
 			{ *optionsbutton },
 				1, 1.f / panel_amount, false, black, PROTO_GUIPANEL_PERCENTDIMS
 				);
@@ -366,7 +366,7 @@ void Game::createguis()
 				GUIElement{ PROTO_GUI_LABEL, 0 }
 		},
 			{},
-			{*updatelabel},
+			{ *updatelabel },
 			{ *updatebutton },
 				1, 1.f / panel_amount, false, black, PROTO_GUIPANEL_PERCENTDIMS
 				);
@@ -376,27 +376,62 @@ void Game::createguis()
 				GUIElement{ PROTO_GUI_LABEL, 0 }
 		},
 			{},
-			{*aboutlabel},
+			{ *aboutlabel },
 			{ *aboutbutton },
 				1, 1.f / panel_amount, false, black, PROTO_GUIPANEL_PERCENTDIMS
 				);
 		GUIPanel* quitpanel = new GUIPanel(
 			std::vector<GUIElement> {
-				GUIElement{ PROTO_GUI_BUTTON, 0 },
-				GUIElement{PROTO_GUI_LABEL, 0}
-			},
+			GUIElement{ PROTO_GUI_BUTTON, 0 },
+				GUIElement{ PROTO_GUI_LABEL, 0 }
+		},
 			{},
-			{*quitlabel},
+			{ *quitlabel },
 			{ *quitbutton },
-			1, 1.f / panel_amount, false, black, PROTO_GUIPANEL_PERCENTDIMS
-		);
+				1, 1.f / panel_amount, false, black, PROTO_GUIPANEL_PERCENTDIMS
+				);
 
 
-		mainmenu = new GUI(PROTO_GUI_LAYOUT_PANELS, std::vector<GUIPanel>{*playpanel, *optionspanel, *modspanel, *updatepanel, *aboutpanel, *quitpanel}, mbx, mby, btnwidth, btnheight*panel_amount);
+		mainmenu = new GUI(PROTO_GUI_LAYOUT_PANELS, std::vector<GUIPanel>{*playpanel, * optionspanel, * modspanel, * updatepanel, * aboutpanel, * quitpanel}, mbx, mby, btnwidth, btnheight* panel_amount);
 
 		delete playbutton, optionsbutton, modsbutton, aboutbutton, updatebutton, quitbutton, playlabel, optionslabel, modslabel, aboutlabel, updatelabel, quitlabel;
 		delete playpanel, optionspanel, modspanel, aboutpanel, quitpanel;
 	}
+
+	/*/ escape gui
+	{
+		int btn_w = screenw / 4 - 50, btn_h = (screenh / 2 - 50)/3;
+
+		auto esc_scale = proto.getScale(defaultguiImage, screenw / 4, screenh / 2);
+		auto btns = proto.getScale(menubutton, btn_w, btn_h);
+
+		int def_x = (screenw / 4 - btn_w) / 2;
+
+		Button* save_btn = new Button(def_x, 0, btn_w, btn_h, *menubutton);
+		Button* load_last_btn = new Button(def_x, 0, btn_w, btn_h, *menubutton);
+		Button* quit_btn = new Button(def_x, 0, btn_w, btn_h, *menubutton);
+
+		save_btn->setHoverEffect(highlight1);
+		load_last_btn->setHoverEffect(highlight1);
+		quit_btn->setHoverEffect(highlight1);
+
+		Label* save_lbl = new Label(proto.dict("label-save"), DrawData{ screenw / 8, btn_h / 2 }, menutxtcol, segoeuib, 24, PROTO_OFFSET_CENTER);
+		Label* load_last_lbl = new Label(proto.dict("label-load-last"), DrawData{ screenw / 8, btn_h / 2 }, menutxtcol, segoeuib, 24, PROTO_OFFSET_CENTER);
+		Label* quit_lbl = new Label(proto.dict("label-quit"), DrawData{ screenw / 8, btn_h / 2 }, menutxtcol, segoeuib, 24, PROTO_OFFSET_CENTER);
+
+		GUIPanel* save_panel = new GUIPanel(
+			{GUIElement{PROTO_GUI_BUTTON, 0}, GUIElement{PROTO_GUI_LABEL, 1}},
+			{},
+			{save_lbl},
+			{save_btn},
+			1,
+
+		)
+
+		escapegui = new GUI(PROTO_GUI_LAYOUT_PANELS, {}, screenw/3 * 8, screenh/4, screenw/4, screenh/2);
+		escapegui->setBackgroundImage(*defaultguiImage, DrawData{ 0, 0, 0, esc_scale.first, esc_scale.second });
+	}
+	//*/
 
 	script.open_gui(mainmenu);
 

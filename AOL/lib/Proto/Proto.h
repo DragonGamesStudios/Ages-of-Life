@@ -8,6 +8,7 @@
 #include<allegro5/allegro_ttf.h>
 #include<allegro5/allegro_image.h>
 #include<allegro5/allegro_primitives.h>
+#include<allegro5/allegro_native_dialog.h>
 
 #include <nlohmann/json.hpp>
 
@@ -25,7 +26,6 @@
 #include <functional>
 #include <filesystem>
 
-
 #define PROTO_WINDOW_FULLSCREEN 0b1
 #define PROTO_OFFSET_TOPLEFT 0
 #define PROTO_OFFSET_CENTER 1
@@ -33,18 +33,29 @@
 #define PROTO_GUI_LABEL 1
 #define PROTO_GUI_IMAGE 2
 #define PROTO_GUI_LAYOUT_PANELS 0
+#define PROTO_GUI_LAYOUT_TREE 0b1
 #define PROTO_GUIPANEL_PERCENTDIMS 0b1
 #define PROTO_GUIPANEL_BGCOLOR 0b10
 #define PROTO_GUIPANEL_SCROLLABLE 0b100
 #define PROTO_LABEL_USES_DICT 0b1
-#define PROTO_LABEL_ADJUST_FONSIZE 0b1;
-#define PROTO_LABEL_ADJUST_NEWLINE = 0b0;
+#define PROTO_LABEL_ADJUST_FONSIZE 0b1
+#define PROTO_LABEL_ADJUST_NEWLINE 0b0
+#define PROTO_IMAGE_IGNORE_ERRORS 0b1
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 extern std::vector<ALLEGRO_BITMAP*> loaded_bitmaps;
 extern std::vector<ALLEGRO_FONT*> loaded_fonts;
+
+class TreeNode;
+
+class TreeNode : public std::variant<std::map<std::string, TreeNode>, bool> {
+public:
+	using base = std::variant<std::map<std::string, TreeNode>, bool>;
+	using base::base;
+	using base::operator=;
+};
 
 struct DrawData {
 	int x = 0;
@@ -130,7 +141,7 @@ class Image : public Drawable
 {
 public:
 	Image();
-	Image(std::string filepath, DrawData dData);
+	Image(std::string filepath, DrawData dData, int flags=0);
 
 	ALLEGRO_BITMAP* image;
 	
@@ -440,6 +451,59 @@ public:
 
 	void update(double dt);
 };
+
+// DOM GUI
+
+struct DOM_element;
+
+struct DOM_path : public std::vector<DOM_element*>
+{
+	DOM_path operator&(DOM_path path1);
+};
+
+struct DOM_ruleset
+{
+	DOM_ruleset(json _info);
+	json info;
+	DOM_ruleset operator|(DOM_ruleset ruleset);
+	const json get_rule(std::string rule_name);
+	void set_rule(std::string rule_name, std::string value);
+};
+
+struct DOM_computed
+{
+
+};
+
+struct DOM_element
+{
+	std::vector<DOM_element*> children;
+	DOM_path path;
+	DOM_ruleset ruleset;
+	DOM_computed computed;
+	json state;
+
+	void calculate();
+	void draw();
+	void update(double dt);
+};
+
+class DOM_document
+{
+public:
+	DOM_element* get_root();
+	DOM_element* get_element_by_id(std::string id);
+	std::vector<DOM_element> get_elements_of_class(std::string classname);
+	void add_event_listener(std::string, DOM_element* element, std::function<void()>);
+
+	std::map<std::string, std::pair<DOM_element*, std::function<void()>>> event_listeners;
+
+private:
+	std::vector<DOM_element*> elements;
+	DOM_element* root;
+};
+
+extern DOM_ruleset DOM_default_ruleset;
 
 template <std::size_t ... Is>
 inline std::string Proto::dict(const std::string& value, const std::vector<std::string>& v, std::index_sequence<Is...>)

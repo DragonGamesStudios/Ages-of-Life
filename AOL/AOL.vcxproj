@@ -79,6 +79,7 @@
     <Allegro_AddonFont>true</Allegro_AddonFont>
     <Allegro_AddonVideo>true</Allegro_AddonVideo>
     <Allegro_AddonAcodec>true</Allegro_AddonAcodec>
+    <Allegro_AddonDialog>true</Allegro_AddonDialog>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -160,11 +161,11 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="globals.h" />
     <ClCompile Include="independent-globals.cpp" />
+    <ClCompile Include="lib\Proto\DOM.cpp" />
     <ClCompile Include="lib\Proto\Proto.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="modding-api.cpp" />
     <ClCompile Include="Script.cpp" />
-    <ClCompile Include="setup.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allegrolib.h" />
@@ -173,6 +174,9 @@
     <ClInclude Include="classes\Technology.h" />
     <ClInclude Include="independent-globals.h" />
     <ClInclude Include="lib\Proto\Proto.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="helpme.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

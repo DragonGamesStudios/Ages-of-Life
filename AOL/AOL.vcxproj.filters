@@ -52,14 +52,14 @@
     <ClCompile Include="classes\GameObject.cpp">
       <Filter>classes</Filter>
     </ClCompile>
-    <ClCompile Include="setup.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
     <ClCompile Include="independent-globals.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
     <ClCompile Include="modding-api.cpp">
       <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\Proto\DOM.cpp">
+      <Filter>Proto</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -81,5 +81,10 @@
     <ClInclude Include="independent-globals.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="helpme.md">
+      <Filter>Pliki zasobów</Filter>
+    </Text>
   </ItemGroup>
 </Project>

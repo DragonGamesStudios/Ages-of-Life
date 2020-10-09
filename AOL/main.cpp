@@ -9,6 +9,7 @@ int main()
 	al_init_font_addon();
 	al_init_ttf_addon();
 	al_init_primitives_addon();
+	al_init_native_dialog_addon();
 
 	al_install_mouse();
 	al_install_keyboard();
@@ -48,7 +49,7 @@ int main()
 	}
 
 	if (!AOLok) {
-		MessageBoxA(0, err.c_str(), "Exception", MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+		al_show_native_message_box(NULL, "Exception Occured", "The game crashed. Please contact the developer.", err.c_str(), "Ok", ALLEGRO_MESSAGEBOX_ERROR);
 	}
 
 	al_uninstall_mouse();

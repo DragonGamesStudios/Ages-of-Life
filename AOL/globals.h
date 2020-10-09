@@ -1,6 +1,7 @@
 #include "lib/Proto/Proto.h"
 #include "allegrolib.h"
 #include "classes/GameObject.h"
+#include "classes/Technology.h"
 
 typedef unsigned int uint;
 typedef const char* ccptr;
@@ -88,10 +89,12 @@ protected:
 	GUI* aboutgui;
 	GUI* creatorsgui;
 	GUI* licensesgui;
+	GUI* escapegui;
 
 	basedata_struct basedata;
 
 	bool menu;
+	bool playing;
 
 	DrawData displayed_save_scale;
 
@@ -119,8 +122,12 @@ protected:
 	void load_prototypes();
 	void apply_changes();
 	void initialize_prototypes();
-	
-	void setup_ages();
 
 	void api_load_datafile(std::string path);
+
+	std::unordered_map<Technology*, std::vector<Technology*>> costruct_groups();
+	std::unordered_map<Technology*, TechnologyGroupData> plan_groups(std::unordered_map<Technology*, std::vector<Technology*>>* groups);
+	void plan_group(std::unordered_map<Technology*, std::vector<Technology*>>* groups, std::unordered_map<Technology*, TechnologyGroupData>* groupdata, Technology* key);
+	void render_groups(std::unordered_map<Technology*, std::vector<Technology*>>* groups, std::unordered_map<Technology*, TechnologyGroupData>* planned);
+	void render_group(std::unordered_map<Technology*, std::vector<Technology*>>* groups, std::unordered_map<Technology*, TechnologyGroupData>* planned, Technology* key, int x=0);
 };

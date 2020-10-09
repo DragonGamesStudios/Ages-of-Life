@@ -1,5 +1,6 @@
 #pragma once
 #include "GameObject.h"
+#include "..\independent-globals.h"
 
 class Technology;
 
@@ -41,7 +42,9 @@ public:
 	ALLEGRO_COLOR master_color;
 	Image* master_image;
 
-	std::map<std::string, std::pair<std::string, std::string>> dumped;
+	Dumpable dumped;
+
+	AgePrototype* prototype;
 
 	void get_dumped();
 

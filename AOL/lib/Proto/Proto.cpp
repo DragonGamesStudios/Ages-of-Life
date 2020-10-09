@@ -308,12 +308,12 @@ Image::Image()
 	this->height = 0;
 }
 
-Image::Image(std::string filepath, DrawData dData)
+Image::Image(std::string filepath, DrawData dData, int flags)
 {
 	this->image = NULL;
 	this->image = al_load_bitmap(filepath.c_str());
 
-	assert(this->image);
+	assert((this->image != NULL) || (flags & PROTO_IMAGE_IGNORE_ERRORS));
 
 	loaded_bitmaps.push_back(this->image);
 
@@ -1424,3 +1424,4 @@ std::wstring s2ws(const std::string& s)
 	delete[] buf;
 	return r;
 }
+

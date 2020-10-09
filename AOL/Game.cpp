@@ -1,17 +1,20 @@
 #include "globals.h"
 #include "classes/GameObject.h"
 #include "classes/Age.h"
+#include "classes/Technology.h"
 #include <atlstr.h>
 #include <lua.hpp>
 
 Game::Game()
 {
+	path_templates.insert({ "base", "base" });
+
 	this->proto = Proto();
 	this->script = Script();
 
 	AOLicon = al_load_bitmap("base/graphics/AOLIcon.png");
 
-	proto.createWindow(1900, 1180, AOLicon, "Ages of Life", PROTO_WINDOW_FULLSCREEN);
+	proto.createWindow(1900, 1180, AOLicon, "Ages of Life", 0);
 
 	proto.setAppDataDir("AOL");
 
@@ -39,6 +42,8 @@ Game::Game()
 	this->logo->setPosition((screenw - this->logo->width) / 2 - 65 * sc.first, screenh / 8);
 	this->logo->setScale(sc.first, sc.first);
 
+	this->playing = false;
+
 	load_basedata();
 	proto.loadDictionary((fs::path)"base" / "locale" / (this->basedata.language + ".json"));
 
@@ -46,12 +51,12 @@ Game::Game()
 
 	this->object_tree = {
 		{"age", {}},
-		{"technologies", {}}
+		{"technology", {}}
 	};
 
 	this->prototype_tree = {
 		{"age", {}},
-		{"technologies", {}}
+		{"technology", {}}
 	};
 }
 
@@ -78,11 +83,16 @@ Game::~Game()
 		loadbutton.normal,
 		loadbutton.hover;
 
-	for (auto const& [key, value] : this->prototype_tree["ages"])
-		delete this->prototype_tree["ages"][key];
+	std::vector<std::string> deleted_keys = { "ages", "technology" };
 
-	for (auto const& [key, value] : this->object_tree["ages"])
-		delete this->object_tree["ages"][key];
+	for (auto del = deleted_keys.begin(); del != deleted_keys.end(); del++)
+	{
+		for (auto const& [key, value] : this->prototype_tree[*del])
+			delete this->prototype_tree[*del][key];
+
+		for (auto const& [key, value] : this->object_tree[*del])
+			delete this->object_tree[*del][key];
+	}
 }
 
 void Game::run()
@@ -97,11 +107,13 @@ void Game::run()
 	std::cout << "\nObjects:\n";
 	for (const auto& [key, value] : this->object_tree["age"]) {
 		Age* fixed = (Age*)value;
-		std::cout << key << ": {\n";
-		for (const auto& [field, fval] : fixed->dumped) {
-			std::cout << "    " << fval.first << " " << field << " = " << fval.second << ",\n";
-		}
-		std::cout << "}\n";
+		print_dumpable(fixed->dumped);
+	}
+
+	std::cout << "\nObjects:\n";
+	for (const auto& [key, value] : this->object_tree["technology"]) {
+		Technology* fixed = (Technology*)value;
+		print_dumpable(fixed->dumped);
 	}
 
 	this->menu = true;
@@ -274,7 +286,8 @@ void Game::load()
 
 void Game::load_prototypes()
 {
-	setup_ages();
+	api_load_datafile("core/setup-age.lua");
+	api_load_datafile("core/setup-technology.lua");
 }
 
 void Game::apply_changes()
@@ -287,9 +300,59 @@ void Game::initialize_prototypes()
 		this->object_tree["age"].insert({ key, new Age((AgePrototype*)value) });
 	}
 
+
+	//creating master technologies for ages
+	for (const auto& [key, value] : this->object_tree["age"]) {
+		Age* fixed = (Age*)value;
+		//if there is no previous age, use the "beginning" icon
+		std::string correct_icon_path = "";
+		if (fixed->previous_age) {
+			correct_icon_path = fixed->previous_age->prototype->icon_path;
+		}
+		else {
+			correct_icon_path = "__base__/graphics/technology/icons/beginning.png";
+		}
+
+		TechnologyPrototype* newtech = new TechnologyPrototype(
+			fixed->name + ":master",
+			fixed->name,
+			correct_icon_path,
+			-1,
+			0,
+			{},
+			"0",
+			0,
+			0,
+			false,
+			true,
+			false,
+			true
+		);
+
+		this->register_prototype(newtech, "technology");
+	}
+
+	for (const auto& [key, value] : this->prototype_tree["technology"]) {
+		//update parents for root technologies
+		TechnologyPrototype* fixed = (TechnologyPrototype*)value;
+		if (fixed->is_root) fixed->parents.push_back(fixed->age + ":master");
+
+		this->object_tree["technology"].insert({ key, new Technology(fixed) });
+	}
+
 	for (const auto& [key, value] : this->object_tree["age"]) {
 		((Age*)value)->fill_dependencies(&this->object_tree);
 	}
+
+	for (const auto& [key, value] : this->object_tree["technology"]) {
+		((Technology*)value)->fill_dependencies(&this->object_tree);
+	}
+
+
+	// Post everything - finalization
+	auto groupmap = this->costruct_groups();
+	auto plannedmap = this->plan_groups(&groupmap);
+	this->render_groups(&groupmap, &plannedmap);
 }
 
 void Game::quit()
@@ -355,4 +418,145 @@ void Game::change_loading_screen(std::string mes)
 	int px = screenw / 2 - this->segoeuib->getWidth(24, mes) / 2;
 	al_draw_text(this->segoeuib->fonts[24], white, px, py - 50, 0, mes.c_str());
 	al_flip_display();
+}
+
+std::unordered_map<Technology*, std::vector<Technology*>> Game::costruct_groups()
+{
+	std::unordered_map<Technology*, std::vector<Technology*>> groups = {};
+
+	// Give every technology its field in map. The value is vector of technology poitners - those are groups. Groups are stored under technology pointer like that:
+	/*
+	ptr1 = group of ptr1
+	ptr2 = group of ptr2
+	*/
+	// The groups don't contain root technologies, since they are stored as keys
+	for (const auto& [key, gbj] : this->object_tree["technology"])
+	{
+		Technology* technology = (Technology*)gbj;
+		groups.insert({ technology, {} });
+	}
+
+	for (const auto& [key, gbj] : this->object_tree["technology"])
+	{
+		Technology* technology = (Technology*)gbj;
+		// For every technology get its group (see Technology::get_group()) and under that key push itself
+		groups[technology->get_group()].push_back(technology);
+	}
+
+	return groups;
+}
+
+std::unordered_map<Technology*, TechnologyGroupData> Game::plan_groups(std::unordered_map<Technology*, std::vector<Technology*>>* groups)
+{
+	std::unordered_map<Technology*, TechnologyGroupData> result = {};
+
+	for (auto p = groups->begin(); p != groups->end(); p++)
+	{
+		result.insert({ p->first, {} });
+	}
+
+	for (const auto& [key, g_age] : this->object_tree["age"])
+	{
+		auto fixed = (Age*)g_age;
+
+		this->plan_group(groups, &result, (Technology*)this->object_tree["technology"][fixed->name + ":master"]);
+	}
+
+	return result;
+}
+
+void Game::plan_group(std::unordered_map<Technology*, std::vector<Technology*>>* groups, std::unordered_map<Technology*, TechnologyGroupData>* groupdata, Technology* key)
+{
+	std::map<int, std::pair<std::vector<Technology*>, int>> technologies = {};
+
+	for (auto technology : groups->at(key))
+	{
+		// Plan children groups first
+		plan_group(groups, groupdata, technology);
+		if (technologies.find(technology->level) == technologies.end())
+		{
+			// Create technology entry if doesn't exist
+			technologies.insert({ technology->level, std::make_pair(std::vector<Technology*>{}, 0) });
+		}
+		// Register technology
+		technologies[technology->level].first.push_back(technology);
+		if (technology->count_to_width)
+		{
+			technologies[technology->level].second += groupdata->at(technology).width + tech_interval_x;
+		}
+	}
+
+	// Repeat the same steps for root
+	if (technologies.find(key->level) == technologies.end())
+	{
+		technologies.insert({ key->level, std::make_pair(std::vector<Technology*>{}, 0) });
+	}
+	technologies[key->level].first.push_back(key);
+	technologies[key->level].second += tech_label_width + tech_interval_x;
+
+	// Find group width
+	int current_max = 0;
+
+	for (auto p = technologies.begin(); p != technologies.end(); p++)
+	{
+		// Fix level width. This is necessary beacause of the additional interval after last technology
+		p->second.second -= tech_interval_x;
+		if (p->second.second > current_max)
+		{
+			current_max = p->second.second;
+		}
+	}
+
+
+	int min_level = technologies.begin()->first;
+	int max_level = technologies.rbegin()->first;
+
+	// Fill basic data of group
+	groupdata->at(key).level_y = min_level;
+	groupdata->at(key).level_height = max_level - min_level;
+	groupdata->at(key).width = current_max;
+	groupdata->at(key).y = min_level * (tech_label_height + tech_interval_y);
+
+	// For every technology give it x - coordinate based on its position in level
+	for (auto&[level, techs_on_level] : technologies)
+	{
+		// Sort level groups by root order
+		std::sort(techs_on_level.first.begin(), techs_on_level.first.end(), [](const Technology* tech1, const Technology* tech2) { return tech1->order < tech2->order; });
+
+		// Fix width once again (after defining correct group width. It is done to correctly set x for groups
+		techs_on_level.second -= tech_label_width;
+		int x = -techs_on_level.second / 2;
+		for (auto technology : techs_on_level.first)
+		{
+			// Consider forced offset
+			x += technology->force_offset * (tech_label_width + tech_interval_x);
+
+			// Add technology and increase x
+			groupdata->at(technology).x = x;
+			x += tech_label_width + tech_interval_x;
+		}
+	}
+}
+
+void Game::render_groups(std::unordered_map<Technology*, std::vector<Technology*>>* groups, std::unordered_map<Technology*, TechnologyGroupData>* planned)
+{
+	for (const auto& [key, g_age] : this->object_tree["age"])
+	{
+		auto fixed = (Age*)g_age;
+
+		this->render_group(groups, planned, (Technology*)this->object_tree["technology"][fixed->name + ":master"], 600);
+	}
+}
+
+void Game::render_group(std::unordered_map<Technology*, std::vector<Technology*>>* groups, std::unordered_map<Technology*, TechnologyGroupData>* planned, Technology* key, int x)
+{
+	// Set group root coordinates
+	key->blit.first = x - tech_label_width / 2;
+	key->blit.second = planned->at(key).y;
+
+	// Render children
+	for (auto group : groups->at(key))
+	{
+		render_group(groups, planned, group, x + planned->at(group).x);
+	}
 }
