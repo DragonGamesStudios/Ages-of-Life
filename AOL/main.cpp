@@ -14,10 +14,12 @@ int main()
 	al_install_mouse();
 	al_install_keyboard();
 
+
 	bool AOLok = false;
 	std::string err;
 
 	try {
+		define_colors();
 
 		Game game;
 
@@ -34,7 +36,6 @@ int main()
 	}
 	catch (std::exception& e) {
 		//std::cout << e.what();
-		std::wstring werr = s2ws(e.what());
 		//err = werr.c_str();
 		err = e.what();
 	}
@@ -49,7 +50,7 @@ int main()
 	}
 
 	if (!AOLok) {
-		al_show_native_message_box(NULL, "Exception Occured", "The game crashed. Please contact the developer.", err.c_str(), "Ok", ALLEGRO_MESSAGEBOX_ERROR);
+		al_show_native_message_box(NULL, "Exception Occured", "The game crashed. Please contact the developer.", ("Error: "+err).c_str(), "Ok", ALLEGRO_MESSAGEBOX_ERROR);
 	}
 
 	al_uninstall_mouse();

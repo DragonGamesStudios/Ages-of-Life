@@ -58,6 +58,29 @@ Game::Game()
 		{"age", {}},
 		{"technology", {}}
 	};
+
+	DOM_element* test_root = new DOM_element;
+
+	json testrlst = {
+		{"background-color", "white"},
+		{"height", "50vw"}
+	};
+
+	test_root->set_rulesets({testrlst});
+
+	DOM_element* another_test = new DOM_element;
+
+	json another = {
+		{"height", "50%"}
+	};
+
+	another_test->set_rulesets({ another });
+
+	test_root->add_child(another_test);
+
+	testgui = new DOM_document(test_root);
+	testgui->calculate();
+	std::cout << "Loaded\n";
 }
 
 Game::~Game()

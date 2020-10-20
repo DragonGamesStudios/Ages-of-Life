@@ -21,10 +21,11 @@
 #include <iostream>
 #include <variant>
 #include <map>
-#include <Windows.h>
+//#include <Windows.h>
 #include <fstream>
 #include <functional>
 #include <filesystem>
+#include <assert.h>
 
 #define PROTO_WINDOW_FULLSCREEN 0b1
 #define PROTO_OFFSET_TOPLEFT 0
@@ -466,31 +467,79 @@ struct DOM_ruleset
 	DOM_ruleset(json _info);
 	json info;
 	DOM_ruleset operator|(DOM_ruleset ruleset);
+	void operator|=(DOM_ruleset ruleset);
 	const json get_rule(std::string rule_name);
 	void set_rule(std::string rule_name, std::string value);
 };
 
+extern DOM_ruleset DOM_default_ruleset;
+
 struct DOM_computed
 {
+	ALLEGRO_COLOR background_color = { 0, 0, 0, 0 };
+	int width = 0;
+	int height = 0;
+	int x = 0;
+	int y = 0;
 
+	int box_content_width = 0;
+	int box_content_height = 0;
+	int padding_left = 0;
+	int padding_top = 0;
+	int padding_right = 0;
+	int padding_bottom = 0;
+	int border_left = 0;
+	int border_right = 0;
+	int border_top = 0;
+	int border_bottom = 0;
+	int margin_top = 0;
+	int margin_right = 0;
+	int margin_bottom = 0;
+	int margin_left = 0;
+};
+
+struct DOM_dependent
+{
+	bool background_color = false;
+
+	bool width = false;
+	std::string width_unit = "";
+	float width_value = 0;
+
+	bool height = false;
+	std::string height_unit = "";
+	float height_value = 0;
 };
 
 struct DOM_element
 {
-	std::vector<DOM_element*> children;
-	DOM_path path;
-	DOM_ruleset ruleset;
-	DOM_computed computed;
-	json state;
+	std::vector<DOM_element*> children = {};
+	DOM_element* parent = nullptr;
+	DOM_path path = {};
+	bool initialized= false;
+	DOM_computed computed = {};
+	json state = {};
+	std::string id = "";
+	std::vector<std::string> classes = {};
+	std::map<std::string, std::vector<std::vector<std::string>>> parsed_ruleset = {};
+	DOM_dependent dependent = {};
+	DOM_element* document_base = nullptr;
 
+	void set_rulesets(std::vector<DOM_ruleset> rulesets);
+	void add_child(DOM_element* child);
 	void calculate();
-	void draw();
+	int get_width(std::string boxes);
+	int get_height(std::string boxes);
+	void draw(int x, int y);
 	void update(double dt);
 };
 
 class DOM_document
 {
 public:
+	DOM_document(DOM_element* root, int width=1000, int height=1000);
+	~DOM_document();
+
 	DOM_element* get_root();
 	DOM_element* get_element_by_id(std::string id);
 	std::vector<DOM_element> get_elements_of_class(std::string classname);
@@ -498,12 +547,21 @@ public:
 
 	std::map<std::string, std::pair<DOM_element*, std::function<void()>>> event_listeners;
 
+	void draw(int x, int y);
+	void update(double dt);
+	void calculate();
+
+	void add_element_with_children(DOM_element* element);
+
 private:
 	std::vector<DOM_element*> elements;
 	DOM_element* root;
+	DOM_element* base;
 };
 
-extern DOM_ruleset DOM_default_ruleset;
+extern std::map<std::string, ALLEGRO_COLOR> predefined_colors;
+
+void define_colors();
 
 template <std::size_t ... Is>
 inline std::string Proto::dict(const std::string& value, const std::vector<std::string>& v, std::index_sequence<Is...>)
@@ -524,5 +582,3 @@ inline void Proto::log(const T& ... args)
 {
 	(std::cout << ... << args) << '\n';
 }
-
-std::wstring s2ws(const std::string& s);

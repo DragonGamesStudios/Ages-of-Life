@@ -7,18 +7,14 @@
 #include <fmt/format.h>
 #include <algorithm>
 #include <filesystem>
-#include <ShlObj.h>
-#include <Shlwapi.h>
+// #include <ShlObj.h>
+// #include <Shlwapi.h>
 
 namespace fs = std::filesystem;
 
-#ifndef max
-#define max std::max;
-#endif // !max
-
-
 std::vector<ALLEGRO_BITMAP*> loaded_bitmaps = {};
 std::vector<ALLEGRO_FONT*> loaded_fonts = {};
+std::map<std::string, ALLEGRO_COLOR> predefined_colors = {};
 
 Proto::Proto()
 {
@@ -785,7 +781,7 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 				//colormap[textcolor.c_str()];
 				this->chunks.push_back(TextChunk{ colormap[textcolor], fontmap[textfont]->fonts[textsize], chunk, chunkX, 0 });
 				chunkX += al_get_text_width(fontmap[textfont]->fonts[textsize], chunk.c_str());
-				maxlineheight = max(maxlineheight, al_get_font_line_height(fontmap[textfont]->fonts[textsize]));
+				maxlineheight = std::max(maxlineheight, al_get_font_line_height(fontmap[textfont]->fonts[textsize]));
 				chunk = "";
 				reading_tag = true;
 			}
@@ -816,7 +812,7 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 
 	this->chunks.push_back(TextChunk{colormap[textcolor], fontmap[textfont]->fonts[textsize], chunk, chunkX, 0});
 	chunkX += al_get_text_width(fontmap[textfont]->fonts[textsize], chunk.c_str());
-	maxlineheight = max(maxlineheight, al_get_font_line_height(fontmap[textfont]->fonts[textsize]));
+	maxlineheight = std::max(maxlineheight, al_get_font_line_height(fontmap[textfont]->fonts[textsize]));
 	this->height = maxlineheight;
 	this->width = chunkX;
 
@@ -879,7 +875,7 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 			else if (ch == '<') {
 				this->chunks.push_back(TextChunk{ colormap[textcolor], fontmap[textfont]->fonts[textsize], chunk, chunkX, chunkY });
 				chunkX += al_get_text_width(fontmap[textfont]->fonts[textsize], chunk.c_str());
-				maxlineheight = max(maxlineheight, al_get_font_line_height(fontmap[textfont]->fonts[textsize]));
+				maxlineheight = std::max(maxlineheight, al_get_font_line_height(fontmap[textfont]->fonts[textsize]));
 				chunk = "";
 				reading_tag = true;
 			}
@@ -897,7 +893,7 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 					assert(tagargs.size() == 1);
 					this->chunks.push_back(TextChunk{ colormap[textcolor], fontmap[textfont]->fonts[textsize], chunk, chunkX, chunkY });
 					chunkX = 0;
-					maxlineheight = max(maxlineheight, fontmap[textfont]->getHeight(textsize));
+					maxlineheight = std::max(maxlineheight, fontmap[textfont]->getHeight(textsize));
 					chunkY += maxlineheight + line_interval;
 					maxlineheight = 0;
 					chunk = "";
@@ -918,7 +914,7 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 					maxlineheight = 0;
 				}
 				this->chunks.push_back(TextChunk{ colormap[textcolor], fontmap[textfont]->fonts[textsize], chunk, chunkX, chunkY });
-				maxlineheight = max( maxlineheight, fontmap[textfont]->getHeight(textsize));
+				maxlineheight = std::max( maxlineheight, fontmap[textfont]->getHeight(textsize));
 				chunkX += fontmap[textfont]->getWidth(textsize, chunk.c_str());
 				chunk = "";
 			}
@@ -934,7 +930,7 @@ Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COL
 		chunkY += maxlineheight + line_interval;
 	}
 	this->chunks.push_back(TextChunk{ colormap[textcolor], fontmap[textfont]->fonts[textsize], chunk, chunkX, chunkY });
-	maxlineheight = max(maxlineheight, fontmap[textfont]->getHeight(textsize));
+	maxlineheight = std::max(maxlineheight, fontmap[textfont]->getHeight(textsize));
 	chunkY += maxlineheight;
 	this->height = chunkY;
 }
@@ -1158,8 +1154,8 @@ void GUIPanel::draw()
 
 void GUIPanel::setScroll(int scroll)
 {
-	this->scroll = max(scroll, this->scrollLowBound);
-	this->scroll = min(this->scroll, this->scrollHighBound);
+	this->scroll = std::max(scroll, this->scrollLowBound);
+	this->scroll = std::min(this->scroll, this->scrollHighBound);
 	for (std::vector<GUIElement>::iterator elem = this->elements.begin(); elem != this->elements.end(); elem++) {
 		if (elem->type == PROTO_GUI_BUTTON) {
 			this->buttons[elem->index].setPosition(this->buttons[elem->index].x, this->y + this->btn_originals[elem->index].y - this->scroll);
@@ -1242,7 +1238,7 @@ void GUI::calculatePanels()
 				maxrowheight = panelheight;
 			}
 			else {
-				maxrowheight = max(maxrowheight, panelheight);
+				maxrowheight = std::max(maxrowheight, panelheight);
 			}
 
 			panel->setPosition(drawx, drawy);
@@ -1413,15 +1409,36 @@ DataCell deserializeData(std::ifstream* ifs)
 	return vecstack[vecsize-1][0];
 }
 
-std::wstring s2ws(const std::string& s)
+void define_colors()
 {
-	int len;
-	int slength = (int)s.length() + 1;
-	len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, 0, 0);
-	wchar_t* buf = new wchar_t[len];
-	MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, buf, len);
-	std::wstring r(buf);
-	delete[] buf;
-	return r;
+	predefined_colors.insert({ "white",   al_map_rgb(0xff, 0xff, 0xff) });
+	predefined_colors.insert({ "black",   al_map_rgb(0x00, 0x00, 0x00) });
+	predefined_colors.insert({ "red",     al_map_rgb(0xff, 0x00, 0x00) });
+	predefined_colors.insert({ "green",   al_map_rgb(0x00, 0xff, 0x00) });
+	predefined_colors.insert({ "blue",    al_map_rgb(0x00, 0x00, 0xff) });
+	predefined_colors.insert({ "yellow",  al_map_rgb(0xff, 0xff, 0x00) });
+	predefined_colors.insert({ "magenta", al_map_rgb(0xff, 0x00, 0xff) });
+	predefined_colors.insert({ "cyan",    al_map_rgb(0x00, 0xff, 0xff) });
+
+	predefined_colors.insert({ "aliceblue",      al_map_rgb(0xf0, 0xf8, 0xff) });
+	predefined_colors.insert({ "antiquewhite",   al_map_rgb(0xfa, 0xeb, 0xd7) });
+	predefined_colors.insert({ "aqua",           al_map_rgb(0x00, 0xff, 0xff) });
+	predefined_colors.insert({ "aquamarine",     al_map_rgb(0x7f, 0xff, 0xd4) });
+	predefined_colors.insert({ "azure",          al_map_rgb(0xf0, 0xff, 0xff) });
+	predefined_colors.insert({ "beige",          al_map_rgb(0xf5, 0xf5, 0xdc) });
+	predefined_colors.insert({ "bisque",         al_map_rgb(0xff, 0xe4, 0xc4) });
+	predefined_colors.insert({ "blanchedalmond", al_map_rgb(0xff, 0xeb, 0xcd) });
+	predefined_colors.insert({ "blueviolet",     al_map_rgb(0x8a, 0x2b, 0xe2) });
+	predefined_colors.insert({ "brown",          al_map_rgb(0xa5, 0x2a, 0x2a) });
+	predefined_colors.insert({ "burlywood",      al_map_rgb(0xde, 0xb8, 0x87) });
+	predefined_colors.insert({ "cadetblue",      al_map_rgb(0x5f, 0x9e, 0xa0) });
+	predefined_colors.insert({ "chartreuse",     al_map_rgb(0x7f, 0xff, 0x00) });
+	predefined_colors.insert({ "chocolate",      al_map_rgb(0xd2, 0x69, 0x1e) });
+	predefined_colors.insert({ "coral",          al_map_rgb(0xff, 0x7f, 0x50) });
+	predefined_colors.insert({ "cornflowerblue", al_map_rgb(0x64, 0x95, 0xed) });
+
+
+
+	predefined_colors.insert({ "transparent", al_map_rgba(0, 0, 0, 0) });
 }
 

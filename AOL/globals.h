@@ -91,6 +91,8 @@ protected:
 	GUI* licensesgui;
 	GUI* escapegui;
 
+	DOM_document* testgui;
+
 	basedata_struct basedata;
 
 	bool menu;
