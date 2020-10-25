@@ -14,7 +14,7 @@ Game::Game()
 
 	AOLicon = al_load_bitmap("base/graphics/AOLIcon.png");
 
-	proto.createWindow(1900, 1180, AOLicon, "Ages of Life", 0);
+	proto.createWindow(1900, 1180, AOLicon, "Ages of Life", PROTO_WINDOW_FULLSCREEN);
 
 	proto.setAppDataDir("AOL");
 
@@ -62,21 +62,28 @@ Game::Game()
 	DOM_element* test_root = new DOM_element;
 
 	json testrlst = {
-		{"background-color", "white"},
-		{"height", "50vw"}
+		{"background-color", "#3ef"},
+		{"height", "50vw"},
+		{"border-style-left", "double"},
+		{"border-width", "5px"},
+		{"border-color", "green"}
 	};
 
 	test_root->set_rulesets({testrlst});
 
 	DOM_element* another_test = new DOM_element;
+	//DOM_element* another_test2 = new DOM_element;
 
 	json another = {
-		{"height", "50%"}
+		{"height", "30%"},
+		{"background-color", "brown"},
 	};
 
 	another_test->set_rulesets({ another });
+	//another_test2->set_rulesets({ another });
 
 	test_root->add_child(another_test);
+	//test_root->add_child(another_test2);
 
 	testgui = new DOM_document(test_root);
 	testgui->calculate();
@@ -393,6 +400,8 @@ void Game::draw()
 	for (std::vector<GUI*>::iterator gui = script.guis.begin(); gui != script.guis.end(); gui++) {
 		(*gui)->draw();
 	}
+
+	testgui->draw(100, 100);
 
 	this->draw_active_input();
 }

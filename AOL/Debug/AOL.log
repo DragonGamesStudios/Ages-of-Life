@@ -1,2 +1,3 @@
-﻿  DOM.cpp
+﻿  Game.cpp
+C:\AOL\AOL\Game.cpp(418,20): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
   AOL.vcxproj -> C:\AOL\Debug\AOL.exe

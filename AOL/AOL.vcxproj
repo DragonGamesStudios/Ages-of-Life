@@ -173,6 +173,7 @@
     <ClInclude Include="classes\GameObject.h" />
     <ClInclude Include="classes\Technology.h" />
     <ClInclude Include="independent-globals.h" />
+    <ClInclude Include="lib\Proto\DOM.h" />
     <ClInclude Include="lib\Proto\Proto.h" />
   </ItemGroup>
   <ItemGroup>

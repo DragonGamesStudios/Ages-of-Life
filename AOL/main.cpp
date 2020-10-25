@@ -20,6 +20,7 @@ int main()
 
 	try {
 		define_colors();
+		define_default_transform();
 
 		Game game;
 

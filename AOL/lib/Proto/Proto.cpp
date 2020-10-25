@@ -16,6 +16,8 @@ std::vector<ALLEGRO_BITMAP*> loaded_bitmaps = {};
 std::vector<ALLEGRO_FONT*> loaded_fonts = {};
 std::map<std::string, ALLEGRO_COLOR> predefined_colors = {};
 
+ALLEGRO_TRANSFORM default_trans;
+
 Proto::Proto()
 {
 	display = NULL;
@@ -1440,5 +1442,10 @@ void define_colors()
 
 
 	predefined_colors.insert({ "transparent", al_map_rgba(0, 0, 0, 0) });
+}
+
+void define_default_transform()
+{
+	al_identity_transform(&default_trans);
 }
 

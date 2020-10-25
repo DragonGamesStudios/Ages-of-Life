@@ -81,6 +81,9 @@
     <ClInclude Include="independent-globals.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+    <ClInclude Include="lib\Proto\DOM.h">
+      <Filter>Proto</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="helpme.md">

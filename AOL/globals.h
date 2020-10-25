@@ -1,4 +1,5 @@
 #include "lib/Proto/Proto.h"
+#include "lib/Proto/DOM.h"
 #include "allegrolib.h"
 #include "classes/GameObject.h"
 #include "classes/Technology.h"
