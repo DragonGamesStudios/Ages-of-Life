@@ -1,3 +1,7 @@
-﻿  Game.cpp
-C:\AOL\AOL\Game.cpp(418,20): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+﻿  DOM.cpp
+C:\AOL\AOL\lib\Proto\DOM.cpp(529,20): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\AOL\AOL\lib\Proto\DOM.cpp(734,20): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\AOL\AOL\lib\Proto\DOM.cpp(781,20): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\AOL\AOL\lib\Proto\DOM.cpp(794,21): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\AOL\AOL\lib\Proto\DOM.cpp(1032,21): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
   AOL.vcxproj -> C:\AOL\Debug\AOL.exe

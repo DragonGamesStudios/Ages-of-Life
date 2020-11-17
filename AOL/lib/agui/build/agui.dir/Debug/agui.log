@@ -1,0 +1,84 @@
+﻿  Building Custom Rule C:/aguitestingsite/aguitestingsite/lib/agui/CMakeLists.txt
+  WinClipboard.cpp
+  Clipboard.cpp
+  ActionEvent.cpp
+  ActionListener.cpp
+  BaseTypes.cpp
+  BlinkingEvent.cpp
+  BorderLayout.cpp
+  CursorProvider.cpp
+  Color.cpp
+  Dimension.cpp
+  EmptyWidget.cpp
+  EventArgs.cpp
+  FlowLayout.cpp
+  FocusListener.cpp
+  FocusManager.cpp
+  Font.cpp
+  Graphics.cpp
+  GridLayout.cpp
+  Gui.cpp
+C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Gui.cpp(525,25): warning C4244: "inicjowanie": konwersja z "int" do "float", możliwa utrata danych
+C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Gui.cpp(666,51): warning C4244: "argument": konwersja z "double" do "float", możliwa utrata danych
+  Image.cpp
+  Generowanie kodu...
+  Trwa kompilowanie...
+  Input.cpp
+  KeyboardListener.cpp
+  Layout.cpp
+  MouseListener.cpp
+  Point.cpp
+  Rectangle.cpp
+  ResizableText.cpp
+  ResizableBorderLayout.cpp
+  SelectionListener.cpp
+  TableLayout.cpp
+  Transform.cpp
+  TopContainer.cpp
+  Widget.cpp
+  WidgetListener.cpp
+  Button.cpp
+  ButtonGroup.cpp
+  ButtonListener.cpp
+  CheckBox.cpp
+  CheckBoxListener.cpp
+  DropDown.cpp
+  Generowanie kodu...
+  Trwa kompilowanie...
+  DropDownListener.cpp
+  Frame.cpp
+  FrameListener.cpp
+  ImageWidget.cpp
+  Label.cpp
+  LabelListener.cpp
+  ListBox.cpp
+C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\ListBox\ListBox.cpp(1802,22): warning C4267: "return": konwersja z "size_t" do "int", możliwa utrata danych
+  PopUpMenu.cpp
+  PopUpMenuItem.cpp
+  ListBoxListener.cpp
+  RadioButton.cpp
+  RadioButtonListener.cpp
+  RadioButtonGroup.cpp
+  HScrollBar.cpp
+  HScrollBarListener.cpp
+  VScrollBar.cpp
+  VScrollBarListener.cpp
+  ScrollPane.cpp
+  Slider.cpp
+  SliderListener.cpp
+  Generowanie kodu...
+  Trwa kompilowanie...
+  Tab.cpp
+  TabbedPane.cpp
+  TabbedPaneListener.cpp
+  TextBox.cpp
+  TextBoxListener.cpp
+  ExtendedTextBox.cpp
+C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\TextBox\ExtendedTextBox.cpp(176,66): warning C4267: "inicjowanie": konwersja z "size_t" do "int", możliwa utrata danych
+C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\TextBox\ExtendedTextBox.cpp(325,65): warning C4267: "inicjowanie": konwersja z "size_t" do "int", możliwa utrata danych
+C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\TextBox\ExtendedTextBox.cpp(633,66): warning C4267: "inicjowanie": konwersja z "size_t" do "int", możliwa utrata danych
+  TextField.cpp
+  TextFieldListener.cpp
+  ToolTip.cpp
+  Generowanie kodu...
+  agui.vcxproj -> C:\aguitestingsite\aguitestingsite\lib\agui\build\Debug\agui.lib

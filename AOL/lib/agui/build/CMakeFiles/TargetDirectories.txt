@@ -1,0 +1,4 @@
+C:/aguitestingsite/aguitestingsite/lib/agui/build/CMakeFiles/agui_allegro5.dir
+C:/aguitestingsite/aguitestingsite/lib/agui/build/CMakeFiles/agui.dir
+C:/aguitestingsite/aguitestingsite/lib/agui/build/CMakeFiles/ALL_BUILD.dir
+C:/aguitestingsite/aguitestingsite/lib/agui/build/CMakeFiles/ZERO_CHECK.dir

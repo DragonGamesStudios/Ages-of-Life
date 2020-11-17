@@ -1,0 +1,10 @@
+^C:\AGUITESTINGSITE\AGUITESTINGSITE\LIB\AGUI\BUILD\CMAKEFILES\C38B6C746A09F4B71B0E463569C7B17E\GENERATE.STAMP.RULE
+setlocal
+C:\Users\micha\Downloads\cmake-3.18.0-win64-x64\bin\cmake.exe -SC:/aguitestingsite/aguitestingsite/lib/agui -BC:/aguitestingsite/aguitestingsite/lib/agui/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/aguitestingsite/aguitestingsite/lib/agui/build/agui.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

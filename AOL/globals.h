@@ -1,6 +1,8 @@
 #include "lib/Proto/Proto.h"
-#include "lib/Proto/DOM.h"
+//#include "lib/Proto/DOM.h"
 #include "allegrolib.h"
+#include <Agui/Agui.hpp>
+#include <Agui/Backends/Allegro5/Allegro5.hpp>
 #include "classes/GameObject.h"
 #include "classes/Technology.h"
 
@@ -92,7 +94,8 @@ protected:
 	GUI* licensesgui;
 	GUI* escapegui;
 
-	DOM_document* testgui;
+	agui::Allegro5Graphics* graphics_handler;
+	agui::Allegro5Input* input_handler;
 
 	basedata_struct basedata;
 

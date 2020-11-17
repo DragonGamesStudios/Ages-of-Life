@@ -3,6 +3,13 @@
 json DOM_default_ruleset_json = {
 	{"background-color", "rgba(0, 0, 0, 0)"},
 	{"background-image", "none"},
+	{"background-clip", "border-box"},
+	{"background-origin", "border-box"},
+	{"background-size", "auto auto"},
+	{"background-position-x", "0px"},
+	{"background-position-y", "0px"},
+	{"background-repeat-x", "no-repeat"},
+	{"background-repeat-y", "no-repeat"},
 	{"width", "auto"},
 	{"height", "auto"},
 	{"margin-top", "0px"},
@@ -25,7 +32,24 @@ json DOM_default_ruleset_json = {
 	{"border-color-bottom", "black"},
 	{"border-color-left", "black"},
 	{"border-color-right", "black"},
+	{"overflow", "hidden"},
+	{"scroll", "y"}
 };
+
+bool is_element_hovered(int x, int y, DOM_element* element)
+{
+	int hoverbox_x = x + element->computed->x + element->computed->margin_left,
+		hoverbox_y = y + element->computed->y + element->computed->margin_top;
+
+	if (
+		hoverbox_x <= element->document->mouse_state.x && element->document->mouse_state.x <= hoverbox_x + element->get_width("cpb") &&
+		hoverbox_y <= element->document->mouse_state.y && element->document->mouse_state.y <= hoverbox_y + element->get_height("cpb")
+		)
+	{
+		return true;
+	}
+	return false;
+}
 
 DOM_ruleset DOM_default_ruleset = DOM_default_ruleset_json;
 
@@ -231,22 +255,128 @@ const json DOM_ruleset::get_rule(std::string rule_name)
 DOM_document::DOM_document(DOM_element* root, int width, int height)
 {
 	this->root = root;
-	add_element_with_children(root);
 
 	this->base = new DOM_element;
 	this->base->add_child(root);
+	std::vector<DOM_element*> buff = { this->base };
+	std::copy(buff.begin(), buff.end(), std::back_inserter(root->path));
 
 	this->base->set_rulesets({ json{
 		{"background-color", "white"},
 		{"width", std::to_string(width)+"px"},
-		{"height", std::to_string(height) + "px"}
+		{"height", std::to_string(height) + "px"},
+		{"overflow", "scroll"},
+		{"scroll", "both"}
 	} });
+
+	add_element_with_children(base);
+
+	this->event_listeners = {
+		{DOM_EVENT_MOUSE_PRESSED, {}},
+		{DOM_EVENT_MOUSE_RELEASED, {}},
+		{DOM_EVENT_MOUSE_MOTION, {}},
+		{DOM_EVENT_MOUSE_DRAG, {}},
+		{DOM_EVENT_MOUSE_SCROLL, {}},
+		{DOM_EVENT_KEY_PRESSED, {}},
+		{DOM_EVENT_KEY_RELEASED, {}},
+		{DOM_EVENT_KEY_INPUT, {}},
+	};
+}
+
+void DOM_document::dispatch_event(ALLEGRO_EVENT e)
+{
+	switch (e.type)
+	{
+	case ALLEGRO_EVENT_MOUSE_AXES:
+		if (!(e.mouse.dz || e.mouse.dw))
+		{
+			this->events_to_dispatch.push_back({ .type = DOM_EVENT_MOUSE_MOTION, .x = e.mouse.x, .y = e.mouse.y, .dx = e.mouse.dx, .dy = e.mouse.dy });
+
+			// Mose drag detect
+
+			if (this->mouse_state.buttons)
+			{
+				this->events_to_dispatch.push_back(
+					{
+						.type = DOM_EVENT_MOUSE_DRAG,
+						.x = e.mouse.x,
+						.y = e.mouse.y,
+						.dx = this->mouse_state.x - e.mouse.x,
+						.dy = this->mouse_state.y - e.mouse.y,
+						.button = (unsigned int)this->mouse_state.buttons
+					}
+				);
+			}
+		}
+		else
+			this->events_to_dispatch.push_back({ .type = DOM_EVENT_MOUSE_SCROLL, .x = e.mouse.w, .y = e.mouse.z, .dx = e.mouse.dw, .dy = e.mouse.dz });
+
+		break;
+	case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+		this->events_to_dispatch.push_back({ .type = DOM_EVENT_MOUSE_PRESSED, .x = e.mouse.x, .y = e.mouse.y, .button = e.mouse.button });
+		break;
+	case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
+		this->events_to_dispatch.push_back({ .type = DOM_EVENT_MOUSE_RELEASED, .x = e.mouse.x, .y = e.mouse.y, .button = e.mouse.button });
+		break;
+	case ALLEGRO_EVENT_KEY_DOWN:
+		this->events_to_dispatch.push_back({
+			.type = DOM_EVENT_KEY_PRESSED,
+			.keycode = e.keyboard.keycode, 
+			.character = (char)e.keyboard.unichar
+		});
+		break;
+	case ALLEGRO_EVENT_KEY_UP:
+		this->events_to_dispatch.push_back({
+			.type = DOM_EVENT_KEY_RELEASED,
+			.keycode = e.keyboard.keycode,
+			.character = (char)e.keyboard.unichar
+		});
+		break;
+	case ALLEGRO_EVENT_KEY_CHAR:
+		this->events_to_dispatch.push_back({
+			.type = DOM_EVENT_KEY_INPUT,
+			.keycode = e.keyboard.keycode,
+			.character = (char)e.keyboard.unichar,
+			.modifiers = e.keyboard.modifiers
+		});
+		break;
+	default:
+		break;
+	}
 }
 
 void DOM_document::draw(int x, int y)
 {
 	al_use_transform(&default_trans);
 	this->base->draw(x, y);
+}
+
+void DOM_document::update(double dt, int x, int y)
+{
+	al_get_mouse_state(&this->mouse_state);
+
+	this->base->update(dt, x, y);
+
+	for (const auto& e : this->element_related_events)
+	{
+		e.element->event_functions[e.type](e);
+	}
+
+	for (const auto& e : this->events_to_dispatch)
+	{
+		for (auto& listener : this->event_listeners[e.type])
+		{
+			if (listener->hover)
+			{
+				listener->event_functions[e.type](e);
+				if (e.type == DOM_EVENT_MOUSE_SCROLL && (listener->computed->scrollable_x || listener->computed->scrollable_y))
+					listener->dispatch_scroll_event(e);
+			}
+		}
+	}
+
+	this->events_to_dispatch.clear();
+	this->element_related_events.clear();
 }
 
 void DOM_document::calculate()
@@ -260,15 +390,35 @@ void DOM_document::add_element_with_children(DOM_element* element)
 {
 	// Recursively add element's children to the document
 	this->elements.push_back(element);
+	element->document = this;
+	if (element->computed->scrollable_x || element->computed->scrollable_y)
+		this->event_listeners[DOM_EVENT_MOUSE_SCROLL].insert(element);
 	for (auto child : element->children)
 	{
+		child->path = element->path;
+		child->path.push_back(child);
 		add_element_with_children(child);
 	}
+}
+
+DOM_document::~DOM_document()
+{
+	for (auto ptr : this->elements)
+	{
+		delete ptr;
+	}
+}
+
+DOM_element::DOM_element()
+{
+	this->computed = new DOM_computed;
+	this->computed_background = new DOM_computed_background;
 }
 
 void DOM_element::set_rulesets(std::vector<DOM_ruleset> rulesets)
 {
 	this->initialized = true;
+	this->parsed_ruleset = {};
 
 	// Apply all rulesets
 	DOM_ruleset result = DOM_default_ruleset;
@@ -285,7 +435,7 @@ void DOM_element::set_rulesets(std::vector<DOM_ruleset> rulesets)
 
 	if (width_pair.second != "auto")
 	{
-		this->computed.auto_width = false;
+		this->computed->auto_width = false;
 	}*/
 
 	for (auto rule : result.info.items())
@@ -327,6 +477,18 @@ void DOM_element::set_rulesets(std::vector<DOM_ruleset> rulesets)
 					}
 				}
 			}
+
+			for (std::string rulename : std::vector<std::string>
+				{ "background-position", "background-repeat" }
+				)
+			{
+				if (key == rulename)
+				{
+					auto bgpos = parse_expression(result.info[rulename]);
+					result.info[rulename + "-x"] = bgpos[0][0];
+					result.info[rulename + "-y"] = bgpos[0][1];
+				}
+			}
 		}
 		else
 		{
@@ -346,12 +508,12 @@ void DOM_element::set_rulesets(std::vector<DOM_ruleset> rulesets)
 	};
 
 	std::vector<ALLEGRO_COLOR*> color_values = {
-		&this->computed.background_color,
+		&this->computed_background->background_color,
 
-		& this->computed.border_color_left,
-		& this->computed.border_color_top,
-		& this->computed.border_color_right,
-		& this->computed.border_color_bottom,
+		& this->computed->border_color_left,
+		& this->computed->border_color_top,
+		& this->computed->border_color_right,
+		& this->computed->border_color_bottom,
 	};
 
 	std::vector<std::string> color_names = {
@@ -519,6 +681,8 @@ void DOM_element::set_rulesets(std::vector<DOM_ruleset> rulesets)
 		"border-width-left",
 		"border-width-right",
 		"border-width-bottom",
+		"background-position-x",
+		"background-position-y",
 	};
 
 	std::vector<DOM_dependent_unit_value*> dep_ptrs = {
@@ -539,26 +703,32 @@ void DOM_element::set_rulesets(std::vector<DOM_ruleset> rulesets)
 		& this->dependent.border_width_left,
 		& this->dependent.border_width_right,
 		& this->dependent.border_width_bottom,
+
+		& this->dependent.background_position_x,
+		& this->dependent.background_position_y,
 	};
 
 	std::vector<int*> cmp_ptrs = {
-		&this->computed.box_content_width,
-		&this->computed.box_content_height,
+		&this->computed->box_content_width,
+		&this->computed->box_content_height,
 
-		&this->computed.margin_top,
-		&this->computed.margin_left,
-		&this->computed.margin_right,
-		&this->computed.margin_bottom,
+		&this->computed->margin_top,
+		&this->computed->margin_left,
+		&this->computed->margin_right,
+		&this->computed->margin_bottom,
 
-		& this->computed.padding_top,
-		& this->computed.padding_left,
-		& this->computed.padding_right,
-		& this->computed.padding_bottom,
+		& this->computed->padding_top,
+		& this->computed->padding_left,
+		& this->computed->padding_right,
+		& this->computed->padding_bottom,
 
-		& this->computed.border_width_top,
-		& this->computed.border_width_left,
-		& this->computed.border_width_right,
-		& this->computed.border_width_bottom,
+		& this->computed->border_width_top,
+		& this->computed->border_width_left,
+		& this->computed->border_width_right,
+		& this->computed->border_width_bottom,
+
+		& this->computed_background->background_position_x,
+		& this->computed_background->background_position_y,
 	};
 
 	for (int i = 0; i < names.size(); i++)
@@ -586,13 +756,17 @@ void DOM_element::set_rulesets(std::vector<DOM_ruleset> rulesets)
 		"border-style-top",
 		"border-style-right",
 		"border-style-bottom",
+		"background-clip",
+		"background-origin",
 	};
 
 	std::vector<std::string*> str_values = {
-		&this->computed.border_style_left,
-		&this->computed.border_style_top,
-		&this->computed.border_style_right,
-		&this->computed.border_style_bottom,
+		&this->computed->border_style_left,
+		&this->computed->border_style_top,
+		&this->computed->border_style_right,
+		&this->computed->border_style_bottom,
+		&this->computed_background->background_clip,
+		&this->computed_background->background_origin,
 	};
 
 	std::vector<bool*> str_deps = {
@@ -600,6 +774,8 @@ void DOM_element::set_rulesets(std::vector<DOM_ruleset> rulesets)
 		&this->dependent.border_style_top,
 		&this->dependent.border_style_right,
 		&this->dependent.border_style_bottom,
+		&this->dependent.background_clip,
+		&this->dependent.background_origin,
 	};
 
 	for (int i = 0; i < str_names.size(); i++)
@@ -610,15 +786,159 @@ void DOM_element::set_rulesets(std::vector<DOM_ruleset> rulesets)
 		{
 			*str_deps[i] = true;
 		}
-		else if (val == "solid" || val == "double")
+		*str_values[i] = val;
+	}
+
+	// Background Image
+	{
+		for (int i = 0; i < this->parsed_ruleset["background-image"].size(); i++)
 		{
-			*str_values[i] = val;
+			auto currently_parsed = parse_value(this->parsed_ruleset["background-image"][i][0]);
+
+			if (currently_parsed.first.empty() && currently_parsed.second != "none")
+			{
+				this->dependent.background_image = true;
+			}
+			else if (currently_parsed.first == "url")
+			{
+				if (DOM_loaded_images.find(currently_parsed.second) == DOM_loaded_images.end())
+				{
+					DOM_loaded_images.insert({ currently_parsed.second, al_load_bitmap(currently_parsed.second.c_str()) });
+				}
+
+				if (DOM_loaded_images[currently_parsed.second])
+				{
+					this->computed_background->background_images.push_back(DOM_loaded_images[currently_parsed.second]);
+				}
+				else
+				{
+					std::cout << "DOM gui warning: could not find image on path \"" + currently_parsed.second + "\"\n";
+				}
+			}
 		}
 	}
 
+	// Background size
+	{
+		if (this->parsed_ruleset["background-size"][0].size() == 1)
+		{
+			this->dependent.background_size_type = this->parsed_ruleset["background-size"][0][0];
+			this->dependent.background_size = true;
+		}
+		else
+		{
+			const auto buffer = this->parsed_ruleset["background-size"][0];
+			// auto ___
+			if (buffer[0] == "auto")
+			{
+				// auto auto
+				if (buffer[1] == "auto")
+				{
+					this->dependent.background_size = true;
+					this->dependent.background_size_type = "auto";
+				}
+				// auto !auto
+				else
+				{
+					auto height_pair = divide_value_unit(buffer[1]);
+					// auto __px
+					if (unit_to_pixel.find(height_pair.second) != unit_to_pixel.end())
+					{
+						this->computed_background->background_size_height = std::stoi(height_pair.first) * unit_to_pixel.at(height_pair.second);
+						this->dependent.background_size_width.is = true;
+						this->dependent.background_size_width.unit = "auto";
+					}
+					// auto __%
+					else
+					{
+						this->dependent.background_size_height.is = true;
+						this->dependent.background_size_height.value = (float)std::stoi(height_pair.first)/100.f;
+						this->dependent.background_size_height.unit = height_pair.second;
+						this->dependent.background_size_width.is = true;
+						this->dependent.background_size_width.unit = "auto";
+					}
+				}
+			}
+			// ___ ___
+			else
+			{
+				// ___ auto
+				if (buffer[1] == "auto")
+				{
+					//this->dependent.background_size = true;
+					this->dependent.background_size_height.is = true;
+					this->dependent.background_size_height.unit = "auto";
+				}
+				// ___ ___
+				else
+				{
+					auto height_pair = divide_value_unit(buffer[1]);
+					// ___ __px
+					if (unit_to_pixel.find(height_pair.second) != unit_to_pixel.end())
+					{
+						this->computed_background->background_size_height = std::stoi(height_pair.first) * unit_to_pixel.at(height_pair.second);
+					}
+					// ___ __%
+					else
+					{
+						this->dependent.background_size_height.is = true;
+						this->dependent.background_size_height.value = (float)std::stoi(height_pair.first) / 100.f;
+						this->dependent.background_size_height.unit = height_pair.second;
+					}
+				}
+
+				auto width_pair = divide_value_unit(buffer[0]);
+				// ___px ___
+				if (unit_to_pixel.find(width_pair.second) != unit_to_pixel.end())
+				{
+					this->computed_background->background_size_width = std::stoi(width_pair.first) * unit_to_pixel.at(width_pair.second);
+				}
+				// __% ___
+				else
+				{
+					this->dependent.background_size_width.is = true;
+					this->dependent.background_size_width.value = (float)std::stoi(width_pair.first) / 100.f;
+					this->dependent.background_size_width.unit = width_pair.second;
+				}
+			}
+		}
+	}
+
+	// Background repeat
+	{
+		this->computed_background->background_repeat_x = (this->parsed_ruleset["background-repeat-x"][0][0] == "repeat");
+		this->computed_background->background_repeat_y = (this->parsed_ruleset["background-repeat-y"][0][0] == "repeat");
+
+		this->dependent.background_repeat_x = (this->parsed_ruleset["background-repeat-x"][0][0] == "inherit");
+		this->dependent.background_repeat_y = (this->parsed_ruleset["background-repeat-y"][0][0] == "inherit");
+	}
+	//*/
+
+	// Overflow
+	{
+		if (this->parsed_ruleset["overflow"][0][0] == "hidden")
+		{
+			this->computed->hide_overflow = true;
+		}
+		else if (this->parsed_ruleset["overflow"][0][0] == "scroll")
+		{
+			this->computed->hide_overflow = true;
+			if (this->parsed_ruleset["scroll"][0][0] == "x" || this->parsed_ruleset["scroll"][0][0] == "both")
+				this->computed->scrollable_x = true;
+			if (this->parsed_ruleset["scroll"][0][0] == "y" || this->parsed_ruleset["scroll"][0][0] == "both")
+				this->computed->scrollable_y = true;
+		}
+		else if (this->parsed_ruleset["overflow"][0][0] == "visible")
+		{
+			this->computed->hide_overflow = false;
+		}
+		else if (this->parsed_ruleset["overflow"][0][0] == "inherit")
+			this->dependent.overflow = true;
+	}
+
 	// Finalizing
-	this->computed.width = this->get_width();
-	this->computed.height = this->get_height();
+	this->computed->width = this->get_width();
+	this->computed->height = this->get_height();
 }
 
 void DOM_element::add_child(DOM_element* child)
@@ -651,20 +971,20 @@ void DOM_element::calculate()
 
 		std::get<1>(this->box_model_deps) = {
 			{
-				&this->computed.margin_top,
-				&this->computed.margin_bottom,
-				&this->computed.margin_left,
-				&this->computed.margin_right,
+				&this->computed->margin_top,
+				&this->computed->margin_bottom,
+				&this->computed->margin_left,
+				&this->computed->margin_right,
 
-				&this->computed.padding_top,
-				&this->computed.padding_bottom,
-				&this->computed.padding_left,
-				&this->computed.padding_right,
+				&this->computed->padding_top,
+				&this->computed->padding_bottom,
+				&this->computed->padding_left,
+				&this->computed->padding_right,
 
-				&this->computed.border_width_top,
-				&this->computed.border_width_bottom,
-				&this->computed.border_width_left,
-				&this->computed.border_width_right,
+				&this->computed->border_width_top,
+				&this->computed->border_width_bottom,
+				&this->computed->border_width_left,
+				&this->computed->border_width_right,
 			}
 		};
 
@@ -689,20 +1009,20 @@ void DOM_element::calculate()
 
 		std::get<3>(this->box_model_deps) = {
 			{
-				this->parent->computed.margin_top,
-				this->parent->computed.margin_bottom,
-				this->parent->computed.margin_left,
-				this->parent->computed.margin_right,
+				this->parent->computed->margin_top,
+				this->parent->computed->margin_bottom,
+				this->parent->computed->margin_left,
+				this->parent->computed->margin_right,
 
-				this->parent->computed.padding_top,
-				this->parent->computed.padding_bottom,
-				this->parent->computed.padding_left,
-				this->parent->computed.padding_right,
+				this->parent->computed->padding_top,
+				this->parent->computed->padding_bottom,
+				this->parent->computed->padding_left,
+				this->parent->computed->padding_right,
 
-				this->parent->computed.border_width_top,
-				this->parent->computed.border_width_bottom,
-				this->parent->computed.border_width_left,
-				this->parent->computed.border_width_right,
+				this->parent->computed->border_width_top,
+				this->parent->computed->border_width_bottom,
+				this->parent->computed->border_width_left,
+				this->parent->computed->border_width_right,
 			}
 		};
 	}
@@ -721,8 +1041,8 @@ void DOM_element::calculate()
 				if (unit == "%")
 				{
 					int buff;
-					if (std::get<2>(this->box_model_deps)[i]) buff = this->parent->computed.box_content_width;
-					else buff = this->parent->computed.box_content_height;
+					if (std::get<2>(this->box_model_deps)[i]) buff = this->parent->computed->box_content_width;
+					else buff = this->parent->computed->box_content_height;
 					*ptr = value * buff;
 				}
 				else if (unit == "auto")
@@ -732,69 +1052,194 @@ void DOM_element::calculate()
 			}
 		}
 
-		this->computed.width = this->get_width();
-		this->computed.height = this->get_height();
+		this->computed->width = this->get_width();
+		this->computed->height = this->get_height();
 
-		if (this->dependent.background_color)
-			this->computed.background_color = this->parent->computed.background_color;
+		{
+			if (this->dependent.background_color)
+				this->computed_background->background_color = this->parent->computed_background->background_color;
 
-		if (this->dependent.border_style_left)
-			this->computed.border_style_left = this->parent->computed.border_style_left;
-		if (this->dependent.border_style_right)
-			this->computed.border_style_right = this->parent->computed.border_style_right;
-		if (this->dependent.border_style_top)
-			this->computed.border_style_top = this->parent->computed.border_style_top;
-		if (this->dependent.border_style_bottom)
-			this->computed.border_style_bottom = this->parent->computed.border_style_bottom;
+			if (this->dependent.background_origin)
+				this->computed_background->background_origin = this->parent->computed_background->background_origin;
+			if (this->dependent.background_clip)
+				this->computed_background->background_clip = this->parent->computed_background->background_clip;
 
-		if (this->dependent.border_color_left)
-			this->computed.border_color_left = this->parent->computed.border_color_left;
-		if (this->dependent.border_color_right)
-			this->computed.border_color_right = this->parent->computed.border_color_right;
-		if (this->dependent.border_color_top)
-			this->computed.border_color_top = this->parent->computed.border_color_top;
-		if (this->dependent.border_color_bottom)
-			this->computed.border_color_bottom = this->parent->computed.border_color_bottom;
+			if (this->dependent.background_image)
+				this->computed_background->background_images = this->parent->computed_background->background_images;
+
+			if (this->dependent.border_style_left)
+				this->computed->border_style_left = this->parent->computed->border_style_left;
+			if (this->dependent.border_style_right)
+				this->computed->border_style_right = this->parent->computed->border_style_right;
+			if (this->dependent.border_style_top)
+				this->computed->border_style_top = this->parent->computed->border_style_top;
+			if (this->dependent.border_style_bottom)
+				this->computed->border_style_bottom = this->parent->computed->border_style_bottom;
+
+			if (this->dependent.border_color_left)
+				this->computed->border_color_left = this->parent->computed->border_color_left;
+			if (this->dependent.border_color_right)
+				this->computed->border_color_right = this->parent->computed->border_color_right;
+			if (this->dependent.border_color_top)
+				this->computed->border_color_top = this->parent->computed->border_color_top;
+			if (this->dependent.border_color_bottom)
+				this->computed->border_color_bottom = this->parent->computed->border_color_bottom;
+
+			if (this->dependent.overflow)
+			{
+				this->computed->hide_overflow = this->parent->computed->hide_overflow;
+				this->computed->scrollable_x = this->parent->computed->scrollable_x;
+				this->computed->scrollable_y = this->parent->computed->scrollable_y;
+			}
+		}
 
 		if (this->dependent.width.is)
 		{
 			if (this->dependent.width.unit == "%")
-				this->computed.box_content_width = this->dependent.width.value * this->parent->computed.box_content_width;
+				this->computed->box_content_width = this->dependent.width.value * this->parent->computed->box_content_width;
 			else if (this->dependent.width.unit == "auto")
-				this->computed.box_content_width = this->parent->computed.box_content_width - this->get_width("pbm");
+				this->computed->box_content_width = this->parent->computed->box_content_width - this->get_width("pbm");
 			else if (this->dependent.width.unit == "vw")
-				this->computed.box_content_width = this->dependent.width.value * this->document_base->computed.width;
+				this->computed->box_content_width = this->dependent.width.value * this->document_base->computed->width;
 			else if (this->dependent.width.unit == "vh")
-				this->computed.box_content_width = this->dependent.width.value * this->document_base->computed.height;
+				this->computed->box_content_width = this->dependent.width.value * this->document_base->computed->height;
 			else if (this->dependent.width.unit == "inherit")
-				this->computed.box_content_width = this->parent->computed.box_content_width;
+				this->computed->box_content_width = this->parent->computed->box_content_width;
 
-			this->computed.width = this->get_width();
+			this->computed->width = this->get_width();
 		}
 
 		if (this->dependent.height.is)
 		{
 			if (this->dependent.height.unit == "%")
-				this->computed.box_content_height = this->dependent.height.value * this->parent->computed.box_content_height;
+				this->computed->box_content_height = this->dependent.height.value * this->parent->computed->box_content_height;
 			// auto value in height is not dependent value
 			/*else if (this->dependent.height_unit == "auto")
-				this->computed.height = this->parent->computed.height;*/
+				this->computed->height = this->parent->computed->height;*/
 			else if (this->dependent.height.unit == "vw")
-				this->computed.box_content_height = this->dependent.height.value * this->document_base->computed.width;
+				this->computed->box_content_height = this->dependent.height.value * this->document_base->computed->width;
 			else if (this->dependent.height.unit == "vh")
-				this->computed.box_content_height = this->dependent.height.value * this->document_base->computed.height;
+				this->computed->box_content_height = this->dependent.height.value * this->document_base->computed->height;
 			else if (this->dependent.height.unit == "inherit")
-				this->computed.box_content_height = this->parent->computed.box_content_height;
+				this->computed->box_content_height = this->parent->computed->box_content_height;
 
-			this->computed.height = this->get_height();
+			this->computed->height = this->get_height();
+		}
+
+		if (this->dependent.background_size && !this->computed_background->background_images.empty())
+		{
+			if (this->dependent.background_size_type == "inherit")
+			{
+				this->computed_background->background_size_width = this->parent->computed_background->background_size_width;
+				this->computed_background->background_size_height = this->parent->computed_background->background_size_height;
+			}
+			else if (this->dependent.background_size_type == "auto")
+			{
+				this->computed_background->background_size_width = al_get_bitmap_width(this->computed_background->background_images[0]);
+				this->computed_background->background_size_height = al_get_bitmap_height(this->computed_background->background_images[0]);
+			}
+		}
+
+		int bcw = 0, bch = 0;
+		if (this->computed_background->background_origin == "border-box")
+		{
+			bcw = this->get_width("cpb");
+			bch = this->get_height("cpb");
+		}
+		else if (this->computed_background->background_origin == "padding-box")
+		{
+			bcw = this->get_width("cp");
+			bch = this->get_height("cp");
+		}
+		else if (this->computed_background->background_origin == "content-box")
+		{
+			bcw = this->get_width("c");
+			bch = this->get_height("c");
+		}
+
+		if (this->dependent.background_repeat_x)
+			this->computed_background->background_repeat_x = this->parent->computed_background->background_repeat_x;
+		if (this->dependent.background_repeat_y)
+			this->computed_background->background_repeat_y = this->parent->computed_background->background_repeat_y;
+
+		bool bgsw = false, bgsh = false;
+		if (this->dependent.background_size_width.is)
+		{
+			if (this->dependent.background_size_width.unit == "auto")
+				bgsw = true;
+			else
+			{
+				if (this->dependent.background_size_width.unit == "%")
+					this->computed_background->background_size_width = this->dependent.background_size_width.value * bcw;
+			}
+		}
+
+		if (this->dependent.background_size_height.is)
+		{
+			if (this->dependent.background_size_height.unit == "auto")
+				bgsh = true;
+			else
+			{
+				if (this->dependent.background_size_height.unit == "%")
+					this->computed_background->background_size_height = this->dependent.background_size_height.value * bch;
+			}
+		}
+
+		if (!this->computed_background->background_images.empty())
+		{
+			if (bgsw)
+			{
+				this->computed_background->background_size_width =
+					this->computed_background->background_size_height *
+					al_get_bitmap_width(this->computed_background->background_images[0]) / al_get_bitmap_height(this->computed_background->background_images[0]);
+			}
+
+			if (bgsh)
+			{
+				this->computed_background->background_size_height =
+					this->computed_background->background_size_width *
+					al_get_bitmap_height(this->computed_background->background_images[0]) / al_get_bitmap_width(this->computed_background->background_images[0]);
+			}
+
+			this->computed_background->background_size_sx =
+				this->computed_background->background_size_width / al_get_bitmap_width(this->computed_background->background_images[0]);
+			this->computed_background->background_size_sy = this->computed_background->background_size_height / al_get_bitmap_height(this->computed_background->background_images[0]);
+
+			if (this->dependent.background_position_x.is)
+			{
+				if (this->dependent.background_position_x.unit == "inherit")
+					this->computed_background->background_position_x = this->parent->computed_background->background_position_x;
+				else if (this->dependent.background_position_x.unit == "left")
+					this->computed_background->background_position_x = 0;
+				else if (this->dependent.background_position_x.unit == "right")
+					this->computed_background->background_position_x = bcw - al_get_bitmap_width(this->computed_background->background_images[0]);
+				else if (this->dependent.background_position_x.unit == "center")
+					this->computed_background->background_position_x = (bcw - al_get_bitmap_width(this->computed_background->background_images[0])) / 2;
+				else if (this->dependent.background_position_x.unit == "%")
+					this->computed_background->background_position_x = this->dependent.background_position_x.value * bcw;
+			}
+
+			if (this->dependent.background_position_y.is)
+			{
+				if (this->dependent.background_position_y.unit == "inherit")
+					this->computed_background->background_position_y = this->parent->computed_background->background_position_y;
+				else if (this->dependent.background_position_y.unit == "top")
+					this->computed_background->background_position_y = 0;
+				else if (this->dependent.background_position_y.unit == "bottom")
+					this->computed_background->background_position_y = bch - al_get_bitmap_height(this->computed_background->background_images[0]);
+				else if (this->dependent.background_position_y.unit == "center")
+					this->computed_background->background_position_y = (bch - al_get_bitmap_width(this->computed_background->background_images[0])) / 2;
+				else if (this->dependent.background_position_y.unit == "%")
+					this->computed_background->background_position_y = this->dependent.background_position_y.value * bch;
+			}
 		}
 
 		if (this->dependent.margin_left.unit == "auto" && this->dependent.margin_right.unit != "auto")
-			this->computed.margin_left = this->parent->computed.width - this->get_width();
+			this->computed->margin_left = this->parent->computed->width - this->get_width();
 		else if (this->dependent.margin_left.unit != "auto" && this->dependent.margin_right.unit == "auto")
-			this->computed.margin_right = this->parent->computed.width - this->get_width();
+			this->computed->margin_right = this->parent->computed->width - this->get_width();
 		else if (this->dependent.margin_left.unit == "auto" && this->dependent.margin_right.unit == "auto")
-			this->computed.margin_right = this->computed.margin_left = (this->parent->computed.width - this->get_width()) / 2;
+			this->computed->margin_right = this->computed->margin_left = (this->parent->computed->width - this->get_width()) / 2;
 	}
 
 	int last_y = 0;
@@ -806,15 +1251,15 @@ void DOM_element::calculate()
 		child->calculate();
 
 		// Set basic coordinates
-		child->computed.x = 0;
-		child->computed.y = last_y;
+		child->computed->x = 0;
+		child->computed->y = last_y;
 
-		last_y += child->computed.height;
+		last_y += child->computed->height;
 
 		// Update dimensions
 		if (this->dependent.height.unit == "auto")
 		{
-			this->computed.height += child->computed.height;
+			this->computed->height += child->computed->height;
 		}
 	}
 }
@@ -828,16 +1273,16 @@ int DOM_element::get_width(std::string boxes)
 		switch (c)
 		{
 		case 'c':
-			result += this->computed.box_content_width;
+			result += this->computed->box_content_width;
 			break;
 		case 'p':
-			result += this->computed.padding_left + this->computed.padding_right;
+			result += this->computed->padding_left + this->computed->padding_right;
 			break;
 		case 'b':
-			result += this->computed.border_width_left + this->computed.border_width_right;
+			result += this->computed->border_width_left + this->computed->border_width_right;
 			break;
 		case 'm':
-			result += this->computed.margin_left + this->computed.margin_right;
+			result += this->computed->margin_left + this->computed->margin_right;
 			break;
 		default:
 			break;
@@ -856,16 +1301,16 @@ int DOM_element::get_height(std::string boxes)
 		switch (c)
 		{
 		case 'c':
-			result += this->computed.box_content_height;
+			result += this->computed->box_content_height;
 			break;
 		case 'p':
-			result += this->computed.padding_top + this->computed.padding_bottom;
+			result += this->computed->padding_top + this->computed->padding_bottom;
 			break;
 		case 'b':
-			result += this->computed.border_width_top + this->computed.border_width_bottom;
+			result += this->computed->border_width_top + this->computed->border_width_bottom;
 			break;
 		case 'm':
-			result += this->computed.margin_top + this->computed.margin_bottom;
+			result += this->computed->margin_top + this->computed->margin_bottom;
 			break;
 		default:
 			break;
@@ -877,39 +1322,140 @@ int DOM_element::get_height(std::string boxes)
 
 void DOM_element::draw(int x, int y)
 {
-	int bbx = x + this->computed.x + this->computed.margin_left, bby = y + this->computed.y + this->computed.margin_top;
-	int bbx2 = x + this->computed.x + this->computed.margin_left + this->get_width("cpb");
-	int bby2 = y + this->computed.y + this->computed.margin_top + this->get_height("cpb");
-	int tb = this->computed.border_width_top, bb = this->computed.border_width_bottom,
-		lb = this->computed.border_width_left, rb = this->computed.border_width_right;
+	int bbx = x + this->computed->x + this->computed->margin_left, bby = y + this->computed->y + this->computed->margin_top;
+	int bbx2 = x + this->computed->x + this->computed->margin_left + this->get_width("cpb");
+	int bby2 = y + this->computed->y + this->computed->margin_top + this->get_height("cpb");
+	int tb = this->computed->border_width_top, bb = this->computed->border_width_bottom,
+		lb = this->computed->border_width_left, rb = this->computed->border_width_right;
 
-	al_draw_filled_rectangle(
-		bbx,
-		bby,
-		bbx2,
-		bby2,
-		this->computed.background_color
-	);
+	int bgx1 = x + this->computed->x + this->computed->margin_left, bgy1 = y + this->computed->y + this->computed->margin_top,
+		bgx2 = x + this->computed->x + this->computed->margin_left + this->get_width("cpb"),
+		bgy2 = y + this->computed->y + this->computed->margin_top + this->get_height("cpb");
+
+	int brx = x + this->computed->x + this->computed->margin_left + this->computed_background->background_position_x,
+		bry = y + this->computed->y + this->computed->margin_top + this->computed_background->background_position_y;
+
+	if (this->computed_background->background_clip == "padding-box")
+	{
+		bgx1 += this->computed->border_width_left;
+		bgy1 += this->computed->border_width_top;
+		bgx2 -= this->computed->border_width_right;
+		bgy2 -= this->computed->border_width_bottom;
+	}
+	else if (this->computed_background->background_clip == "content-box")
+	{
+		bgx1 += this->computed->border_width_left + this->computed->padding_left;
+		bgy1 += this->computed->border_width_top + this->computed->padding_top;
+		bgx2 -= this->computed->border_width_right + this->computed->padding_right;
+		bgy2 -= this->computed->border_width_bottom + this->computed->padding_bottom;
+	}
+
+	if (this->computed_background->background_origin == "padding-box")
+	{
+		brx += this->computed->border_width_left;
+		bry += this->computed->border_width_top;
+	}
+	else if (this->computed_background->background_origin == "content-box")
+	{
+		brx += this->computed->border_width_left + this->computed->padding_left;
+		bry += this->computed->border_width_top + this->computed->padding_top;
+	}
+
+	if (this->hover)
+		al_draw_filled_rectangle(
+			bgx1,
+			bgy1,
+			bgx2,
+			bgy2,
+			al_map_rgb_f(
+				this->computed_background->background_color.r + 0.1,
+				this->computed_background->background_color.g + 0.1,
+				this->computed_background->background_color.b + 0.1
+			)
+		);
+	else
+		al_draw_filled_rectangle(
+			bgx1,
+			bgy1,
+			bgx2,
+			bgy2,
+			this->computed_background->background_color
+		);
+
+	int times_x = 1, times_y = 1;
+	int start_x = brx, start_y = bry;
+
+	if (!this->computed_background->background_images.empty())
+	{
+		if (this->computed_background->background_repeat_x)
+		{
+			int w = this->computed_background->background_size_width;
+			start_x = brx - std::ceil(float(brx - bgx1) / w) * w;
+			times_x = std::ceil(float(bgx2 - start_x) / w);
+		}
+
+		if (this->computed_background->background_repeat_y)
+		{
+			int h = this->computed_background->background_size_height;
+			start_y = bry - std::ceil(float(bry - bgy1) / h) * h;
+			times_y = std::ceil(float(bgy2 - start_y) / h);
+		}
+	}
+
+	int decrease_x = 0;
+	int decrease_y = 0;
+	if (this->parent)
+	{
+		if (this->parent->computed->scrollable_x)
+			decrease_x = this->parent->computed->scroll_x;
+		if (this->parent->computed->scrollable_y)
+			decrease_y = this->parent->computed->scroll_y;
+	}
+
+	int bg_img_clip_x, bg_img_clip_y, bg_img_clip_w, bg_img_clip_h;
+	al_get_clipping_rectangle(&bg_img_clip_x, &bg_img_clip_y, &bg_img_clip_w, &bg_img_clip_h);
+
+	al_set_clipping_rectangle(bgx1, bgy1, bgx2 - bgx1, bgy2 - bgy1);
+
+	for (auto bitmap : this->computed_background->background_images)
+	{
+		int y = start_y - decrease_y;
+		for (int ty = 0; ty < times_y; ty++)
+		{
+			int x = start_x - decrease_x;
+			for (int tx = 0; tx < times_x; tx++)
+			{
+				al_draw_scaled_bitmap(
+					bitmap, 0, 0, al_get_bitmap_width(bitmap), al_get_bitmap_height(bitmap),
+					x, y, this->computed_background->background_size_width, this->computed_background->background_size_height, 0
+				);
+				x += this->computed_background->background_size_width;
+			}
+			y += this->computed_background->background_size_height;
+		}
+	}
+
+	al_set_clipping_rectangle(bg_img_clip_x, bg_img_clip_y, bg_img_clip_w, bg_img_clip_h);
 
 	// Top border
-	if (this->computed.border_style_top == "solid")
+	if (this->computed->border_style_top == "solid")
 	{
 		al_draw_filled_rectangle(
 			bbx,
 			bby,
 			bbx2,
 			bby + tb,
-			this->computed.border_color_top
+			this->computed->border_color_top
 		);
 	}
-	else if (this->computed.border_style_top == "double")
+	else if (this->computed->border_style_top == "double")
 	{
 		al_draw_line(
 			bbx,
 			bby,
 			bbx2,
 			bby,
-			this->computed.border_color_top,
+			this->computed->border_color_top,
 			1
 		);
 		al_draw_line(
@@ -917,30 +1463,30 @@ void DOM_element::draw(int x, int y)
 			bby + tb,
 			bbx2,
 			bby + tb,
-			this->computed.border_color_top,
+			this->computed->border_color_top,
 			1
 		);
 	}
 
 	// Bottom border
-	if (this->computed.border_style_bottom == "solid")
+	if (this->computed->border_style_bottom == "solid")
 	{
 		al_draw_filled_rectangle(
 			bbx,
 			bby2 - bb,
 			bbx2,
 			bby2,
-			this->computed.border_color_bottom
+			this->computed->border_color_bottom
 		);
 	}
-	else if (this->computed.border_style_bottom == "double")
+	else if (this->computed->border_style_bottom == "double")
 	{
 		al_draw_line(
 			bbx,
 			bby2 - bb,
 			bbx2,
 			bby2 - bb,
-			this->computed.border_color_bottom,
+			this->computed->border_color_bottom,
 			1
 		);
 		al_draw_line(
@@ -948,30 +1494,30 @@ void DOM_element::draw(int x, int y)
 			bby2,
 			bbx2,
 			bby2,
-			this->computed.border_color_bottom,
+			this->computed->border_color_bottom,
 			1
 		);
 	}
 
 	// Left border
-	if (this->computed.border_style_left == "solid")
+	if (this->computed->border_style_left == "solid")
 	{
 		al_draw_filled_rectangle(
 			bbx,
 			bby,
 			bbx + lb,
 			bby2,
-			this->computed.border_color_left
+			this->computed->border_color_left
 		);
 	}
-	else if (this->computed.border_style_left == "double")
+	else if (this->computed->border_style_left == "double")
 	{
 		al_draw_line(
 			bbx,
 			bby,
 			bbx,
 			bby2,
-			this->computed.border_color_left,
+			this->computed->border_color_left,
 			1
 		);
 		al_draw_line(
@@ -979,30 +1525,30 @@ void DOM_element::draw(int x, int y)
 			bby,
 			bbx + lb,
 			bby2,
-			this->computed.border_color_left,
+			this->computed->border_color_left,
 			1
 		);
 	}
 
 	// Right border
-	if (this->computed.border_style_right == "solid")
+	if (this->computed->border_style_right == "solid")
 	{
 		al_draw_filled_rectangle(
 			bbx2 - rb,
 			bby,
-			x + this->computed.x + this->computed.margin_left + this->get_width("cpb"),
+			x + this->computed->x + this->computed->margin_left + this->get_width("cpb"),
 			bby2,
-			this->computed.border_color_right
+			this->computed->border_color_right
 		);
 	}
-	else if (this->computed.border_style_right == "double")
+	else if (this->computed->border_style_right == "double")
 	{
 		al_draw_line(
 			bbx2 - rb,
 			bby,
 			bbx2 - rb,
 			bby2,
-			this->computed.border_color_right,
+			this->computed->border_color_right,
 			1
 		);
 		al_draw_line(
@@ -1010,14 +1556,142 @@ void DOM_element::draw(int x, int y)
 			bby,
 			bbx2,
 			bby2,
-			this->computed.border_color_right,
+			this->computed->border_color_right,
 			1
 		);
 	}
 
-	for (auto child : this->children)
-		child->draw(
-			x + this->computed.x + this->computed.margin_left + this->computed.padding_left + this->computed.border_width_left,
-			y + this->computed.y + this->computed.margin_top + this->computed.padding_top + this->computed.border_width_top
-		);
+	if (this->computed->hide_overflow)
+	{
+		int overflow_clip_x, overflow_clip_y, overflow_clip_w, overflow_clip_h;
+		int target_x = x + this->computed->x + this->computed->margin_left + this->computed->border_width_left,
+			target_y = y + this->computed->y + this->computed->margin_top + this->computed->border_width_top,
+			target_w = this->get_width("cp"),
+			target_h = this->get_height("cp");
+
+		al_get_clipping_rectangle(&overflow_clip_x, &overflow_clip_y, &overflow_clip_w, &overflow_clip_h);
+
+		al_set_clipping_rectangle(target_x, target_y, target_w, target_h);
+
+		for (auto child : this->children)
+			child->draw(
+				x + this->computed->x + this->computed->margin_left + this->computed->padding_left
+				+ this->computed->border_width_left - decrease_x,
+				y + this->computed->y + this->computed->margin_top + this->computed->padding_top
+				+ this->computed->border_width_top - decrease_y
+			);
+
+		al_set_clipping_rectangle(overflow_clip_x, overflow_clip_y, overflow_clip_w, overflow_clip_h);
+	}
+	else
+	{
+		for (auto child : this->children)
+			child->draw(
+				x + this->computed->x + this->computed->margin_left + this->computed->padding_left
+				+ this->computed->border_width_left - decrease_x,
+				y + this->computed->y + this->computed->margin_top + this->computed->padding_top
+				+ this->computed->border_width_top - decrease_y
+			);
+	}
+}
+
+void DOM_element::update(double dt, int x, int y, bool force_fail)
+{
+	// To see if we've just lost the hover
+	bool recorded_state = this->hover;
+
+	// Case 3 - no forced fail and hover
+	if (!force_fail && is_element_hovered(x, y, this))
+	{
+		this->hover = true;
+
+		// Hover gained
+		if (!recorded_state && this->hover_gain_event)
+			this->document->element_related_events.push_back({
+				.type = DOM_EVENT_ELEMENT_HOVER_GAINED,
+				.x = this->document->mouse_state.x,	
+				.y = this->document->mouse_state.y,
+				.element = this
+			});
+		
+
+		// We update children since they can have hover
+		for (auto child : this->children)
+			child->update(
+				dt,
+				x + this->computed->x + this->computed->margin_left + this->computed->padding_left + this->computed->border_width_left,
+				y + this->computed->y + this->computed->margin_top + this->computed->padding_top + this->computed->border_width_top
+			);
+	}
+	// no hover
+	else
+	{
+		this->hover = false;
+
+		// Case 2 and no forced failure
+		if (!this->computed->hide_overflow && !force_fail) 
+		{
+
+			// We update all children. If one of them has hover, the parent should immediately have hover as well
+			for (auto child : this->children)
+			{
+				child->update(
+					dt,
+					x + this->computed->x + this->computed->margin_left + this->computed->padding_left + this->computed->border_width_left,
+					y + this->computed->y + this->computed->margin_top + this->computed->padding_top + this->computed->border_width_top
+				);
+
+				this->hover |= child->hover;
+			}
+		}
+		// Case 1a - the hover loss is fresh
+		else if (recorded_state)
+		{
+			// Hover lost event
+			if (this->hover_loss_event)
+				this->document->element_related_events.push_back({
+					.type = DOM_EVENT_ELEMENT_HOVER_LOST,
+					.x = this->document->mouse_state.x,
+					.y = this->document->mouse_state.y,
+					.element = this
+				});
+
+			// We update children with forcing failure
+			for (auto child : this->children)
+				child->update(
+					dt,
+					x + this->computed->x + this->computed->margin_left + this->computed->padding_left + this->computed->border_width_left,
+					y + this->computed->y + this->computed->margin_top + this->computed->padding_top + this->computed->border_width_top,
+					true
+				);
+		}
+	}
+
+	// Case 1b - no hover and overflow is hidden
+}
+
+void DOM_element::on(char event, std::function<void(DOM_event e)> fun)
+{
+	if (this->document)
+	{
+		this->document->event_listeners[event].insert(this);
+		this->event_functions[event] = fun;
+
+		if (event == DOM_EVENT_ELEMENT_HOVER_GAINED) this->hover_gain_event = true;
+		if (event == DOM_EVENT_ELEMENT_HOVER_LOST) this->hover_loss_event = true;
+	}
+}
+
+void DOM_element::dispatch_scroll_event(DOM_event e)
+{
+	this->computed->scroll_x = e.dx * this->computed->scrollable_x;
+	this->computed->scroll_y = e.dy * this->computed->scrollable_y;
+}
+
+void DOM_quit()
+{
+	for (auto iter = DOM_loaded_images.begin(); iter != DOM_loaded_images.end(); iter++)
+	{
+		al_destroy_bitmap(iter->second);
+	}
 }

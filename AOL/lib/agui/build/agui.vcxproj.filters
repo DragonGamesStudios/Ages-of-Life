@@ -1,0 +1,220 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Clipboard\WinClipboard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Clipboard\Clipboard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\ActionEvent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\ActionListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\BaseTypes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\BlinkingEvent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\BorderLayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\CursorProvider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Color.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Dimension.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\EmptyWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\EventArgs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\FlowLayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\FocusListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\FocusManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Font.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Graphics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\GridLayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Gui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Input.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\KeyboardListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Layout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\MouseListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Point.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Rectangle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\ResizableText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\ResizableBorderLayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\SelectionListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\TableLayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Transform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\TopContainer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\WidgetListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\Button\Button.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\Button\ButtonGroup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\Button\ButtonListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\CheckBox\CheckBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\CheckBox\CheckBoxListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\DropDown\DropDown.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\DropDown\DropDownListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\Frame\Frame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\Frame\FrameListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\ImageWidget\ImageWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\Label\Label.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\Label\LabelListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\ListBox\ListBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\PopUp\PopUpMenu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\PopUp\PopUpMenuItem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\ListBox\ListBoxListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\RadioButton\RadioButton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\RadioButton\RadioButtonListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\RadioButton\RadioButtonGroup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\ScrollBar\HScrollBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\ScrollBar\HScrollBarListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\ScrollBar\VScrollBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\ScrollBar\VScrollBarListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\ScrollPane\ScrollPane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\Slider\Slider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\Slider\SliderListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\Tab\Tab.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\Tab\TabbedPane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\Tab\TabbedPaneListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\TextBox\TextBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\TextBox\TextBoxListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\TextBox\ExtendedTextBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\TextField\TextField.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\TextField\TextFieldListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\aguitestingsite\aguitestingsite\lib\agui\src\Agui\Widgets\ToolTip\ToolTip.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\aguitestingsite\aguitestingsite\lib\agui\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{197CAB5E-CF31-340E-B936-CBCF232A2935}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,15 @@
+﻿  Age.cpp
+  GameObject.cpp
+  Technology.cpp
+  createguis.cpp
+  Game.cpp
+  globals.h
+  independent-globals.cpp
+  DOM.cpp
+  Proto.cpp
+C:\AOL\AOL\lib\Proto\Proto.cpp(427,37): warning C4267: "=": konwersja z "size_t" do "int", możliwa utrata danych
+  main.cpp
+  modding-api.cpp
+  Script.cpp
+  Generowanie kodu...
+  AOL.vcxproj -> C:\AOL\x64\Debug\AOL.exe

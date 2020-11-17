@@ -51,8 +51,6 @@ extern std::vector<ALLEGRO_FONT*> loaded_fonts;
 
 extern ALLEGRO_TRANSFORM default_trans;
 
-extern std::map<std::string, ALLEGRO_BITMAP*> DOM_loaded_images;
-
 class TreeNode;
 
 class TreeNode : public std::variant<std::map<std::string, TreeNode>, bool> {
@@ -362,6 +360,8 @@ public:
 	std::pair <float, float> getScale(Image img, int w, int h);
 	std::pair <float, float> getScale(Image* img, int w, int h);
 	std::pair <int, int> getWindowDimensions();
+
+	ALLEGRO_EVENT last_event;
 
 	void quit();
 	std::pair <bool, bool> update();

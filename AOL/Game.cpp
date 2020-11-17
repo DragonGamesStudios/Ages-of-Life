@@ -14,7 +14,7 @@ Game::Game()
 
 	AOLicon = al_load_bitmap("base/graphics/AOLIcon.png");
 
-	proto.createWindow(1900, 1180, AOLicon, "Ages of Life", PROTO_WINDOW_FULLSCREEN);
+	proto.createWindow(1900, 1180, AOLicon, "Ages of Life", 0);
 
 	proto.setAppDataDir("AOL");
 
@@ -59,24 +59,36 @@ Game::Game()
 		{"technology", {}}
 	};
 
-	DOM_element* test_root = new DOM_element;
+	// Agui setup
+	agui::Image::setImageLoader(new agui::Allegro5ImageLoader);
+	agui::Font::setFontLoader(new agui::Allegro5FontLoader);
+
+	this->graphics_handler = new agui::Allegro5Graphics;
+	this->input_handler = new agui::Allegro5Input;
+
+	agui::Color::setPremultiplyAlpha(true);
+
+	/*
+	DOM_element* test_root = new DOM_element();
 
 	json testrlst = {
 		{"background-color", "#3ef"},
 		{"height", "50vw"},
-		{"border-style-left", "double"},
-		{"border-width", "5px"},
-		{"border-color", "green"}
 	};
 
 	test_root->set_rulesets({testrlst});
 
-	DOM_element* another_test = new DOM_element;
+	DOM_element* another_test = new DOM_element();
 	//DOM_element* another_test2 = new DOM_element;
 
 	json another = {
-		{"height", "30%"},
+		{"height", "90%"},
 		{"background-color", "brown"},
+		{"margin-top", "5%"},
+		{"background-image", "url(base/graphics/gui/input.png)"},
+		{"background-origin", "content-box"},
+		{"padding", "10px"},
+		{"background-position", "center center"}
 	};
 
 	another_test->set_rulesets({ another });
@@ -88,6 +100,7 @@ Game::Game()
 	testgui = new DOM_document(test_root);
 	testgui->calculate();
 	std::cout << "Loaded\n";
+	*/
 }
 
 Game::~Game()
@@ -113,6 +126,9 @@ Game::~Game()
 		loadbutton.normal,
 		loadbutton.hover;
 
+	//delete input_handler;
+	//delete graphics_handler;
+
 	std::vector<std::string> deleted_keys = { "ages", "technology" };
 
 	for (auto del = deleted_keys.begin(); del != deleted_keys.end(); del++)
@@ -123,6 +139,8 @@ Game::~Game()
 		for (auto const& [key, value] : this->object_tree[*del])
 			delete this->object_tree[*del][key];
 	}
+
+	//DOM_quit();
 }
 
 void Game::run()
@@ -400,8 +418,6 @@ void Game::draw()
 	for (std::vector<GUI*>::iterator gui = script.guis.begin(); gui != script.guis.end(); gui++) {
 		(*gui)->draw();
 	}
-
-	testgui->draw(100, 100);
 
 	this->draw_active_input();
 }

@@ -162,6 +162,7 @@ std::pair <bool, bool> Proto::update()
 	ALLEGRO_EVENT event;
 	bool ticked = false;
 	al_wait_for_event(this->queue, &event);
+	this->last_event = event;
 	if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE || this->shouldClose) {
 		this->quit();
 		return std::make_pair(false, false);

@@ -1,0 +1,2 @@
+C:\aguitestingsite\aguitestingsite\lib\agui\build\Debug\agui_allegro5.pdb
+C:\aguitestingsite\aguitestingsite\lib\agui\build\agui_allegro5.dir\Debug\agui_allegro5.pdb

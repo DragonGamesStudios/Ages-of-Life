@@ -20,3 +20,18 @@ neighbor_specifier - specifies if the given neighbor age is after the selected o
 a) TechnologyPath - vector of Technology* used to define which technologies should be researched in order to research certain technology. It's sorted using following rules:
 -> technology of lower level is earlier
 -> if two technologies are the same level they are sorted by name
+
+## Proto
+
+### 1. DOM GUI
+
+Pretty simmilar to DOM design. Division into elements and
+controlling them with rulesets - for documentation, just look
+at css docs.
+
+Notes:
+- Border corners are not displayed properly if different colors/styles
+- If border is set to none, but still has width, it is "displayed"
+- `background-size` property needs two values for numeric and one for keyword (background-size: 75%; is not correct)
+- `background-position` is just a shorthand for `background-position-x` and `y`
+- `background-repear` is just a shorthand for `background-repeat-x` and `y`
