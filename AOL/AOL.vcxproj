@@ -169,6 +169,7 @@
     <ClCompile Include="createguis.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="globals.h" />
+    <ClCompile Include="gui.cpp" />
     <ClCompile Include="independent-globals.cpp" />
     <ClCompile Include="lib\Proto\DOM.cpp" />
     <ClCompile Include="lib\Proto\Proto.cpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="classes\Age.h" />
     <ClInclude Include="classes\GameObject.h" />
     <ClInclude Include="classes\Technology.h" />
+    <ClInclude Include="gui.h" />
     <ClInclude Include="independent-globals.h" />
     <ClInclude Include="lib\Proto\DOM.h" />
     <ClInclude Include="lib\Proto\Proto.h" />

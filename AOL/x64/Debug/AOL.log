@@ -4,6 +4,7 @@
   createguis.cpp
   Game.cpp
   globals.h
+  gui.cpp
   independent-globals.cpp
   DOM.cpp
   Proto.cpp

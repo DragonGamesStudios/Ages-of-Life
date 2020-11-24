@@ -63,10 +63,22 @@ Game::Game()
 	agui::Image::setImageLoader(new agui::Allegro5ImageLoader);
 	agui::Font::setFontLoader(new agui::Allegro5FontLoader);
 
-	this->graphics_handler = new agui::Allegro5Graphics;
-	this->input_handler = new agui::Allegro5Input;
+	this->graphics_handler = new agui::Allegro5Graphics();
+	this->input_handler = new agui::Allegro5Input();
 
 	agui::Color::setPremultiplyAlpha(true);
+
+
+	this->segoeUI_bold = new FontSet((fs::path)"base" / "fonts" / "segoeuib.ttf", { 18, 24, 27, 36, 56 });
+
+	agui::Widget::setGlobalFont(segoeUI_bold->sizes[18]);
+
+	main_menu_gui_instance = new agui::Gui();
+
+	main_menu_gui_instance->setGraphics(this->graphics_handler);
+	main_menu_gui_instance->setInput(this->input_handler);
+
+	this->main_menu_gui = new MainMenuGui(main_menu_gui_instance);
 
 	/*
 	DOM_element* test_root = new DOM_element();
@@ -126,8 +138,15 @@ Game::~Game()
 		loadbutton.normal,
 		loadbutton.hover;
 
-	//delete input_handler;
-	//delete graphics_handler;
+	main_menu_gui_instance->getTop()->clear();
+	delete main_menu_gui;
+	delete main_menu_gui_instance;
+
+	delete input_handler;
+	delete graphics_handler;
+
+	delete segoeUI_bold;
+	
 
 	std::vector<std::string> deleted_keys = { "ages", "technology" };
 
@@ -170,6 +189,8 @@ void Game::run()
 		if (!rundata.first) {
 			break;
 		}
+
+		this->input_handler->processEvent(proto.last_event);
 
 		if (rundata.second) {
 			double dt = proto.step();
@@ -420,6 +441,11 @@ void Game::draw()
 	}
 
 	this->draw_active_input();
+
+	al_use_transform(&default_trans);
+
+	this->main_menu_gui_instance->logic();
+	this->main_menu_gui_instance->render();
 }
 
 void Game::update(double dt)

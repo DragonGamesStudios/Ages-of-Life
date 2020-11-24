@@ -1,10 +1,9 @@
 #include "lib/Proto/Proto.h"
 //#include "lib/Proto/DOM.h"
 #include "allegrolib.h"
-#include <Agui/Agui.hpp>
-#include <Agui/Backends/Allegro5/Allegro5.hpp>
 #include "classes/GameObject.h"
 #include "classes/Technology.h"
+#include "gui.h"
 
 typedef unsigned int uint;
 typedef const char* ccptr;
@@ -84,6 +83,7 @@ protected:
 	ALLEGRO_BITMAP* AOLicon;
 
 	Font* segoeuib;
+	FontSet* segoeUI_bold;
 
 	Label* name_input_label;
 
@@ -93,6 +93,9 @@ protected:
 	GUI* creatorsgui;
 	GUI* licensesgui;
 	GUI* escapegui;
+
+	agui::Gui* main_menu_gui_instance;
+	MainMenuGui* main_menu_gui;
 
 	agui::Allegro5Graphics* graphics_handler;
 	agui::Allegro5Input* input_handler;

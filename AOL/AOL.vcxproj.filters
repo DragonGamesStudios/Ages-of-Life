@@ -61,6 +61,9 @@
     <ClCompile Include="lib\Proto\DOM.cpp">
       <Filter>Proto</Filter>
     </ClCompile>
+    <ClCompile Include="gui.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allegrolib.h">
@@ -83,6 +86,9 @@
     </ClInclude>
     <ClInclude Include="lib\Proto\DOM.h">
       <Filter>Proto</Filter>
+    </ClInclude>
+    <ClInclude Include="gui.h">
+      <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
