@@ -1,0 +1,16 @@
+{
+    "label-play": "Play",
+    "label-options": "Options",
+    "label-mods": "Mods",
+    "label-updatelog": "Update Log",
+    "label-about": "About",
+    "label-quit": "Quit",
+    "label-creators": "Creators",
+    "label-licenses": "Licenses",
+    "label-load-game": "Load game",
+    "label-create-game": "Create game",
+    "label-name": "Name",
+    "label-create": "Create",
+
+    "loading-guis1": "Loading guis..."
+}
