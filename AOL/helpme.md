@@ -23,7 +23,15 @@ a) TechnologyPath - vector of Technology* used to define which technologies shou
 
 ## Proto
 
-### 1. DOM GUI
+### 1. AOLGuiLibrary
+Inspired by Agui.
+Notes:
+- When an element is maintained by parent, it's automatically added to it.
+- If not, it needs to be added manually.
+- Marker, when automatically generated, has borderbox sizing by default and is draggable.
+- Button sets font to the connected Label. If font is set before conecting, nothing happens.
+
+### 2. DOM GUI (no longer used)
 
 Pretty simmilar to DOM design. Division into elements and
 controlling them with rulesets - for documentation, just look

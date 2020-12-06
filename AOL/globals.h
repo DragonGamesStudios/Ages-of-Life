@@ -83,7 +83,7 @@ protected:
 	ALLEGRO_BITMAP* AOLicon;
 
 	Font* segoeuib;
-	FontSet* segoeUI_bold;
+	agl::Font* segoeUI_bold;
 
 	Label* name_input_label;
 
@@ -94,11 +94,12 @@ protected:
 	GUI* licensesgui;
 	GUI* escapegui;
 
-	agui::Gui* main_menu_gui_instance;
+	agl::GuiGroup* main_gui_group;
+
+	agl::Gui* main_menu_gui_instance;
 	MainMenuGui* main_menu_gui;
 
-	agui::Allegro5Graphics* graphics_handler;
-	agui::Allegro5Input* input_handler;
+	agl::EventHandler* event_handler;
 
 	basedata_struct basedata;
 

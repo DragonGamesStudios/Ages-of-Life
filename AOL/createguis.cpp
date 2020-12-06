@@ -460,7 +460,7 @@ void Game::createguis()
 	}
 	//*/
 
-	script.open_gui(mainmenu);
+	//script.open_gui(mainmenu);
 
 	this->get_displayed_saves();
 }

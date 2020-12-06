@@ -1,0 +1,2 @@
+C:\AOL\AOL\lib\agl\AOLGuiLibrary.pdb
+C:\AOL\AOLGuiLibrary\x64\Debug\AOLGuiLibrary.pdb

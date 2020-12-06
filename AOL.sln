@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.30320.27
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AOL", "AOL\AOL.vcxproj", "{9DAFBFE5-006D-4BD2-810F-081FC0ABAB1B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AOLGuiLibrary", "AOLGuiLibrary\AOLGuiLibrary.vcxproj", "{F97D7B05-9617-4BEF-943C-618AAF2F6253}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{9DAFBFE5-006D-4BD2-810F-081FC0ABAB1B}.Release|x64.Build.0 = Release|x64
 		{9DAFBFE5-006D-4BD2-810F-081FC0ABAB1B}.Release|x86.ActiveCfg = Release|Win32
 		{9DAFBFE5-006D-4BD2-810F-081FC0ABAB1B}.Release|x86.Build.0 = Release|Win32
+		{F97D7B05-9617-4BEF-943C-618AAF2F6253}.Debug|x64.ActiveCfg = Debug|x64
+		{F97D7B05-9617-4BEF-943C-618AAF2F6253}.Debug|x64.Build.0 = Debug|x64
+		{F97D7B05-9617-4BEF-943C-618AAF2F6253}.Debug|x86.ActiveCfg = Debug|Win32
+		{F97D7B05-9617-4BEF-943C-618AAF2F6253}.Debug|x86.Build.0 = Debug|Win32
+		{F97D7B05-9617-4BEF-943C-618AAF2F6253}.Release|x64.ActiveCfg = Release|x64
+		{F97D7B05-9617-4BEF-943C-618AAF2F6253}.Release|x64.Build.0 = Release|x64
+		{F97D7B05-9617-4BEF-943C-618AAF2F6253}.Release|x86.ActiveCfg = Release|Win32
+		{F97D7B05-9617-4BEF-943C-618AAF2F6253}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

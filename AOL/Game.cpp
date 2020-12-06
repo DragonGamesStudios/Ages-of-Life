@@ -7,6 +7,9 @@
 
 Game::Game()
 {
+	// Set non-pre-multiplied alpha
+	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+
 	path_templates.insert({ "base", "base" });
 
 	this->proto = Proto();
@@ -58,27 +61,26 @@ Game::Game()
 		{"age", {}},
 		{"technology", {}}
 	};
+	agl::debug::debug = true;
+	agl::debug::init();
 
-	// Agui setup
-	agui::Image::setImageLoader(new agui::Allegro5ImageLoader);
-	agui::Font::setFontLoader(new agui::Allegro5FontLoader);
+	// Main menu test setup
+	segoeUI_bold = new agl::Font("base/fonts/segoeuib.ttf", { 18, 24, 27, 36, 56 });
+	agl::set_default_font(segoeUI_bold);
 
-	this->graphics_handler = new agui::Allegro5Graphics();
-	this->input_handler = new agui::Allegro5Input();
+	event_handler = new agl::EventHandler();
 
-	agui::Color::setPremultiplyAlpha(true);
+	main_gui_group = new agl::GuiGroup();
 
+	setup_styles();
 
-	this->segoeUI_bold = new FontSet((fs::path)"base" / "fonts" / "segoeuib.ttf", { 18, 24, 27, 36, 56 });
+	main_menu_gui_instance = new agl::Gui();
+	main_gui_group->register_event_handler(event_handler);
+	main_gui_group->add_gui(main_menu_gui_instance);
 
-	agui::Widget::setGlobalFont(segoeUI_bold->sizes[18]);
+	main_gui_group->set_screen_dimensions(screenw, screenh);
 
-	main_menu_gui_instance = new agui::Gui();
-
-	main_menu_gui_instance->setGraphics(this->graphics_handler);
-	main_menu_gui_instance->setInput(this->input_handler);
-
-	this->main_menu_gui = new MainMenuGui(main_menu_gui_instance);
+	main_menu_gui = new MainMenuGui(main_menu_gui_instance, screenw, screenh);
 
 	/*
 	DOM_element* test_root = new DOM_element();
@@ -138,14 +140,17 @@ Game::~Game()
 		loadbutton.normal,
 		loadbutton.hover;
 
-	main_menu_gui_instance->getTop()->clear();
-	delete main_menu_gui;
 	delete main_menu_gui_instance;
 
-	delete input_handler;
-	delete graphics_handler;
-
 	delete segoeUI_bold;
+
+	delete bronze_age_hflow;
+	delete horizontal_flow;
+	delete bronze_age_scrollbar;
+
+	delete main_gui_group;
+
+	delete event_handler;
 	
 
 	std::vector<std::string> deleted_keys = { "ages", "technology" };
@@ -189,8 +194,7 @@ void Game::run()
 		if (!rundata.first) {
 			break;
 		}
-
-		this->input_handler->processEvent(proto.last_event);
+		this->event_handler->handle_event(proto.last_event);
 
 		if (rundata.second) {
 			double dt = proto.step();
@@ -444,8 +448,7 @@ void Game::draw()
 
 	al_use_transform(&default_trans);
 
-	this->main_menu_gui_instance->logic();
-	this->main_menu_gui_instance->render();
+	this->main_gui_group->draw();
 }
 
 void Game::update(double dt)
@@ -461,6 +464,10 @@ void Game::update(double dt)
 		GUI* gui = script.guis[i];
 		gui->update();
 	}
+
+	this->main_gui_group->update();
+
+	this->event_handler->reset_event_queue();
 }
 
 void Game::change_loading_screen(std::string mes, float per)

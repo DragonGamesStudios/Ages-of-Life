@@ -4,6 +4,10 @@
 
 //#define DOM_CONSTRUCTOR
 
+#ifdef DOM_CONSTRUCTOR
+#include "lib/Proto/DOM.h"
+#endif
+
 void AOL_main()
 {
 	bool AOLok = false;
@@ -46,9 +50,9 @@ void AOL_main()
 	}
 }
 
+#ifdef DOM_CONSTRUCTOR
+void DOMGUI_constr()
 
-void DOMGUI_constr();
-/*
 {
 	Proto proto;
 
@@ -61,7 +65,7 @@ void DOMGUI_constr();
 
 	json base_ruleset = {
 		{"padding", "20px"},
-		{"background-color", "#f90"},
+		{"background-color", "rgba(200, 0, 0, 128)"},
 		{"height", "300px"},
 		{"overflow", "scroll"}
 	};
@@ -72,7 +76,7 @@ void DOMGUI_constr();
 
 	json maintest_ruleset = {
 		{"background-color", "#fe4"},
-		{"height", "2000px"},
+		{"height", "200px"},
 		{"background-image", "url(base/graphics/gui/input.png)"},
 		{"background-repeat", "repeat repeat"},
 	};
@@ -111,7 +115,7 @@ void DOMGUI_constr();
 
 	DOM_quit();
 }
-*/
+#endif
 
 int main()
 {

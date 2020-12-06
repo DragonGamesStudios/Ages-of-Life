@@ -1,11 +1,10 @@
 #pragma once
-#include <Agui/Agui.hpp>
-#include <Agui/FlowLayout.hpp>
-#include <Agui/Widgets/Button/Button.hpp>
-#include <Agui/Widgets/ScrollPane/ScrollPane.hpp>
-#include <Agui/Widgets/Frame/Frame.hpp>
-#include <Agui/Widgets/ListBox/ListBox.hpp>
-#include <Agui/Backends/Allegro5/Allegro5.hpp>
+
+#include <AOLGuiLibrary.h>
+#include <builtins/Flow.h>
+#include <builtins/Scrollbar.h>
+#include <builtins/ScrollBlock.h>
+#include <builtins/button.h>
 
 #include <map>
 #include <set>
@@ -16,46 +15,49 @@ namespace fs = std::filesystem;
 
 // Gui helpers
 
-struct FontSet
-{
-	FontSet(fs::path path, std::set<int> sizes);
-	~FontSet();
-
-	std::map<int, agui::Font*> sizes = {};
-};
-
-class VerticalFlow : public agui::FlowLayout
-{
-public:
-	VerticalFlow();
-private:
-	virtual void LayoutChildren();
-};
-
-// In-game guis
-
 class TwoPanelGui
 {
-protected:
-	// Gui
-	agui::Gui* gui_ptr;
-	agui::Frame main_frame;
-	agui::FlowLayout main_flow;
+private:
+	agl::Gui* gui_ptr;
+
+	agl::Block main_frame;
+	agl::builtins::Flow main_flow;
 
 	// Left panel
-	agui::ScrollPane menu_options_scrollpane;
+	agl::builtins::ScrollBlock options_menu;
+	agl::builtins::Flow options_flow;
+	
+	agl::builtins::Scrollbar options_scrollbar;
 
 	// Right panel
-	agui::ScrollPane content_scrollpane;
+	agl::Block content_panel;
+
+	int left_width;
+	int right_width;
+
 public:
-	TwoPanelGui(agui::Gui* gui_instance, int side,
-		int preferred_left_width=-1, int preferred_right_width=-1);
+	TwoPanelGui(
+		agl::Gui* gui, int side,
+		int preferred_left_width = -1, int preferred_right_width = -1
+	);
+
+	void create_buttons(
+		std::vector<std::string> btns,
+		std::vector<agl::builtins::Button*> buttons
+	);
 };
 
 class MainMenuGui : public TwoPanelGui
 {
 private:
-	agui::Button menu_buttons[5];
+	agl::builtins::Button main_menu_buttons[6];
 public:
-	MainMenuGui(agui::Gui* gui_instance);
+	MainMenuGui(agl::Gui* gui, int screenw, int screenh);
 };
+
+extern agl::Style* horizontal_flow;
+extern agl::Style* bronze_age_hflow;
+extern agl::Style* bronze_age_scrollbar;
+extern agl::Style* bronze_age_menubutton;
+
+void setup_styles();

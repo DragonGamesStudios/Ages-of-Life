@@ -1,108 +1,139 @@
 #pragma once
 #include "gui.h"
-// tEST
-FontSet::FontSet(fs::path path, std::set<int> sizes)
-{
-	std::string str_path = path.string();
-	for (auto const& size : sizes)
-	{
-		this->sizes.insert({ size, agui::Font::load(str_path, size) });
-	}
-}
-
-FontSet::~FontSet()
-{
-	for (auto font : sizes)
-	{
-		delete font.second;
-	}
-}
-
-VerticalFlow::VerticalFlow()
-{
-}
-
-void VerticalFlow::LayoutChildren()
-{
-	int current_y = 0;
-
-	for (agui::WidgetArray::iterator it = this->getChildBegin(); it != this->getChildEnd(); it++)
-	{
-		if (!(*it)->isVisible() && isFilteringVisibility())
-		{
-			continue;
-		}
-
-		(*it)->setLocation(0, current_y);
-		current_y += (*it)->getHeight();
-	}
-}
 
 
 // Ingame guis
 
-TwoPanelGui::TwoPanelGui(agui::Gui* gui_instance, int side,	int preferred_left_width, int preferred_right_width)
+agl::Style* horizontal_flow;
+agl::Style* bronze_age_hflow;
+agl::Style* bronze_age_scrollbar;
+agl::Style* bronze_age_menubutton;
+
+TwoPanelGui::TwoPanelGui(
+	agl::Gui* gui,
+	int side,
+	int preferred_left_width,
+	int preferred_right_width
+)
 {
 	// Setup widths
-	int left_width = preferred_left_width;
+	left_width = preferred_left_width;
 	if (preferred_left_width == -1)
 		left_width = side / 3;
 
-	int right_width = preferred_right_width;
+	right_width = preferred_right_width;
 	if (preferred_right_width == -1)
 		right_width = side;
 
 	// Initialize gui
-	gui_ptr = gui_instance;
+	gui_ptr = gui;
 	gui_ptr->add(&main_frame);
 
-	// Calculate magins
-	int horizontal_margins = main_flow.getMargin(agui::SIDE_LEFT) + main_flow.getMargin(agui::SIDE_RIGHT)
-		//+ menu_options_scrollpane.getMargin(agui::SIDE_RIGHT)
-		+ menu_options_scrollpane.getMargin(agui::SIDE_LEFT)
-		+ content_scrollpane.getMargin(agui::SIDE_RIGHT)
-		//+ content_scrollpane.getMargin(agui::SIDE_LEFT)
-		+ main_frame.getLeftMargin() + main_frame.getRightMargin();
-
-	int vertical_margins = main_flow.getMargin(agui::SIDE_TOP) + main_flow.getMargin(agui::SIDE_BOTTOM)
-		+ menu_options_scrollpane.getMargin(agui::SIDE_TOP) + menu_options_scrollpane.getMargin(agui::SIDE_BOTTOM)
-		+ main_frame.getTopMargin() + main_frame.getBottomMargin();
-
 	// Create gui base
-	main_frame.setSize(right_width + left_width + 5 + horizontal_margins, side + vertical_margins);
-	main_frame.setFontColor(agui::Color(0, 0, 0));
+	main_frame.set_size(right_width + left_width + 4, side);
+	main_frame.set_paddings(2, 2, 2, 2);
+	main_frame.set_background_color(agl::Color(93, 35, 0));
 
 	main_frame.add(&main_flow);
 
-	main_flow.setLocation(0, 0);
-	main_flow.setHorizontalSpacing(0);
+	main_flow.set_size(right_width + left_width + 4, side);
+	//main_flow.set_background_color(agl::Color(133, 75, 20));
+	//main_flow.set_main_axis_spacing(2);
 
-	// Left pane
+	main_flow.apply(bronze_age_hflow);
 
-	
+	// Left panel
+	main_flow.add(&options_menu);
 
-	main_flow.add(&menu_options_scrollpane);
-	menu_options_scrollpane.setSize(left_width, side);
-	menu_options_scrollpane.setHScrollPolicy(agui::SHOW_NEVER);
+	options_menu.set_size(left_width - 12, side - 2);
+	options_menu.set_paddings(1, 1, 1, 1);
+	options_menu.set_background_color(agl::Color(133, 75, 20));
 
-	main_flow.add(&content_scrollpane);
+	options_menu.connect_vscrollbar(&options_scrollbar);
+	options_menu.connect_children_container(&options_flow);
 
-	content_scrollpane.setSize(right_width, side);
+	options_menu.direct_add(&options_flow);
+
+	options_flow.set_size(left_width - 10, 0);
+	options_flow.set_single_subflow(true);
+	options_flow.set_main_axis(AGL_VERTICAL);
+	options_flow.set_background_color(agl::Color(0, 0, 0, 0));
+
+	// Scrollbar
+
+	main_flow.add(&options_scrollbar);
+
+	options_scrollbar.set_size(10, side);
+	options_scrollbar.apply(bronze_age_scrollbar);
+	options_scrollbar.set_step(10);
 }
 
-MainMenuGui::MainMenuGui(agui::Gui* gui_instance)
-	: TwoPanelGui(gui_instance, 750)
+void TwoPanelGui::create_buttons(
+	std::vector<std::string> btns,
+	std::vector<agl::builtins::Button*> buttons
+)
 {
-	const int button_amount = 5;
-	const int button_height = 50;
-
-	std::string button_texts[button_amount] = { "Play", "Options", "License & Creators", "update log", "Quit" };
-	for (int i = 0; i < button_amount; i++)
+	for (int i = 0; i < btns.size(); i++)
 	{
-		menu_buttons[i].setText(button_texts[i]);
-		menu_buttons[i].setSize(250, button_height);
-		menu_buttons[i].setLocation(0, i * button_height);
+		options_flow.add(buttons[i]);
 
-		menu_options_scrollpane.add(&menu_buttons[i]);
+		buttons[i]->set_size(left_width - 10, 60);
+		buttons[i]->apply(bronze_age_menubutton);
+		buttons[i]->create_label();
+		buttons[i]->set_font(agl::loaded_fonts["default"]);
+		buttons[i]->set_text_size(24);
+		buttons[i]->set_text_color(agl::Color(255, 210, 103));
+		buttons[i]->set_text(btns[i]);
 	}
+
+	options_flow.resize_to_content();
+}
+
+MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh)
+	: TwoPanelGui(gui, screenh, -1, screenw - screenh / 3)
+{
+	std::vector<agl::builtins::Button*> btn_ptrs;
+	for (int i = 0; i < 6; i++)
+		btn_ptrs.push_back(&main_menu_buttons[i]);
+	
+	std::vector<std::string> btn_texts = {
+		"Play",
+		"Options",
+		"Licenses",
+		"Creators",
+		"Mods",
+		"Quit"
+	};
+
+	create_buttons(btn_texts, btn_ptrs);
+}
+
+void setup_styles()
+{
+	horizontal_flow = new agl::Style("horizontal-flow");
+	bronze_age_hflow = new agl::Style("bronze-age-hflow");
+	bronze_age_scrollbar = new agl::Style("bronze-age-scrollbar");
+	bronze_age_menubutton = new agl::Style("bronze-age-menubutton");
+
+	horizontal_flow->set_value("main_axis_spacing", 2);
+	horizontal_flow->set_value("main_axis", AGL_HORIZONTAL);
+
+	bronze_age_hflow->apply(horizontal_flow);
+	bronze_age_hflow->set_value("background_color", agl::Color(123, 65, 10));
+
+	bronze_age_scrollbar->set_value("background_color", agl::Color(93, 35, 0));
+	bronze_age_scrollbar->set_value("marker", AGL_MARKER_CREATE);
+
+	bronze_age_menubutton->set_value("background_color", agl::Color(163, 105, 70));
+	bronze_age_menubutton->set_value("background_color_hover", agl::Color(153, 95, 60));
+	bronze_age_menubutton->set_value("background_color_click", agl::Color(143, 85, 50));
+	bronze_age_menubutton->set_value("sizing", AGL_SIZING_BORDERBOX);
+	bronze_age_menubutton->set_value("border_left", 5);
+	bronze_age_menubutton->set_value("border_right", 5);
+	bronze_age_menubutton->set_value("border_top", 5);
+	bronze_age_menubutton->set_value("border_bottom", 5);
+	bronze_age_menubutton->set_value("border_color_left", agl::Color(168, 110, 75));
+	bronze_age_menubutton->set_value("border_color_right", agl::Color(158, 100, 65));
+	bronze_age_menubutton->set_value("border_color_top", agl::Color(168, 110, 75));
+	bronze_age_menubutton->set_value("border_color_bottom", agl::Color(158, 100, 65));
 }

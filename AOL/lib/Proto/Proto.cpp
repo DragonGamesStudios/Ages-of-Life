@@ -743,15 +743,6 @@ void Font::loadSizes(const char* filepath, int sizes[], int sizes_size)
 	}
 }
 
-Label::Label()
-{
-	this->defsize = 0;
-	this->height = 0;
-	this->is_dict = false;
-	this->offset = 0;
-	this->width = 0;
-}
-
 Label::Label(std::string text, DrawData dData, std::map<std::string, ALLEGRO_COLOR> colormap, std::map<std::string, Font*> fontmap, std::string color, std::string font, int fontsize, int offset)
 {
 	this->data = dData;
