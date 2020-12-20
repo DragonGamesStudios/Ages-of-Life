@@ -1,4 +1,4 @@
-#include "builtins/ImageBlock.h"
+#include "agl/builtins/ImageBlock.h"
 
 namespace agl::builtins
 {
@@ -9,6 +9,7 @@ namespace agl::builtins
 		scaling = AGL_SCALING_NONE;
 		image = 0;
 		display_box = AGL_SIZING_BORDERBOX;
+		shader = NULL;
 	}
 
 	void ImageBlock::set_image(Image* _image)
@@ -116,6 +117,10 @@ namespace agl::builtins
 
 		if (image)
 		{
+			al_use_shader(shader ? shader->shader : nullptr);
+			
+			if (shader_setup_fn) shader_setup_fn();
+
 			Point display_point = base_location + image_offset;
 
 			switch (display_box)
@@ -145,6 +150,8 @@ namespace agl::builtins
 				desired_width, desired_height,
 				0
 			);
+
+			al_use_shader(NULL);
 		}
 	}
 
@@ -161,6 +168,16 @@ namespace agl::builtins
 
 		if (style->values["image_scaling"].source)
 			set_scaling((char)std::get<int>(style->values["image_scaling"].value));
+	}
+
+	void ImageBlock::set_shader(Shader* _shader)
+	{
+		shader = _shader;
+	}
+
+	void ImageBlock::set_shader_setup(std::function<void()> fn)
+	{
+		shader_setup_fn = fn;
 	}
 
 }

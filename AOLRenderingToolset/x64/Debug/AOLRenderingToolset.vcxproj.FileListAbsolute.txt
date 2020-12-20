@@ -1,0 +1,2 @@
+C:\AOL\x64\Debug\AOLRenderingToolset.pdb
+C:\AOL\AOLRenderingToolset\x64\Debug\AOLRenderingToolset.pdb

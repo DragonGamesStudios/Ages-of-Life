@@ -129,6 +129,8 @@ int main()
 	al_install_mouse();
 	al_install_keyboard();
 
+	al_set_new_display_flags(ALLEGRO_PROGRAMMABLE_PIPELINE | ALLEGRO_OPENGL);
+
 #ifndef	DOM_CONSTRUCTOR // DOM gui system testing
 	AOL_main();
 #else

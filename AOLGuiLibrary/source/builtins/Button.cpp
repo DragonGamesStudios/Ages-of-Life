@@ -1,11 +1,11 @@
-#include "builtins\Button.h"
-#include "events.h"
+#include "agl/builtins\Button.h"
+#include "agl/events.h"
 
 namespace agl::builtins
 {
 	void Button::dispath_events(Event e)
 	{
-		if (e.source == this)
+		if (e.source == this || e.source == label)
 			switch (e.type)
 			{
 			case AGL_EVENT_MOUSE_PRESSED:
@@ -42,6 +42,17 @@ namespace agl::builtins
 			default:
 				return;
 			}
+	}
+
+	void Button::on_label_text_changed_relocate(Event e)
+	{
+		if (e.type == AGL_EVENT_TEXT_CHANGED && e.source == label && maintain_label)
+		{
+			label->set_location(
+				(get_inner_width() - label->get_width()) / 2,
+				(get_inner_height() - label->get_height()) / 2
+			);
+		}
 	}
 
 	Button::Button() : ImageBlock()
@@ -110,11 +121,16 @@ namespace agl::builtins
 	void Button::create_label()
 	{
 		Label* _label = new Label();
+		_label->resize_always();
 		
 		connect_label(_label);
 
 		add(_label);
 		maintain_label = true;
+
+		add_event_function(
+			std::bind(&Button::on_label_text_changed_relocate, this, std::placeholders::_1)
+		);
 	}
 
 	void Button::set_text(std::string text)
@@ -168,6 +184,17 @@ namespace agl::builtins
 
 		if (label && maintain_label)
 			label->set_size(get_inner_width(), get_inner_height());
+	}
+
+	void Button::apply_to_label(Style* _style)
+	{
+		if (label)
+			label->apply(_style);
+	}
+
+	Label* Button::get_label()
+	{
+		return label;
 	}
 
 }

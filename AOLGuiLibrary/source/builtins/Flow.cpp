@@ -1,6 +1,6 @@
 
-#include "builtins/Flow.h"
-#include "events.h"
+#include "agl/builtins/Flow.h"
+#include "agl/events.h"
 
 namespace agl::builtins
 {
@@ -88,14 +88,22 @@ namespace agl::builtins
 				int child_main_axis_size = child->get_width(),
 					child_second_axis_size = child->get_height();
 
+				if (main_axis_direction == AGL_VERTICAL)
+					std::swap(child_main_axis_size, child_second_axis_size);
+
 				int child_x = main_axis_base + current_main_axis,
-					child_y = current_second_axis;
+					child_y = second_axis_base + current_second_axis;
+
+				if (single)
+				{
+					if (second_axis_align == AGL_ALIGN_CENTER)
+						child_y = (second_axis_max_size - child_second_axis_size) / 2;
+					else if (second_axis_align == AGL_ALIGN_END)
+						child_y = second_axis_max_size - child_second_axis_size;
+				}
 
 				if (main_axis_direction == AGL_VERTICAL)
-				{
-					std::swap(child_main_axis_size, child_second_axis_size);
 					std::swap(child_x, child_y);
-				}
 
 				child->set_location(child_x, child_y);
 				current_main_axis += child_main_axis_size + main_axis_spacing;

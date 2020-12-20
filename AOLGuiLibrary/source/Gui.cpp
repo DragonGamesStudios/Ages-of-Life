@@ -1,4 +1,4 @@
-#include "Gui.h"
+#include "agl/Gui.h"
 
 namespace agl
 {
@@ -13,10 +13,12 @@ namespace agl
 		children.push_back(new_child);
 	}
 
-	void Gui::update(Block** event_receiver, Point mouse_location)
+	void Gui::update(Block** event_receiver, Block** focus_listener,
+		Point mouse_location)
 	{
 		for (auto& child : this->children)
-			child->update(mouse_location, Point(0, 0), event_receiver);
+			child->update(mouse_location, Point(0, 0),
+				event_receiver, focus_listener);
 	}
 
 	void Gui::draw()

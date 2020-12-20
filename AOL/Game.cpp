@@ -4,6 +4,7 @@
 #include "classes/Technology.h"
 #include <atlstr.h>
 #include <lua.hpp>
+#include <agl/events.h>
 
 Game::Game()
 {
@@ -17,13 +18,53 @@ Game::Game()
 
 	AOLicon = al_load_bitmap("base/graphics/AOLIcon.png");
 
-	proto.createWindow(1900, 1180, AOLicon, "Ages of Life", 0);
+	event_manager = new art::MainEventManager(60);
+	keyboard_manager = new art::KeyboardEventManager;
+	display = new art::Display(1900, 1180, "Ages of Life");
+	event_manager->add_manager(keyboard_manager);
+
+	event_manager->connect_display(display);
+	event_manager->enable_mouse();
+	event_manager->enable_keyboard();
+
+	shortcuts = {
+		{
+			{ALLEGRO_KEY_F3, ALLEGRO_KEYMOD_CTRL}
+		}
+	};
+
+	shortcut_functions = {
+		{
+			std::bind(&Game::enable_debug, this, std::placeholders::_1)
+		}
+	};
+
+	base_fs = new art::FileSystem;
+	dict = new art::Dictionary;
+	dict->set_filesystem(base_fs);
+	dict->set_translation_dir_path("base/locale");
+	dict->set_active_language("en");
+
+	renderer = new art::Renderer;
+	gui_layer = new art::Layer(0xff);
+
+	renderer->add_layer(gui_layer);
+
+	for (int i = 0; i < shortcuts.size(); i++)
+	{
+		for (int j = 0; j < shortcuts[i].size(); j++)
+		{
+			keyboard_manager->register_shortcut(
+				shortcuts[i][j].first, shortcuts[i][j].second,
+				shortcut_functions[i][j]
+			);
+		}
+	}
 
 	proto.setAppDataDir("AOL");
 
-	auto dims = proto.getWindowDimensions();
-	screenw = dims.first;
-	screenh = dims.second;
+	screenw = display->get_width();
+	screenh = display->get_height();
 
 	const int szm = 5;
 	int sizes[szm] = { 18, 24, 27, 36, 56 };
@@ -33,17 +74,6 @@ Game::Game()
 	this->lastmwpos = 0;
 
 	this->proto.setInputCallback(std::bind(&Script::keyinput, &this->script, std::placeholders::_1, std::placeholders::_2));
-
-	this->loadbutton.normal = new Image("base/graphics/icons/load-arrow/normal.png", DrawData{});
-	this->loadbutton.hover = new Image("base/graphics/icons/load-arrow/hover.png", DrawData{});
-
-	this->displayed_save_scale = {};
-
-	this->logo = new Image("base/graphics/promethean-logo.png", DrawData{});
-
-	spair sc = proto.getScale(this->logo, 25 * screenw / 32, 100);
-	this->logo->setPosition((screenw - this->logo->width) / 2 - 65 * sc.first, screenh / 8);
-	this->logo->setScale(sc.first, sc.first);
 
 	this->playing = false;
 
@@ -61,26 +91,8 @@ Game::Game()
 		{"age", {}},
 		{"technology", {}}
 	};
-	agl::debug::debug = true;
-	agl::debug::init();
 
-	// Main menu test setup
-	segoeUI_bold = new agl::Font("base/fonts/segoeuib.ttf", { 18, 24, 27, 36, 56 });
-	agl::set_default_font(segoeUI_bold);
-
-	event_handler = new agl::EventHandler();
-
-	main_gui_group = new agl::GuiGroup();
-
-	setup_styles();
-
-	main_menu_gui_instance = new agl::Gui();
-	main_gui_group->register_event_handler(event_handler);
-	main_gui_group->add_gui(main_menu_gui_instance);
-
-	main_gui_group->set_screen_dimensions(screenw, screenh);
-
-	main_menu_gui = new MainMenuGui(main_menu_gui_instance, screenw, screenh);
+	initialize_agl();
 
 	/*
 	DOM_element* test_root = new DOM_element();
@@ -119,27 +131,6 @@ Game::Game()
 
 Game::~Game()
 {
-	delete
-		mainmenuBg,
-		menubutton,
-		defaultguiImage,
-		closebutton,
-		inputbutton,
-		logo,
-		segoeuib,
-		name_input_label;
-
-	delete
-		mainmenu,
-		playgui,
-		aboutgui,
-		creatorsgui,
-		licensesgui;
-
-	delete
-		loadbutton.normal,
-		loadbutton.hover;
-
 	delete main_menu_gui_instance;
 
 	delete segoeUI_bold;
@@ -148,9 +139,16 @@ Game::~Game()
 	delete horizontal_flow;
 	delete bronze_age_scrollbar;
 
-	delete main_gui_group;
+	delete renderer;
 
 	delete event_handler;
+
+	delete guassian_blur;
+	delete main_menu_background;
+
+	delete event_manager;
+	delete keyboard_manager;
+	delete display;
 	
 
 	std::vector<std::string> deleted_keys = { "ages", "technology" };
@@ -166,6 +164,35 @@ Game::~Game()
 
 	//DOM_quit();
 }
+
+void Game::enable_debug(agl::Event e)
+{
+	agl::debug::debug = !agl::debug::debug;
+}
+
+void Game::shortcut_capture(agl::Event e)
+{
+	if (e.type == AGL_EVENT_CHAR_INPUT && e.source->get_focus())
+	{
+		agl::Block* parent = e.source->get_parent();
+		int opt = parent->get_child_index(e.source) - 1;
+		int cat = (parent->get_parent()->get_child_index(parent) - 1) / 2;
+
+		int mods = e.mods & keyboard_manager->supported_mods;
+
+		agl::builtins::Label* lbl = (agl::builtins::Label*)e.source->get_child_by_index(0);
+
+		lbl->set_text(shortcut_to_string(e.keycode, mods));
+		auto s = shortcuts[cat][opt];
+
+		keyboard_manager->remove_shortcut(s.first, s.second);
+		keyboard_manager->register_shortcut(e.keycode, mods, shortcut_functions[cat][opt]);
+		shortcuts[cat][opt] = std::make_pair(e.keycode, mods);
+
+		e.source->set_focus(false);
+	}
+}
+
 
 void Game::run()
 {
@@ -190,21 +217,19 @@ void Game::run()
 
 	this->menu = true;
 	while (true) {
-		std::pair <bool, bool> rundata = proto.update();
-		if (!rundata.first) {
+		ALLEGRO_EVENT e = event_manager->get_event();
+		if (event_manager->window_closed()) {
 			break;
 		}
-		this->event_handler->handle_event(proto.last_event);
+		this->event_handler->handle_event(e);
 
-		if (rundata.second) {
-			double dt = proto.step();
-			update(dt);
+		if (event_manager->clock_ticked()) {
+			update(event_manager->get_delta());
 
 			al_clear_to_color(black);
 
 			draw();
 
-			proto.finish_frame();
 			al_flip_display();
 		}
 	}
@@ -212,20 +237,15 @@ void Game::run()
 
 void Game::close()
 {
-	proto.close();
+	event_manager->close();
 }
 
 void Game::scroll(int amt)
 {
-	if (script.get_gui_opened(licensesgui)) {
-		licensesgui->panels[0].setScroll(licensesgui->panels[0].scroll - amt*100);
-	}
 }
 
 void Game::close_all_menu_guis()
 {
-	script.close_gui(aboutgui);
-	script.close_gui(playgui);
 }
 
 void Game::draw_active_input()
@@ -277,7 +297,7 @@ void Game::save_basedata()
 
 void Game::get_displayed_saves()
 {
-	ALLEGRO_COLOR menutxtcol = al_map_rgb(238, 226, 93);
+	/*ALLEGRO_COLOR menutxtcol = al_map_rgb(238, 226, 93);
 
 	std::vector<GUIElement> new_elements;
 	lblvec new_labels;
@@ -316,11 +336,12 @@ void Game::get_displayed_saves()
 	std::copy(new_labels.begin(), new_labels.end(), std::back_inserter(this->playgui->panels[1].labels));
 	std::copy(new_buttons.begin(), new_buttons.end(), std::back_inserter(this->playgui->panels[1].buttons));
 	std::copy(new_elements.begin(), new_elements.end(), std::back_inserter(this->playgui->panels[1].elements));
+	*/
 }
 
 void Game::create_save()
 {
-	std::string name = this->name_input_label->text;
+	/*std::string name = this->name_input_label->text;
 
 	if (!name.empty()) {
 		if (script.validate_savename(name)) {
@@ -333,7 +354,7 @@ void Game::create_save()
 
 	script.activate_input();
 	this->name_input_label->setTextChunk("");
-	this->get_displayed_saves();
+	this->get_displayed_saves();*/
 }
 
 void Game::delete_save(int index)
@@ -365,6 +386,7 @@ void Game::load_prototypes()
 
 void Game::apply_changes()
 {
+	
 }
 
 void Game::initialize_prototypes()
@@ -434,11 +456,22 @@ void Game::quit()
 	al_destroy_bitmap(AOLicon);
 }
 
+void Game::initialize_agl()
+{
+	agl::debug::init();
+
+	segoeUI_bold = new agl::Font("base/fonts/segoeuib.ttf", { 18, 24, 27, 36, 56 });
+	agl::set_default_font(segoeUI_bold);
+
+	event_handler = new agl::Allegro5EventHandler();
+
+	main_gui_group = new agl::GuiGroup();
+
+	setup_styles();
+}
+
 void Game::draw()
 {
-	if (menu) {
-		mainmenuBg->draw();
-	}
 
 	for (std::vector<GUI*>::iterator gui = script.guis.begin(); gui != script.guis.end(); gui++) {
 		(*gui)->draw();
@@ -448,7 +481,7 @@ void Game::draw()
 
 	al_use_transform(&default_trans);
 
-	this->main_gui_group->draw();
+	gui_layer->draw();
 }
 
 void Game::update(double dt)
@@ -465,7 +498,7 @@ void Game::update(double dt)
 		gui->update();
 	}
 
-	this->main_gui_group->update();
+	gui_layer->update(dt);
 
 	this->event_handler->reset_event_queue();
 }
@@ -476,7 +509,7 @@ void Game::change_loading_screen(std::string mes, float per)
 	ALLEGRO_TRANSFORM def;
 	al_identity_transform(&def);
 	int py = 3 * screenh / 4;
-	this->logo->draw();
+	//this->logo->draw();
 	al_use_transform(&def);
 	std::string message = mes + " " + std::to_string(int(100 * per)) + "%";
 	int px = screenw / 2 - this->segoeuib->getWidth(24, message) / 2;
@@ -494,7 +527,7 @@ void Game::change_loading_screen(std::string mes)
 	ALLEGRO_TRANSFORM def;
 	al_identity_transform(&def);
 	int py = 3 * screenh / 4;
-	this->logo->draw();
+	//this->logo->draw();
 	al_use_transform(&def);
 	int px = screenw / 2 - this->segoeuib->getWidth(24, mes) / 2;
 	al_draw_text(this->segoeuib->fonts[24], white, px, py - 50, 0, mes.c_str());

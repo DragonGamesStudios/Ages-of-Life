@@ -1,5 +1,5 @@
-#include "Block.h"
-#include "events.h"
+#include "agl/Block.h"
+#include "agl/events.h"
 #include <allegro5/allegro_primitives.h>
 
 #include <algorithm>
@@ -17,6 +17,8 @@ namespace agl
 		is_dragged = false;
 		scroll_detection = false;
 		parent_scroll_detection = false;
+		focus = false;
+		detects_focus = false;
 	}
 
 	Block::~Block()
@@ -158,12 +160,20 @@ namespace agl
 			set_size(get_box_width(sizing), get_box_height(sizing));
 	}
 
+	void Block::set_visible(bool visible)
+	{
+		visibility = visible;
+	}
+
 	void Block::add(Block* block)
 	{
 		this->children.push_back(block);
 		block->set_parent(this);
 		if (parent_scroll_detection || scroll_detection)
 			block->enable_parent_scroll_detection(true);
+
+		if (detects_focus)
+			add_event_source(block);
 	}
 
 	void Block::apply(Style* applied_style)
@@ -345,15 +355,6 @@ namespace agl
 			4,
 			box.border_colors.top.calculated
 		);
-
-		if (this->direct_hover && debug::debug)
-			al_draw_filled_rectangle(
-				topleft.x,
-				topleft.y,
-				bottomright.x,
-				bottomright.y,
-				debug::highlight.calculated
-			);
 	}
 
 	void Block::draw_block(Point base_location)
@@ -376,6 +377,23 @@ namespace agl
 			is_dragged = false;
 	}
 
+	void Block::on_press_focus(Event e)
+	{
+		if ((e.source == this || (e.source->parent && e.source->parent == this))
+			&& e.type == AGL_EVENT_MOUSE_PRESSED)
+			if (!focus)
+			{
+				focus = true;
+				raise_event({ .type = AGL_EVENT_BLOCK_FOCUS_GAINED, .source = this });
+			}
+			else
+				if (!hover)
+				{
+					focus = false;
+					raise_event({ .type = AGL_EVENT_BLOCK_FOCUS_LOST, .source = this });
+				}
+	}
+
 	void Block::draw(Point base_location)
 	{
 		if (visibility)
@@ -392,6 +410,16 @@ namespace agl
 				base_location.y + location.y + box.margin.top + box.border.top + box.padding.top
 			);
 
+
+			if (this->direct_hover && debug::debug)
+				al_draw_filled_rectangle(
+					base_location.x + location.x + box.margin.left,
+					base_location.y + location.y + box.margin.top,
+					base_location.x + location.x + box.margin.left + get_width("cpb"),
+					base_location.y + location.y + box.margin.top + get_height("cpb"),
+					debug::highlight.calculated
+				);
+
 			set_up_clipping(clip_base, &clip_x, &clip_y, &clip_w, &clip_h);
 
 			draw_block(clip_base);
@@ -401,10 +429,15 @@ namespace agl
 	}
 
 	void Block::update(
-		Point mouse_location, Point base_location, Block** event_receiver, bool force_fail
+		Point mouse_location, Point base_location, Block** event_receiver,
+		Block** focus_listener, bool force_fail
 	)
 	{
+		if (!visibility) return;
 		if (*event_receiver && (*event_receiver)->get_dragged()) return;
+
+		if (focus)
+			*focus_listener = this;
 
 		bool previous_hover = this->hover;
 		direct_hover = false;
@@ -454,7 +487,7 @@ namespace agl
 						base_location.y + this->location.y + this->box.margin.top
 						+ this->box.border.top + this->box.padding.top
 					),
-					event_receiver,
+					event_receiver, focus_listener,
 					previous_hover && !this->hover
 				);
 			}
@@ -513,22 +546,24 @@ namespace agl
 		direct_hover = value;
 	}
 
-	int Block::get_total_width() const
+	int Block::get_total_width(bool include_invisible, bool consider_width) const
 	{
-		int total_width = this->get_width("c");
+		int total_width = consider_width * this->get_width("cp");
 		for (const auto& child : children)
-			total_width = std::max(total_width, (int)child->get_location().x + child->get_width());
+			if (include_invisible || child->visibility)
+				total_width = std::max(total_width, (int)child->get_location().x + child->get_width());
 
-		return std::max(total_width, this->get_width("cp"));
+		return total_width;
 	}
 	
-	int Block::get_total_height() const
+	int Block::get_total_height(bool include_invisible, bool consider_height) const
 	{
-		int total_height = this->get_height("c");
+		int total_height = consider_height * this->get_height("cp");
 		for (const auto& child : children)
-			total_height = std::max(total_height, (int)child->get_location().y + child->get_height());
+			if (include_invisible || child->visibility)
+				total_height = std::max(total_height, (int)child->get_location().y + child->get_height());
 
-		return std::max(total_height, this->get_height("cp"));
+		return total_height;
 	}
 
 	void Block::set_sizing(char _sizing)
@@ -542,9 +577,32 @@ namespace agl
 		add_event_function(std::bind(&Block::on_release_drag, this, std::placeholders::_1));
 	}
 
+	void Block::enable_focus()
+	{
+		add_event_function(
+			std::bind(&Block::on_press_focus, this, std::placeholders::_1)
+		);
+		detects_focus = true;
+	}
+
 	bool Block::get_dragged() const
 	{
 		return is_dragged;
+	}
+
+	bool Block::get_focus() const
+	{
+		return focus;
+	}
+
+	void Block::set_focus(bool val)
+	{
+		bool rec = focus;
+		focus = val;
+		if (rec && !focus)
+			raise_event({ .type = AGL_EVENT_BLOCK_FOCUS_LOST, .source = this });
+		else if (!rec && focus)
+			raise_event({ .type = AGL_EVENT_BLOCK_FOCUS_GAINED, .source = this });
 	}
 
 	bool Block::detects_scroll() const
@@ -640,6 +698,48 @@ namespace agl
 		return get_height(boxes);
 	}
 
+	void Block::bring_to_top(Block* child)
+	{
+		auto it = std::find(children.begin(), children.end(), child);
+
+		if (it != children.end())
+		{
+			children.erase(it);
+			children.push_back(child);
+		}
+	}
+
+	int Block::get_child_index(Block* child)
+	{
+		auto it = std::find(children.begin(), children.end(), child);
+
+		if (it != children.end())
+			return it - children.begin();
+
+		return -1;
+	}
+
+	Block* Block::get_child_by_index(int child)
+	{
+		return children[child];
+	}
+
+	int Block::get_children_amount() const
+	{
+		return children.size();
+	}
+
+	Block& Block::operator<<(Block& block)
+	{
+		add(&block);
+		return *this;
+	}
+
+
+	void Block::set_bottom_margin(int bottom)
+	{
+		box.margin.bottom = bottom;
+	}
 
 	void Block::set_borders(int top, int right, int bottom, int left)
 	{
@@ -647,6 +747,11 @@ namespace agl
 		box.border.right = right;
 		box.border.bottom = bottom;
 		box.border.left = left;
+	}
+
+	void Block::set_borders(BoxColors borders)
+	{
+		box.border_colors = borders;
 	}
 
 	void Block::set_borders(Color border_col)

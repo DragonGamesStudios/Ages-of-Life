@@ -7,6 +7,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AOL", "AOL\AOL.vcxproj", "{
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AOLGuiLibrary", "AOLGuiLibrary\AOLGuiLibrary.vcxproj", "{F97D7B05-9617-4BEF-943C-618AAF2F6253}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AOLRenderingToolset", "AOLRenderingToolset\AOLRenderingToolset.vcxproj", "{520E42C1-33BF-42AD-8C45-21D9A9CECB86}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AGLAllegro5Backend", "AGLAllegro5Backend\AGLAllegro5Backend.vcxproj", "{8B914A9F-21AE-47C9-A415-71B0A38A408D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +35,22 @@ Global
 		{F97D7B05-9617-4BEF-943C-618AAF2F6253}.Release|x64.Build.0 = Release|x64
 		{F97D7B05-9617-4BEF-943C-618AAF2F6253}.Release|x86.ActiveCfg = Release|Win32
 		{F97D7B05-9617-4BEF-943C-618AAF2F6253}.Release|x86.Build.0 = Release|Win32
+		{520E42C1-33BF-42AD-8C45-21D9A9CECB86}.Debug|x64.ActiveCfg = Debug|x64
+		{520E42C1-33BF-42AD-8C45-21D9A9CECB86}.Debug|x64.Build.0 = Debug|x64
+		{520E42C1-33BF-42AD-8C45-21D9A9CECB86}.Debug|x86.ActiveCfg = Debug|Win32
+		{520E42C1-33BF-42AD-8C45-21D9A9CECB86}.Debug|x86.Build.0 = Debug|Win32
+		{520E42C1-33BF-42AD-8C45-21D9A9CECB86}.Release|x64.ActiveCfg = Release|x64
+		{520E42C1-33BF-42AD-8C45-21D9A9CECB86}.Release|x64.Build.0 = Release|x64
+		{520E42C1-33BF-42AD-8C45-21D9A9CECB86}.Release|x86.ActiveCfg = Release|Win32
+		{520E42C1-33BF-42AD-8C45-21D9A9CECB86}.Release|x86.Build.0 = Release|Win32
+		{8B914A9F-21AE-47C9-A415-71B0A38A408D}.Debug|x64.ActiveCfg = Debug|x64
+		{8B914A9F-21AE-47C9-A415-71B0A38A408D}.Debug|x64.Build.0 = Debug|x64
+		{8B914A9F-21AE-47C9-A415-71B0A38A408D}.Debug|x86.ActiveCfg = Debug|Win32
+		{8B914A9F-21AE-47C9-A415-71B0A38A408D}.Debug|x86.Build.0 = Debug|Win32
+		{8B914A9F-21AE-47C9-A415-71B0A38A408D}.Release|x64.ActiveCfg = Release|x64
+		{8B914A9F-21AE-47C9-A415-71B0A38A408D}.Release|x64.Build.0 = Release|x64
+		{8B914A9F-21AE-47C9-A415-71B0A38A408D}.Release|x86.ActiveCfg = Release|Win32
+		{8B914A9F-21AE-47C9-A415-71B0A38A408D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

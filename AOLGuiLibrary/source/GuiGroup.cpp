@@ -1,4 +1,4 @@
-#include "GuiGroup.h"
+#include "agl/GuiGroup.h"
 
 #include <iostream>
 #include <allegro5/allegro_primitives.h>
@@ -28,23 +28,49 @@ std::map<std::string, std::vector<std::string>> style_flags = {
 		"AGL_SIZING_MARGINBOX"
 	}},
 	{"marker", {"AGL_MARKER_CUSTOM", "AGL_MARKER_CREATE"}},
+	{"base_font", {"AGL_FONT_DEFAULT"}},
 };
 
 namespace agl
 {
 	void GuiGroup::draw_hr_line(int mx, int width, int* y)
 	{
-		al_draw_line(
-			mx + 15, *y, mx + width - 15, *y,
-			debug::hr_color.calculated, 1
-		);
+		graphics_handler->draw_line({ mx + 15, *y }, { mx + width - 15, *y }, 1, debug::hr_color);
 
 		*y += 3;
+	}
+
+	GuiGroup::GuiGroup()
+	{
+		event_handler = 0;
+		graphics_handler = 0;
+
+		event_receiver = 0;
+		focus_listener = 0;
+
+		screen_width = 0;
+		screen_height = 0;
+	}
+
+	GuiGroup::~GuiGroup()
+	{
+		screen_width = 0;
+		screen_height = 0;
+		event_receiver = 0;
+		focus_listener = 0;
+		event_handler = 0;
+		graphics_handler = 0;
+		guis.clear();
 	}
 
 	void GuiGroup::register_event_handler(EventHandler* handler)
 	{
 		event_handler = handler;
+	}
+
+	void GuiGroup::register_graphics_handler(GraphicsHandler* handler)
+	{
+		graphics_handler = handler;
 	}
 
 	void GuiGroup::add_gui(Gui* gui)
@@ -223,15 +249,24 @@ namespace agl
 		);
 
 		for (const auto& gui : guis)
-			gui->update(&event_receiver, mouse_location);
+			gui->update(&event_receiver, &focus_listener, mouse_location);
 
 		if (event_receiver)
 		{
 			for (auto it = event_handler->get_event_queue_begin();
 				it != event_handler->get_event_queue_end(); it++)
 			{
+
 				it->source = event_receiver;
 				event_receiver->raise_event(*it);
+
+				if (focus_listener)
+				{
+					it->source = focus_listener;
+					focus_listener->raise_event(*it);
+					if (!focus_listener->get_focus())
+						focus_listener = NULL;
+				}
 			}
 
 			event_receiver->set_direct_hover(true);

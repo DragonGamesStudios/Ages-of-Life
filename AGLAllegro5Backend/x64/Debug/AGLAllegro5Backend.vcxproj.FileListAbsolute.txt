@@ -1,0 +1,2 @@
+C:\AOL\x64\Debug\AGLAllegro5Backend.pdb
+C:\AOL\AGLAllegro5Backend\x64\Debug\AGLAllegro5Backend.pdb

@@ -1,32 +1,11 @@
-#include "Base.h"
+#include "agl/Base.h"
 
 namespace agl
 {
 
 	std::map<std::string, Font*> loaded_fonts = { { "default", NULL } };
-
-	Point::Point(float x, float y)
-	{
-		this->x = x;
-		this->y = y;
-	}
-
-	Point Point::operator+(const Point& pt)
-	{
-		return Point(x + pt.x, y + pt.y);
-	}
-
-	Point& Point::operator+=(const Point& pt)
-	{
-		x += pt.x;
-		y += pt.y;
-		return *this;
-	}
-
-	Color::Color(unsigned char r, unsigned char g, unsigned char b, unsigned char a) : r(r), g(g), b(b), a(a)
-	{
-		calculated = al_map_rgba(r, g, b, a);
-	}
+	std::map<std::string, Image*> loaded_images = {};
+	std::map<std::string, Shader*> loaded_shaders = {};
 
 	void Style::apply(Style* style)
 	{
@@ -97,6 +76,11 @@ namespace agl
 
 			// ImageBlock
 			{"image_scaling", 0},
+
+			// Label
+			{"base_color", def},
+			{"base_font", 0},
+			{"base_size", 0},
 		};
 	}
 	
@@ -153,6 +137,12 @@ namespace agl
 	}
 
 
+	void register_image(std::string name, Image* new_image)
+	{
+		if (loaded_images.find(name) == loaded_images.end())
+			loaded_images.insert({ name, new_image });
+	}
+
 	void set_default_font(Font* default_font)
 	{
 		loaded_fonts["default"] = default_font;
@@ -164,6 +154,12 @@ namespace agl
 	{
 		if (loaded_fonts.find(name) == loaded_fonts.end())
 			loaded_fonts.insert({ name, new_font });
+	}
+
+	void register_shader(std::string name, Shader* new_shader)
+	{
+		if (loaded_shaders.find(name) == loaded_shaders.end())
+			loaded_shaders.insert({ name, new_shader });
 	}
 
 	namespace debug
@@ -191,42 +187,27 @@ namespace agl
 		}
 	}
 
-	Image::Image(ALLEGRO_BITMAP* _bitmap)
+	Shader::Shader(std::string vertex_shader_source, std::string fragment_shader_source)
 	{
-		bitmap = _bitmap;
-		maintain_bitmap = false;
-		width = al_get_bitmap_width(bitmap);
-		height = al_get_bitmap_height(bitmap);
+		shader = al_create_shader(ALLEGRO_SHADER_GLSL);
+
+		if (!al_attach_shader_source_file(
+			shader, ALLEGRO_VERTEX_SHADER, vertex_shader_source.c_str())
+			)
+			throw std::runtime_error(al_get_shader_log(shader));
+
+		if (!al_attach_shader_source_file(
+			shader, ALLEGRO_PIXEL_SHADER, fragment_shader_source.c_str())
+			)
+			throw std::runtime_error(al_get_shader_log(shader));
+
+		if (!al_build_shader(shader))
+			throw std::runtime_error(al_get_shader_log(shader));
 	}
 
-	Image::Image(std::string path)
+	Shader::~Shader()
 	{
-		bitmap = al_load_bitmap(path.c_str());
-		maintain_bitmap = true;
-		width = al_get_bitmap_width(bitmap);
-		height = al_get_bitmap_height(bitmap);
-	}
-
-	Image::Image(std::filesystem::path path)
-	{
-		bitmap = al_load_bitmap(path.string().c_str());
-		maintain_bitmap = true;
-		width = al_get_bitmap_width(bitmap);
-		height = al_get_bitmap_height(bitmap);
-	}
-
-	Image::~Image()
-	{
-		if (maintain_bitmap)
-		{
-			al_destroy_bitmap(bitmap);
-			bitmap = NULL;
-		}
-	}
-
-	void Image::set_bitmap_maintain(bool maintain)
-	{
-		maintain_bitmap = maintain;
+		al_destroy_shader(shader);
 	}
 
 }

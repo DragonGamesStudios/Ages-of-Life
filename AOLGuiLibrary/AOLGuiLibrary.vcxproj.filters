@@ -18,37 +18,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\AOLGuiLibrary.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
-    <ClCompile Include="source\Base.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
-    <ClCompile Include="source\Gui.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
-    <ClCompile Include="source\EventHandler.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
-    <ClCompile Include="source\Block.cpp">
-      <Filter>Pliki źródłowe</Filter>
+    <ClCompile Include="source\builtins\Button.cpp">
+      <Filter>builtins</Filter>
     </ClCompile>
     <ClCompile Include="source\builtins\Flow.cpp">
-      <Filter>builtins</Filter>
-    </ClCompile>
-    <ClCompile Include="source\builtins\Layout.cpp">
-      <Filter>builtins</Filter>
-    </ClCompile>
-    <ClCompile Include="source\GuiGroup.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
-    <ClCompile Include="source\builtins\Scrollbar.cpp">
-      <Filter>builtins</Filter>
-    </ClCompile>
-    <ClCompile Include="source\builtins\ScrollBlock.cpp">
-      <Filter>builtins</Filter>
-    </ClCompile>
-    <ClCompile Include="source\builtins\Button.cpp">
       <Filter>builtins</Filter>
     </ClCompile>
     <ClCompile Include="source\builtins\ImageBlock.cpp">
@@ -57,52 +30,91 @@
     <ClCompile Include="source\builtins\Label.cpp">
       <Filter>builtins</Filter>
     </ClCompile>
+    <ClCompile Include="source\builtins\Layout.cpp">
+      <Filter>builtins</Filter>
+    </ClCompile>
+    <ClCompile Include="source\builtins\Scrollbar.cpp">
+      <Filter>builtins</Filter>
+    </ClCompile>
+    <ClCompile Include="source\builtins\ScrollBlock.cpp">
+      <Filter>builtins</Filter>
+    </ClCompile>
+    <ClCompile Include="source\AOLGuiLibrary.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Base.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Block.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EventHandler.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Gui.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GuiGroup.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="source\builtins\SelectionList.cpp">
+      <Filter>builtins</Filter>
+    </ClCompile>
+    <ClCompile Include="source\GraphicsHandler.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\AOLGuiLibrary.h">
-      <Filter>Pliki nagłówkowe</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Base.h">
-      <Filter>Pliki nagłówkowe</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Block.h">
-      <Filter>Pliki nagłówkowe</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Gui.h">
-      <Filter>Pliki nagłówkowe</Filter>
-    </ClInclude>
-    <ClInclude Include="include\EventHandler.h">
-      <Filter>Pliki nagłówkowe</Filter>
-    </ClInclude>
-    <ClInclude Include="include\builtins\Flow.h">
+    <ClInclude Include="include\agl\builtins\Button.h">
       <Filter>builtins</Filter>
     </ClInclude>
-    <ClInclude Include="include\builtins\Layout.h">
+    <ClInclude Include="include\agl\builtins\Flow.h">
       <Filter>builtins</Filter>
     </ClInclude>
-    <ClInclude Include="include\GuiGroup.h">
+    <ClInclude Include="include\agl\builtins\ImageBlock.h">
+      <Filter>builtins</Filter>
+    </ClInclude>
+    <ClInclude Include="include\agl\builtins\Label.h">
+      <Filter>builtins</Filter>
+    </ClInclude>
+    <ClInclude Include="include\agl\builtins\Layout.h">
+      <Filter>builtins</Filter>
+    </ClInclude>
+    <ClInclude Include="include\agl\builtins\Scrollbar.h">
+      <Filter>builtins</Filter>
+    </ClInclude>
+    <ClInclude Include="include\agl\builtins\ScrollBlock.h">
+      <Filter>builtins</Filter>
+    </ClInclude>
+    <ClInclude Include="include\agl\AOLGuiLibrary.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
-    <ClInclude Include="include\events.h">
+    <ClInclude Include="include\agl\Base.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
-    <ClInclude Include="include\builtins\Scrollbar.h">
+    <ClInclude Include="include\agl\Block.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="include\agl\EventHandler.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="include\agl\events.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="include\agl\Gui.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="include\agl\GuiGroup.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="include\agl\builtins\SelectionList.h">
       <Filter>builtins</Filter>
     </ClInclude>
-    <ClInclude Include="include\builtins\ScrollBlock.h">
-      <Filter>builtins</Filter>
-    </ClInclude>
-    <ClInclude Include="include\builtins\Button.h">
-      <Filter>builtins</Filter>
-    </ClInclude>
-    <ClInclude Include="include\builtins\ImageBlock.h">
-      <Filter>builtins</Filter>
-    </ClInclude>
-    <ClInclude Include="include\builtins\Label.h">
-      <Filter>builtins</Filter>
+    <ClInclude Include="include\agl\GraphicsHandler.h">
+      <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

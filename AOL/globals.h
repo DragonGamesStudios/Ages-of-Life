@@ -1,9 +1,15 @@
 #include "lib/Proto/Proto.h"
-//#include "lib/Proto/DOM.h"
 #include "allegrolib.h"
 #include "classes/GameObject.h"
 #include "classes/Technology.h"
 #include "gui.h"
+
+#include <art/AOLRenderingToolset.h>
+#include <art/KeyboardEventManager.h>
+#include <art/Dictionary.h>
+#include <art/Renderer.h>
+
+#include <AGLAllegro5Backend/Allegro5EventHandler.h>
 
 typedef unsigned int uint;
 typedef const char* ccptr;
@@ -73,42 +79,42 @@ protected:
 	int lastmwpos;
 	Script script;
 
-	Image* mainmenuBg;
-	Image* menubutton;
-	Image* defaultguiImage;
-	Image* closebutton;
-	Image* inputbutton;
-	Image* logo;
-	image_with_hover loadbutton;
 	ALLEGRO_BITMAP* AOLicon;
 
 	Font* segoeuib;
 	agl::Font* segoeUI_bold;
-
-	Label* name_input_label;
-
-	GUI* mainmenu;
-	GUI* playgui;
-	GUI* aboutgui;
-	GUI* creatorsgui;
-	GUI* licensesgui;
-	GUI* escapegui;
 
 	agl::GuiGroup* main_gui_group;
 
 	agl::Gui* main_menu_gui_instance;
 	MainMenuGui* main_menu_gui;
 
-	agl::EventHandler* event_handler;
+	agl::Shader* guassian_blur;
+	agl::Image* main_menu_background;
+
+	agl::Allegro5EventHandler* event_handler;
+
+	art::MainEventManager* event_manager;
+	art::KeyboardEventManager* keyboard_manager;
+	art::Display* display;
+
+	art::FileSystem* base_fs;
+	art::Dictionary* dict;
+
+	art::Renderer* renderer;
+	art::Layer* gui_layer;
+
+	std::vector<std::vector<std::pair<int, int>>> shortcuts;
+	std::vector<std::vector<std::function<void(agl::Event)>>> shortcut_functions;
 
 	basedata_struct basedata;
 
 	bool menu;
 	bool playing;
 
-	DrawData displayed_save_scale;
-
 	double time;
+
+	void initialize_agl();
 
 	void draw();
 	void update(double dt);
@@ -134,6 +140,9 @@ protected:
 	void initialize_prototypes();
 
 	void api_load_datafile(std::string path);
+
+	void enable_debug(agl::Event e);
+	void shortcut_capture(agl::Event e);
 
 	std::unordered_map<Technology*, std::vector<Technology*>> costruct_groups();
 	std::unordered_map<Technology*, TechnologyGroupData> plan_groups(std::unordered_map<Technology*, std::vector<Technology*>>* groups);

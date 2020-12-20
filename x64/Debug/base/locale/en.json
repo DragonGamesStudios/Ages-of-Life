@@ -8,9 +8,12 @@
     "label-creators": "Creators",
     "label-licenses": "Licenses",
     "label-load-game": "Load game",
-    "label-create-game": "Create game",
+    "label-create-game": "New game",
+    "label-delete": "Delete",
     "label-name": "Name",
     "label-create": "Create",
+    "options-category-debugging": "Debugging",
+    "options-debugging-style-debug": "Style debug mode",
 
-    "loading-guis1": "Loading guis..."
+    "loading-guis-1": "Loading guis..."
 }

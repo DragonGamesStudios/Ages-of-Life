@@ -29,25 +29,29 @@
     <ClCompile Include="source\builtins\Layout.cpp" />
     <ClCompile Include="source\builtins\Scrollbar.cpp" />
     <ClCompile Include="source\builtins\ScrollBlock.cpp" />
+    <ClCompile Include="source\builtins\SelectionList.cpp" />
     <ClCompile Include="source\EventHandler.cpp" />
+    <ClCompile Include="source\GraphicsHandler.cpp" />
     <ClCompile Include="source\Gui.cpp" />
     <ClCompile Include="source\GuiGroup.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\AOLGuiLibrary.h" />
-    <ClInclude Include="include\Base.h" />
-    <ClInclude Include="include\Block.h" />
-    <ClInclude Include="include\builtins\Button.h" />
-    <ClInclude Include="include\builtins\Flow.h" />
-    <ClInclude Include="include\builtins\ImageBlock.h" />
-    <ClInclude Include="include\builtins\Label.h" />
-    <ClInclude Include="include\builtins\Layout.h" />
-    <ClInclude Include="include\builtins\Scrollbar.h" />
-    <ClInclude Include="include\builtins\ScrollBlock.h" />
-    <ClInclude Include="include\EventHandler.h" />
-    <ClInclude Include="include\events.h" />
-    <ClInclude Include="include\Gui.h" />
-    <ClInclude Include="include\GuiGroup.h" />
+    <ClInclude Include="include\agl\AOLGuiLibrary.h" />
+    <ClInclude Include="include\agl\Base.h" />
+    <ClInclude Include="include\agl\Block.h" />
+    <ClInclude Include="include\agl\builtins\Button.h" />
+    <ClInclude Include="include\agl\builtins\Flow.h" />
+    <ClInclude Include="include\agl\builtins\ImageBlock.h" />
+    <ClInclude Include="include\agl\builtins\Label.h" />
+    <ClInclude Include="include\agl\builtins\Layout.h" />
+    <ClInclude Include="include\agl\builtins\Scrollbar.h" />
+    <ClInclude Include="include\agl\builtins\ScrollBlock.h" />
+    <ClInclude Include="include\agl\builtins\SelectionList.h" />
+    <ClInclude Include="include\agl\EventHandler.h" />
+    <ClInclude Include="include\agl\events.h" />
+    <ClInclude Include="include\agl\GraphicsHandler.h" />
+    <ClInclude Include="include\agl\Gui.h" />
+    <ClInclude Include="include\agl\GuiGroup.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -112,7 +116,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\AOL\lib\agl\</OutDir>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <Allegro_AddonImage>true</Allegro_AddonImage>
     <Allegro_AddonTTF>true</Allegro_AddonTTF>
     <Allegro_AddonPrimitives>true</Allegro_AddonPrimitives>

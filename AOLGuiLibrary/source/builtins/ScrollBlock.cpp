@@ -1,5 +1,5 @@
-#include "builtins/ScrollBlock.h"
-#include "events.h"
+#include "agl/builtins/ScrollBlock.h"
+#include "agl/events.h"
 
 namespace agl::builtins
 {
@@ -127,9 +127,14 @@ namespace agl::builtins
 		return get_inner_height();
 	}
 
+	Block* ScrollBlock::get_children_container()
+	{
+		return children_container;
+	}
+
 	void ChildrenContainer::on_child_changed(Event e)
 	{
-		if (e.type == AGL_EVENT_BLOCK_RESIZED || e.type == AGL_EVENT_BLOCK_MOVED &&
+		if ((e.type == AGL_EVENT_BLOCK_RESIZED || e.type == AGL_EVENT_BLOCK_MOVED) &&
 			e.source->get_parent() == this)
 		{
 			set_size(get_total_width(), get_total_height());
