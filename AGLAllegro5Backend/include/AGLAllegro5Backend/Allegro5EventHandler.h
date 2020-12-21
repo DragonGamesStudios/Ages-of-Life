@@ -2,6 +2,8 @@
 
 #include <agl/EventHandler.h>
 
+#include <allegro5/allegro.h>
+
 namespace agl
 {
 	class Allegro5EventHandler : public EventHandler

@@ -3,7 +3,7 @@
 
 namespace agl::builtins
 {
-	void Button::dispath_events(Event e)
+	void Button::dispath_events(const Event& e)
 	{
 		if (e.source == this || e.source == label)
 			switch (e.type)
@@ -44,13 +44,13 @@ namespace agl::builtins
 			}
 	}
 
-	void Button::on_label_text_changed_relocate(Event e)
+	void Button::on_label_text_changed_relocate(const Event& e)
 	{
 		if (e.type == AGL_EVENT_TEXT_CHANGED && e.source == label && maintain_label)
 		{
 			label->set_location(
-				(get_inner_width() - label->get_width()) / 2,
-				(get_inner_height() - label->get_height()) / 2
+				float(get_inner_width() - label->get_width()) / 2,
+				float(get_inner_height() - label->get_height()) / 2
 			);
 		}
 	}
@@ -69,24 +69,24 @@ namespace agl::builtins
 		);
 	}
 
-	void Button::set_background_color(Color color)
+	void Button::set_background_color(const Color& color)
 	{
 		Block::set_background_color(color);
 
 		default_background_color = color;
 	}
 
-	void Button::change_background_color(Color color)
+	void Button::change_background_color(const Color& color)
 	{
 		Block::set_background_color(color);
 	}
 
-	void Button::set_hover_background_color(Color color)
+	void Button::set_hover_background_color(const Color& color)
 	{
 		hover_background_color = color;
 	}
 
-	void Button::set_click_background_color(Color color)
+	void Button::set_click_background_color(const Color& color)
 	{
 		click_background_color = color;
 	}
@@ -96,17 +96,17 @@ namespace agl::builtins
 		allowed_buttons = buttons;
 	}
 
-	void Button::set_click_function(std::function<void(Event, Button*)> fn)
+	void Button::set_click_function(std::function<void(const Event&, Button*)> fn)
 	{
 		click_function = fn;
 	}
 
-	void Button::set_hover_gained_function(std::function<void(Event, Button*)> fn)
+	void Button::set_hover_gained_function(std::function<void(const Event&, Button*)> fn)
 	{
 		hover_gained_function = fn;
 	}
 
-	void Button::set_hover_lost_function(std::function<void(Event, Button*)> fn)
+	void Button::set_hover_lost_function(std::function<void(const Event&, Button*)> fn)
 	{
 		hover_lost_function = fn;
 	}
@@ -133,7 +133,7 @@ namespace agl::builtins
 		);
 	}
 
-	void Button::set_text(std::string text)
+	void Button::set_text(const std::string& text)
 	{
 		if (label)
 		{
@@ -142,20 +142,20 @@ namespace agl::builtins
 			{
 				label->resize_to_text();
 				label->set_location(
-					(get_inner_width() - label->get_width()) / 2,
-					(get_inner_height() - label->get_height()) / 2
+					float(get_inner_width() - label->get_width()) / 2,
+					float(get_inner_height() - label->get_height()) / 2
 				);
 			}
 		}
 	}
 
-	void Button::set_font(Font* font)
+	void Button::set_font(const Font* font)
 	{
 		if (label)
 			label->set_base_font(font);
 	}
 
-	void Button::set_text_color(Color color)
+	void Button::set_text_color(const Color& color)
 	{
 		if (label)
 			label->set_base_color(color);
@@ -167,15 +167,15 @@ namespace agl::builtins
 			label->set_base_size(size);
 	}
 
-	void Button::apply(Style* _style)
+	void Button::apply(const Style* _style)
 	{
 		ImageBlock::apply(_style);
 
-		if (style->values["background_color_hover"].source)
-			set_hover_background_color(std::get<Color>(style->values["background_color_hover"].value));
+		if (style->values.at("background_color_hover").source)
+			set_hover_background_color(std::get<Color>(style->values.at("background_color_hover").value));
 
-		if (style->values["background_color_click"].source)
-			set_click_background_color(std::get<Color>(style->values["background_color_click"].value));
+		if (style->values.at("background_color_click").source)
+			set_click_background_color(std::get<Color>(style->values.at("background_color_click").value));
 	}
 
 	void Button::set_size(int width, int height)
@@ -186,7 +186,7 @@ namespace agl::builtins
 			label->set_size(get_inner_width(), get_inner_height());
 	}
 
-	void Button::apply_to_label(Style* _style)
+	void Button::apply_to_label(const Style* _style)
 	{
 		if (label)
 			label->apply(_style);

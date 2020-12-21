@@ -23,10 +23,10 @@ namespace agl::builtins
 
 		bool react_to_scrollwheel;
 
-		void on_scrollable_resized(Event e);
-		void on_scroll(Event e);
+		void on_scrollable_resized(const Event& e);
+		void on_scroll(const Event& e);
 
-		void on_marker_drag(Event e);
+		void on_marker_drag(const Event& e);
 	public:
 		Scrollbar();
 
@@ -45,7 +45,7 @@ namespace agl::builtins
 		void connect_scrollable(Block* scrollable);
 
 		virtual void set_size(int width, int height);
-		virtual void apply(Style* _style);
+		virtual void apply(const Style* _style);
 
 		void set_step(int _step);
 		void set_react_to_scrollwheel(bool react);

@@ -1,6 +1,5 @@
 #include "agl/Block.h"
 #include "agl/events.h"
-#include <allegro5/allegro_primitives.h>
 
 #include <algorithm>
 
@@ -19,6 +18,7 @@ namespace agl
 		parent_scroll_detection = false;
 		focus = false;
 		detects_focus = false;
+		graphics_handler = 0;
 	}
 
 	Block::~Block()
@@ -63,7 +63,7 @@ namespace agl
 			});
 	}
 
-	int Block::get_width(const std::string getter) const
+	int Block::get_width(const std::string& getter) const
 	{
 		int value = 0;
 		for (char g : getter)
@@ -90,7 +90,7 @@ namespace agl
 		return value;
 	}
 
-	int Block::get_height(const std::string getter) const
+	int Block::get_height(const std::string& getter) const
 	{
 		int value = 0;
 		for (char g : getter)
@@ -127,12 +127,12 @@ namespace agl
 		return box.inner_height;
 	}
 
-	void Block::set_location(int x, int y)
+	void Block::set_location(float x, float y)
 	{
 		set_location(Point(x, y));
 	}
 
-	void Block::set_location(Point point)
+	void Block::set_location(const Point& point)
 	{
 		location = point;
 
@@ -144,7 +144,7 @@ namespace agl
 		return location;
 	}
 
-	void Block::set_background_color(Color new_color)
+	void Block::set_background_color(const Color& new_color)
 	{
 		this->background_color = new_color;
 	}
@@ -174,9 +174,11 @@ namespace agl
 
 		if (detects_focus)
 			add_event_source(block);
+
+		block->connect_graphics_handler(graphics_handler);
 	}
 
-	void Block::apply(Style* applied_style)
+	void Block::apply(const Style* applied_style)
 	{
 		style = applied_style;
 
@@ -189,7 +191,7 @@ namespace agl
 		{
 			for (int j = 0; j < 4; j++)
 			{
-				if (style->values[value_names[i] + "_" + sides[j]].source)
+				if (style->values.at(value_names[i] + "_" + sides[j]).source)
 				{
 					int* side_value = 0;
 					switch (j)
@@ -208,7 +210,7 @@ namespace agl
 						break;
 					}
 
-					*side_value = std::get<int>(style->values[value_names[i] + "_" + sides[j]].value);
+					*side_value = std::get<int>(style->values.at(value_names[i] + "_" + sides[j]).value);
 				}
 			}
 		}
@@ -216,7 +218,7 @@ namespace agl
 		// Border colors
 		for (int j = 0; j < 4; j++)
 		{
-			if (style->values["border_color_" + sides[j]].source)
+			if (style->values.at("border_color_" + sides[j]).source)
 			{
 				Color* side_value = 0;
 				switch (j)
@@ -235,129 +237,95 @@ namespace agl
 					break;
 				}
 
-				*side_value = std::get<Color>(style->values["border_color_" + sides[j]].value);
+				*side_value = std::get<Color>(style->values.at("border_color_" + sides[j]).value);
 			}
 		}
 
 		// background color, width, height
-		if (style->values["background_color"].source)
-			set_background_color(std::get<Color>(style->values["background_color"].value));
+		if (style->values.at("background_color").source)
+			set_background_color(std::get<Color>(style->values.at("background_color").value));
 
-		if (style->values["width"].source)
-			box.inner_width = std::get<int>(style->values["width"].value);
+		if (style->values.at("width").source)
+			box.inner_width = std::get<int>(style->values.at("width").value);
 
-		if (style->values["height"].source)
-			box.inner_height = std::get<int>(style->values["height"].value);
+		if (style->values.at("height").source)
+			box.inner_height = std::get<int>(style->values.at("height").value);
 
-		if (style->values["sizing"].source)
+		if (style->values.at("sizing").source)
 		{
-			sizing = std::get<int>(style->values["sizing"].value);
+			sizing = std::get<int>(style->values.at("sizing").value);
 
 			set_size(get_inner_width(), get_inner_height());
 		}
 	}
 
-	Style* Block::get_style()
+	const Style* Block::get_style()
 	{
 		return this->style;
 	}
 
-	void Block::set_up_clipping(Point base_location, int* old_x, int* old_y, int* old_width, int* old_height)
+	void Block::set_up_clipping(const Point& base_location)
 	{
-		al_get_clipping_rectangle(old_x, old_y, old_width, old_height);
+		Rectangle clip = graphics_handler->get_clipping_rectangle();
 
-		int new_x = std::max(int(base_location.x), *old_x),
-			new_y = std::max(int(base_location.y), *old_y),
-			new_w = std::min(int(base_location.x) + box.inner_width, *old_x + *old_width) - new_x,
-			new_h = std::min(int(base_location.y) + box.inner_height, *old_y + *old_height) - new_y;
+		float new_x = std::max(base_location.x, clip.pt.x),
+			new_y = std::max(base_location.y, clip.pt.y),
+			new_w = std::min(base_location.x + box.inner_width, clip.pt.x + clip.width) - new_x,
+			new_h = std::min(base_location.y + box.inner_height, clip.pt.y + clip.height) - new_y;
 
-		al_set_clipping_rectangle(new_x, new_y, new_w, new_h);
+		graphics_handler->set_clipping_rectangle({ new_x, new_y, new_w, new_h });
 	}
 
-	void Block::reset_clipping(int old_x, int old_y, int old_width, int old_height)
+	void Block::reset_clipping()
 	{
-		al_set_clipping_rectangle(old_x, old_y, old_width, old_height);
+		graphics_handler->pop_clipping_rectangle();
 	}
 
-	void Block::draw_background(Point base_location)
+	void Block::draw_background(const Point& base_location)
 	{
-		Point topleft = base_location;
+		// l - large
+		// s - small
 
-		Point bottomright(
-			topleft.x + get_width("cpb"),
-			topleft.y + get_height("cpb")
-		);
+		// n = north
+		// s - south
 
-		Point inner_topleft = topleft + Point(box.border.left, box.border.top);
-		Point inner_bottomright = bottomright + Point(-box.border.right, -box.border.bottom);
+		// e - east
+		// w - west
 
-		const float top_border[8] = {
-			topleft.x, topleft.y,
-			inner_topleft.x, inner_topleft.y,
-			inner_bottomright.x, inner_topleft.y,
-			bottomright.x, topleft.y,
-		};
+		Point lnw = base_location;
+		Point lse(lnw.x + get_width("cpb"), lnw.y + get_height("cpb"));
+		Point snw(lnw.x + box.border.right, lnw.y + box.border.top);
+		Point sse(snw.x + get_width("cp"), snw.y + get_height("cp"));
 
-		const float right_border[8] = {
-			inner_bottomright.x, inner_topleft.y,
-			inner_bottomright.x, inner_bottomright.y,
-			bottomright.x, bottomright.y,
-			bottomright.x, topleft.y,
-		};
+		Point lne(lse.x, lnw.y);
+		Point lsw(lnw.x, lse.y);
 
-		const float bottom_border[8] = {
-			inner_topleft.x, inner_bottomright.y,
-			topleft.x, bottomright.y,
-			bottomright.x, bottomright.y,
-			inner_bottomright.x, inner_bottomright.y,
-		};
-
-		const float left_border[8] = {
-			topleft.x, topleft.y,
-			topleft.x, bottomright.y,
-			inner_topleft.x, inner_bottomright.y,
-			inner_topleft.x, inner_topleft.y,
-		};
+		Point sne(sse.x, snw.y);
+		Point ssw(snw.x, sse.y);
 
 		// Background
-		al_draw_filled_rectangle(
-			topleft.x,
-			topleft.y,
-			bottomright.x,
-			bottomright.y,
-			background_color.calculated
-		);
+		graphics_handler->draw_filled_rectangle({ lnw, (float)get_width("cpb"), (float)get_height("cpb") }, background_color);
+		
 
 		// Right border
-		al_draw_filled_polygon(
-			right_border,
-			4,
-			box.border_colors.right.calculated
-		);
+		graphics_handler->draw_filled_triangle(sne, lse, sse, box.border_colors.right);
+		graphics_handler->draw_filled_triangle(sne, lse, lne, box.border_colors.right);
+
 
 		// Bottom border
-		al_draw_filled_polygon(
-			bottom_border,
-			4,
-			box.border_colors.bottom.calculated
-		);
+		graphics_handler->draw_filled_triangle(ssw, lse, sse, box.border_colors.bottom);
+		graphics_handler->draw_filled_triangle(ssw, lse, lsw, box.border_colors.bottom);
 
 		// Left border
-		al_draw_filled_polygon(
-			left_border,
-			4,
-			box.border_colors.left.calculated
-		);
+		graphics_handler->draw_filled_triangle(lnw, ssw, lsw, box.border_colors.left);
+		graphics_handler->draw_filled_triangle(lnw, ssw, snw, box.border_colors.left);
 
 		// Top border
-		al_draw_filled_polygon(
-			top_border,
-			4,
-			box.border_colors.top.calculated
-		);
+		graphics_handler->draw_filled_triangle(lnw, sne, lne, box.border_colors.top);
+		graphics_handler->draw_filled_triangle(lnw, sne, snw, box.border_colors.top);
 	}
 
-	void Block::draw_block(Point base_location)
+	void Block::draw_block(const Point& base_location)
 	{
 		for (const auto& child : children)
 		{
@@ -365,19 +333,19 @@ namespace agl
 		}
 	}
 
-	void Block::on_press_drag(Event e)
+	void Block::on_press_drag(const Event& e)
 	{
 		if (e.type == AGL_EVENT_MOUSE_PRESSED && e.source == this)
 			is_dragged = true;
 	}
 
-	void Block::on_release_drag(Event e)
+	void Block::on_release_drag(const Event& e)
 	{
 		if (e.type == AGL_EVENT_MOUSE_RELEASED && e.source == this)
 			is_dragged = false;
 	}
 
-	void Block::on_press_focus(Event e)
+	void Block::on_press_focus(const Event& e)
 	{
 		if ((e.source == this || (e.source->parent && e.source->parent == this))
 			&& e.type == AGL_EVENT_MOUSE_PRESSED)
@@ -403,8 +371,6 @@ namespace agl
 				base_location.y + location.y + box.margin.top
 			));
 
-			int clip_x = 0, clip_y = 0, clip_w = 0, clip_h = 0;
-
 			Point clip_base(
 				base_location.x + location.x + box.margin.left + box.border.left + box.padding.left,
 				base_location.y + location.y + box.margin.top + box.border.top + box.padding.top
@@ -412,24 +378,24 @@ namespace agl
 
 
 			if (this->direct_hover && debug::debug)
-				al_draw_filled_rectangle(
-					base_location.x + location.x + box.margin.left,
-					base_location.y + location.y + box.margin.top,
-					base_location.x + location.x + box.margin.left + get_width("cpb"),
-					base_location.y + location.y + box.margin.top + get_height("cpb"),
-					debug::highlight.calculated
+			{
+				Point margin_topleft((float)box.margin.left, (float)box.margin.top);
+				graphics_handler->draw_filled_rectangle(
+					{ base_location + location + margin_topleft, (float)get_width("cpb"), (float)get_height("cpb") },
+					debug::highlight
 				);
+			}
 
-			set_up_clipping(clip_base, &clip_x, &clip_y, &clip_w, &clip_h);
+			set_up_clipping(clip_base);
 
 			draw_block(clip_base);
 
-			reset_clipping(clip_x, clip_y, clip_w, clip_h);
+			reset_clipping();
 		}
 	}
 
 	void Block::update(
-		Point mouse_location, Point base_location, Block** event_receiver,
+		const Point& mouse_location, const Point& base_location, Block** event_receiver,
 		Block** focus_listener, bool force_fail
 	)
 	{
@@ -509,12 +475,12 @@ namespace agl
 		source->add_event_listener(this);
 	}
 
-	void Block::add_event_function(std::function<void(Event)> function)
+	void Block::add_event_function(std::function<void(const Event&)> function)
 	{
 		event_functions.push_back(function);
 	}
 
-	void Block::raise_event(Event e)
+	void Block::raise_event(const Event& e)
 	{
 		handle_event(e);
 
@@ -525,7 +491,7 @@ namespace agl
 			handle_scroll(e);
 	}
 
-	void Block::handle_event(Event e)
+	void Block::handle_event(const Event& e)
 	{
 		for (const auto& event_function : event_functions)
 			event_function(e);
@@ -641,12 +607,13 @@ namespace agl
 				update_scroll_detection();
 	}
 
-	void Block::handle_scroll(Event e)
+	void Block::handle_scroll(const Event& e)
 	{
 		if (scroll_detection)
 		{
-			e.source = this;
-			raise_event(e);
+			Event new_event = e;
+			new_event.source = this;
+			raise_event(new_event);
 		}
 		else if (parent && parent_scroll_detection)
 			parent->handle_scroll(e);
@@ -714,7 +681,7 @@ namespace agl
 		auto it = std::find(children.begin(), children.end(), child);
 
 		if (it != children.end())
-			return it - children.begin();
+			return (int)std::distance(children.begin(), it);
 
 		return -1;
 	}
@@ -726,7 +693,15 @@ namespace agl
 
 	int Block::get_children_amount() const
 	{
-		return children.size();
+		return (int)children.size();
+	}
+
+	void Block::connect_graphics_handler(GraphicsHandler* graphics_handler_)
+	{
+		graphics_handler = graphics_handler_;
+
+		for (auto& child : children)
+			child->connect_graphics_handler(graphics_handler_);
 	}
 
 	Block& Block::operator<<(Block& block)
@@ -749,12 +724,12 @@ namespace agl
 		box.border.left = left;
 	}
 
-	void Block::set_borders(BoxColors borders)
+	void Block::set_borders(const BoxColors& borders)
 	{
 		box.border_colors = borders;
 	}
 
-	void Block::set_borders(Color border_col)
+	void Block::set_borders(const Color& border_col)
 	{
 		box.border_colors.top = border_col;
 		box.border_colors.right = border_col;

@@ -1,8 +1,4 @@
 #pragma once
-#include <allegro5/allegro5.h>
-#include <allegro5/allegro_image.h>
-#include <allegro5/allegro_font.h>
-#include <allegro5/allegro_ttf.h>
 
 #include "GraphicsHandler.h"
 
@@ -71,18 +67,6 @@ namespace agl
 		Style(std::string style_name);
 	};
 
-	struct Font
-	{
-		std::string path;
-		std::map<int, ALLEGRO_FONT*> sizes;
-		
-		Font(std::string font_path, std::set<int> sizes_to_load);
-		ALLEGRO_FONT* get(int size) const;
-		bool load(int size);
-		int get_height(int size) const;
-		int get_width(int size, std::string text) const;
-	};
-
 	void set_default_font(Font* default_font);
 	void register_font(std::string name, Font* new_font);
 
@@ -91,25 +75,16 @@ namespace agl
 	struct TextChunk
 	{
 		bool type = 0;
-		int x = 0;
-		int y = 0;
+		Point location;
 		int width = 0;
 		int height = 0;
 
-		Image* image = 0;
+		const Image* image = 0;
 
-		Font* font = 0;
+		const Font* font = 0;
 		std::string text;
 		Color color;
 		int size = 0;
-	};
-
-	struct Shader
-	{
-		Shader(std::string vertex_shader_source, std::string fragment_shader_source);
-		~Shader();
-
-		ALLEGRO_SHADER* shader;
 	};
 
 	void register_shader(std::string name, Shader* new_shader);

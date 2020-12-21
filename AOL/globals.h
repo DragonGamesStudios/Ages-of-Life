@@ -4,12 +4,15 @@
 #include "classes/Technology.h"
 #include "gui.h"
 
-#include <art/AOLRenderingToolset.h>
-#include <art/KeyboardEventManager.h>
 #include <art/Dictionary.h>
 #include <art/Renderer.h>
 
 #include <AGLAllegro5Backend/Allegro5EventHandler.h>
+#include <AGLAllegro5Backend/Allegro5GraphicsHandler.h>
+
+#include <ARTAllegro5Backend/Allegro5MainEventManager.h>
+#include <ARTAllegro5Backend/Allegro5KeyboardEventManager.h>
+#include <ARTAllegro5Backend/Allegro5Display.h>
 
 typedef unsigned int uint;
 typedef const char* ccptr;
@@ -82,21 +85,22 @@ protected:
 	ALLEGRO_BITMAP* AOLicon;
 
 	Font* segoeuib;
-	agl::Font* segoeUI_bold;
+	agl::Allegro5Font* segoeUI_bold;
 
 	agl::GuiGroup* main_gui_group;
 
 	agl::Gui* main_menu_gui_instance;
 	MainMenuGui* main_menu_gui;
 
-	agl::Shader* guassian_blur;
-	agl::Image* main_menu_background;
+	agl::Allegro5Shader* guassian_blur;
+	agl::Allegro5Image* main_menu_background;
 
 	agl::Allegro5EventHandler* event_handler;
+	agl::Allegro5GraphicsHandler* graphics_handler;
 
-	art::MainEventManager* event_manager;
-	art::KeyboardEventManager* keyboard_manager;
-	art::Display* display;
+	art::Allegro5MainEventManager* event_manager;
+	art::Allegro5KeyboardEventManager* keyboard_manager;
+	art::Allegro5Display* display;
 
 	art::FileSystem* base_fs;
 	art::Dictionary* dict;
@@ -105,7 +109,7 @@ protected:
 	art::Layer* gui_layer;
 
 	std::vector<std::vector<std::pair<int, int>>> shortcuts;
-	std::vector<std::vector<std::function<void(agl::Event)>>> shortcut_functions;
+	std::vector<std::vector<std::function<void(const agl::Event&)>>> shortcut_functions;
 
 	basedata_struct basedata;
 

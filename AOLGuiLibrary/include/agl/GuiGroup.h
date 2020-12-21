@@ -30,7 +30,7 @@ namespace agl
 		int screen_width;
 		int screen_height;
 
-		void draw_hr_line(int mx, int width, int* y);
+		void draw_hr_line(float mx, int width, float* y);
 	public:
 		GuiGroup();
 		~GuiGroup();

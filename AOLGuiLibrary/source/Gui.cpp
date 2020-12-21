@@ -11,10 +11,11 @@ namespace agl
 	void Gui::add(Block* new_child)
 	{
 		children.push_back(new_child);
+		new_child->connect_graphics_handler(graphics_handler);
 	}
 
 	void Gui::update(Block** event_receiver, Block** focus_listener,
-		Point mouse_location)
+		const Point& mouse_location)
 	{
 		for (auto& child : this->children)
 			child->update(mouse_location, Point(0, 0),
@@ -34,4 +35,10 @@ namespace agl
 	{
 		z_index = new_z_index;
 	}
+
+	void Gui::connect_graphics_handler(GraphicsHandler* handler)
+	{
+		graphics_handler = handler;
+	}
+
 }

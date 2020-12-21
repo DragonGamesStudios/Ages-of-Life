@@ -8,23 +8,24 @@ void Game::createguis()
 
 	gui_layer->connect_guigroup(main_gui_group);
 
-	guassian_blur = new agl::Shader(
+	guassian_blur = new agl::Allegro5Shader(
 		"core/shaders/guassian-blur-vertex.glsl",
 		"core/shaders/guassian-blur-fragment.glsl"
 	);
 
 	agl::register_shader("guassian-blur", guassian_blur);
 
-	main_menu_background = new agl::Image("base/graphics/background.png");
+	main_menu_background = new agl::Allegro5Image("base/graphics/background.png");
 
 	agl::register_image("main-menu-background", main_menu_background);
 
-	agl::Image* preview = new agl::Image("base/graphics/gui/game-preview-placeholder.png");
+	agl::Allegro5Image* preview = new agl::Allegro5Image("base/graphics/gui/game-preview-placeholder.png");
 
 	agl::register_image("game-preview-placeholder", preview);
 
 	main_menu_gui_instance = new agl::Gui();
 	main_gui_group->register_event_handler(event_handler);
+	main_gui_group->register_graphics_handler(graphics_handler);
 	main_gui_group->add_gui(main_menu_gui_instance);
 
 	main_gui_group->set_screen_dimensions(screenw, screenh);

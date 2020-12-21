@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AOLRenderingToolset", "AOLR
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AGLAllegro5Backend", "AGLAllegro5Backend\AGLAllegro5Backend.vcxproj", "{8B914A9F-21AE-47C9-A415-71B0A38A408D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ARTAllegro5Backend", "ARTAllegro5Backend\ARTAllegro5Backend.vcxproj", "{9F57510E-CABC-4007-85D8-04F60E435BBD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -51,6 +53,14 @@ Global
 		{8B914A9F-21AE-47C9-A415-71B0A38A408D}.Release|x64.Build.0 = Release|x64
 		{8B914A9F-21AE-47C9-A415-71B0A38A408D}.Release|x86.ActiveCfg = Release|Win32
 		{8B914A9F-21AE-47C9-A415-71B0A38A408D}.Release|x86.Build.0 = Release|Win32
+		{9F57510E-CABC-4007-85D8-04F60E435BBD}.Debug|x64.ActiveCfg = Debug|x64
+		{9F57510E-CABC-4007-85D8-04F60E435BBD}.Debug|x64.Build.0 = Debug|x64
+		{9F57510E-CABC-4007-85D8-04F60E435BBD}.Debug|x86.ActiveCfg = Debug|Win32
+		{9F57510E-CABC-4007-85D8-04F60E435BBD}.Debug|x86.Build.0 = Debug|Win32
+		{9F57510E-CABC-4007-85D8-04F60E435BBD}.Release|x64.ActiveCfg = Release|x64
+		{9F57510E-CABC-4007-85D8-04F60E435BBD}.Release|x64.Build.0 = Release|x64
+		{9F57510E-CABC-4007-85D8-04F60E435BBD}.Release|x86.ActiveCfg = Release|Win32
+		{9F57510E-CABC-4007-85D8-04F60E435BBD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

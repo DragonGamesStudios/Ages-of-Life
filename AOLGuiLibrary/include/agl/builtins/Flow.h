@@ -1,10 +1,10 @@
 
-#include "agl/Block.h"
+#include "agl/builtins/Layout.h"
 
 namespace agl::builtins
 {
 
-    class Flow : public Block
+    class Flow : public Layout
     {
     private:
         int main_axis_spacing;
@@ -19,7 +19,7 @@ namespace agl::builtins
 
         void layout_children();
 
-        void on_children_changed(Event e);
+        void on_children_changed(const Event& e);
     public:
         void resize_to_content();
         void set_main_axis_spacing(int spacing);
@@ -30,8 +30,7 @@ namespace agl::builtins
         void set_single_subflow(bool value);
         void set_main_axis(char axis);
 
-        virtual void add(Block* child);
-        virtual void apply(Style* style);
+        virtual void apply(const Style* style);
         virtual void set_size(int width, int height);
 
         Flow();

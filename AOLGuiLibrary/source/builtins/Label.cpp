@@ -41,15 +41,14 @@ namespace agl::builtins
 	}
 
 	void Label::add_line(
-		int* row_width, int max_width, int* current_y,
+		int* row_width, int max_width, float* current_y,
 		std::string* chunk_text, int current_font_height,
-		Font* current_font, Color current_color, int current_size,
-		int* current_x, int* row_begin
+		const Font* current_font, const Color& current_color, int current_size,
+		float* current_x, int* row_begin
 	)
 	{
 		chunks.push_back({
-			.x = *current_x,
-			.y = *current_y,
+			.location = Point{*current_x, *current_y},
 			.width = current_font->get_width(current_size, *chunk_text),
 			.height = current_font->get_height(current_size),
 
@@ -59,11 +58,11 @@ namespace agl::builtins
 			.size = current_size
 			});
 
-		int base_x = get_x_by_align(text_horizontal_align, *row_width, max_width);
+		float base_x = (float)get_x_by_align(text_horizontal_align, *row_width, max_width);
 
 		for (auto i = chunks.begin() + *row_begin; i != chunks.end(); i++)
 		{
-			i->x = base_x;
+			i->location.x = base_x;
 			base_x += i->width;
 		}
 
@@ -75,34 +74,33 @@ namespace agl::builtins
 		*current_x = 0;
 	}
 
-	void Label::set_text(std::string _text, bool raise)
+	void Label::set_text(const std::string& _text, bool raise)
 	{
 		text = _text;
 
 		chunks.clear();
 
-		int y = 0;
+		float y = 0;
 
 		switch (text_vertical_align)
 		{
 		case AGL_ALIGN_CENTER:
-			y = (get_inner_height() - base_font->get_height(base_size)) / 2;
+			y = float(get_inner_height() - base_font->get_height(base_size)) / 2;
 			break;
 
 		case AGL_ALIGN_END:
-			y = get_inner_height() - base_font->get_height(base_size);
+			y = (float)get_inner_height() - base_font->get_height(base_size);
 			break;
 		}
 
 		if (!(supports_rich || multiline || text_wrap))
 		{
-			int x = get_x_by_align(
+			float x = (float)get_x_by_align(
 				text_horizontal_align, base_font->get_width(base_size, text), get_inner_width()
 				);
 
 			chunks.push_back({
-				.x = x,
-				.y = y,
+				.location = Point{ x, y },
 
 				.font = base_font,
 				.text = text,
@@ -120,13 +118,13 @@ namespace agl::builtins
 			std::string chunk_text;
 			std::string word;
 			bool ignore_next = false;
-			Font* current_font = base_font;
+			const Font* current_font = base_font;
 			int current_size = base_size;
 			Color current_color = base_color;
 			int current_space_width = current_font->get_width(current_size, " ");
 			int current_font_height = base_font->get_height(current_size);
-			int current_x = 0;
-			int current_y = 0;
+			float current_x = 0;
+			float current_y = 0;
 			int max_width = get_inner_width();
 			bool reading_setter = false;
 			std::vector<std::string> setter_args;
@@ -194,8 +192,7 @@ namespace agl::builtins
 					{
 						// If rich setter begins, add chunk
 						chunks.push_back({
-							.x = current_x,
-							.y = current_y,
+							.location = {current_x, current_y},
 
 							.width = current_font->get_width(current_size, chunk_text),
 							.height = current_font_height,
@@ -279,9 +276,9 @@ namespace agl::builtins
 
 			// Offseting the y
 			for (auto& chunk : chunks)
-				chunk.y += y;
+				chunk.location.y += y;
 
-			text_height = current_y;
+			text_height = (int)current_y;
 		}
 
 		if (resizes_to_content)
@@ -292,33 +289,23 @@ namespace agl::builtins
 			raise_event({ .type = AGL_EVENT_TEXT_CHANGED, .source = this });
 	}
 
-	void Label::draw_block(Point base_location)
+	void Label::draw_block(const Point& base_location)
 	{
 		Block::draw_block(base_location);
 
 		for (const auto& chunk :chunks)
 		{
 			if (!chunk.type)
-				al_draw_text(
-					chunk.font->get(chunk.size),
-					chunk.color.calculated,
-					base_location.x + chunk.x, base_location.y + chunk.y, 0,
-					chunk.text.c_str()
-				);
+			{
+				graphics_handler->draw_text(base_location + chunk.location, chunk.text, chunk.font, chunk.size, chunk.color);
+			}
 			else
-				al_draw_scaled_bitmap(
-					chunk.image->bitmap,
-					0, 0,
-					chunk.image->width,
-					chunk.image->height,
-					chunk.x, chunk.y,
-					chunk.width,
-					chunk.height,
-					0
-				);
+			{
+				graphics_handler->draw_scaled_image_target(chunk.location, chunk.image, { 0, 0 }, chunk.width, chunk.height);
+			}
 		}
 	}
-
+	
 	void Label::set_horizontal_align(char halign)
 	{
 		text_horizontal_align = halign;
@@ -331,7 +318,7 @@ namespace agl::builtins
 		set_text(text);
 	}
 
-	void Label::set_base_font(Font* font)
+	void Label::set_base_font(const Font* font)
 	{
 		base_font = font;
 	}
@@ -341,7 +328,7 @@ namespace agl::builtins
 		base_size = size;
 	}
 
-	void Label::set_base_color(Color color)
+	void Label::set_base_color(const Color& color)
 	{
 		base_color = color;
 	}
@@ -377,7 +364,7 @@ namespace agl::builtins
 		set_text(text);
 	}
 
-	void Label::set_rich_colors(std::vector<Color> colors)
+	void Label::set_rich_colors(const std::vector<Color>& colors)
 	{
 		rich_colors = colors;
 	}
@@ -397,19 +384,19 @@ namespace agl::builtins
 		return text;
 	}
 
-	void Label::apply(Style* _style)
+	void Label::apply(const Style* _style)
 	{
 		Block::apply(_style);
 
-		if (style->values["base_size"].source)
-			base_size = std::get<int>(style->values["base_size"].value);
+		if (style->values.at("base_size").source)
+			base_size = std::get<int>(style->values.at("base_size").value);
 
-		if (style->values["base_color"].source)
-			base_color = std::get<Color>(style->values["base_color"].value);
+		if (style->values.at("base_color").source)
+			base_color = std::get<Color>(style->values.at("base_color").value);
 
-		if (style->values["base_font"].source)
+		if (style->values.at("base_font").source)
 		{
-			if (!std::get<int>(style->values["base_font"].value))
+			if (!std::get<int>(style->values.at("base_font").value))
 				base_font = loaded_fonts["default"];
 		}
 	}

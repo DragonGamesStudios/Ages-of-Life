@@ -2,6 +2,8 @@
 #include "gui.h"
 #include <agl/events.h>
 
+#include <allegro5/allegro.h>
+
 
 // Ingame guis
 

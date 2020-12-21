@@ -17,15 +17,15 @@ namespace agl::builtins
 		config(full_size, visible_size);
 	}
 
-	void Scrollbar::apply(Style* _style)
+	void Scrollbar::apply(const Style* _style)
 	{
 		Block::apply(_style);
 
-		if (style->values["axis"].source)
-			axis = std::get<int>(style->values["axis"].value);
+		if (style->values.at("axis").source)
+			axis = std::get<int>(style->values.at("axis").value);
 
-		if (style->values["marker"].source)
-			if (std::get<int>(style->values["marker"].value))
+		if (style->values.at("marker").source)
+			if (std::get<int>(style->values.at("marker").value))
 				create_marker();
 
 		if (scrollable)
@@ -42,7 +42,7 @@ namespace agl::builtins
 		react_to_scrollwheel = react;
 	}
 
-	void Scrollbar::on_scrollable_resized(Event e)
+	void Scrollbar::on_scrollable_resized(const Event& e)
 	{
 		if (e.type == AGL_EVENT_BLOCK_RESIZED && e.source == scrollable)
 		{
@@ -50,10 +50,10 @@ namespace agl::builtins
 		}
 	}
 
-	void Scrollbar::on_scroll(Event e)
+	void Scrollbar::on_scroll(const Event& e)
 	{
 		if (
-			e.type = AGL_EVENT_MOUSE_MOVED && react_to_scrollwheel &&
+			e.type == AGL_EVENT_MOUSE_MOVED && react_to_scrollwheel &&
 			(e.source == this || e.source == marker || e.source == scrollable) &&
 			e.dz
 			)
@@ -98,9 +98,9 @@ namespace agl::builtins
 			if (percent == 0) percent = 1;
 
 			if (axis == AGL_VERTICAL)
-				marker->set_size(get_inner_width(), percent * get_inner_height());
+				marker->set_size(get_inner_width(), int(percent * get_inner_height()));
 			else
-				marker->set_size(percent * get_inner_width(), get_inner_height());
+				marker->set_size(int(percent * get_inner_width()), get_inner_height());
 		}
 
 		set_scroll(scroll);
@@ -208,15 +208,15 @@ namespace agl::builtins
 		return marker;
 	}
 
-	void Scrollbar::on_marker_drag(Event e)
+	void Scrollbar::on_marker_drag(const Event& e)
 	{
 		if (
 			e.type == AGL_EVENT_MOUSE_MOVED && e.source == marker && marker->get_dragged() &&
 			(e.dx || e.dy) && (e.buttons & AGL_MOUSE_BBUTTON_PRIMARY)
 			)
 		{
-			float proper_coord = e.dy;
-			if (axis == AGL_HORIZONTAL) proper_coord = e.dx;
+			float proper_coord = (float)e.dy;
+			if (axis == AGL_HORIZONTAL) proper_coord = (float)e.dx;
 			
 			int max_size = get_inner_height(), marker_size = marker->get_height();
 			if (axis == AGL_HORIZONTAL)
@@ -226,7 +226,7 @@ namespace agl::builtins
 			}
 
 			float percent = proper_coord / std::max(max_size - marker_size, 1);
-			change_scroll(percent * std::max(full_size - visible_size, 1));
+			change_scroll(int(percent * std::max(full_size - visible_size, 1)));
 		}
 	}
 

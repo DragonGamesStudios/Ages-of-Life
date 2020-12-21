@@ -4,7 +4,7 @@
 
 namespace agl::builtins
 {
-	void SelectionList::select_on_click(Event e)
+	void SelectionList::select_on_click(const Event& e)
 	{
 		if (
 			(e.source->get_parent() == element_container ||
@@ -70,7 +70,7 @@ namespace agl::builtins
 		element_container = flow;
 	}
 
-	void SelectionList::add_element(std::string text)
+	void SelectionList::add_element(const std::string& text)
 	{
 		if (element_container)
 		{
@@ -106,18 +106,18 @@ namespace agl::builtins
 		}
 	}
 
-	void SelectionList::set_default_element_background_color(Color color)
+	void SelectionList::set_default_element_background_color(const Color& color)
 	{
 		set_odd_element_background_color(color);
 		set_even_element_background_color(color);
 	}
 
-	void SelectionList::set_odd_element_background_color(Color color)
+	void SelectionList::set_odd_element_background_color(const Color& color)
 	{
 		element_even_background_color = color;
 	}
 
-	void SelectionList::set_even_element_background_color(Color color)
+	void SelectionList::set_even_element_background_color(const Color& color)
 	{
 		element_odd_background_color = color;
 	}
@@ -137,12 +137,12 @@ namespace agl::builtins
 		element_label_size = size;
 	}
 
-	void SelectionList::set_element_label_color(Color color)
+	void SelectionList::set_element_label_color(const Color& color)
 	{
 		element_label_color = color;
 	}
 
-	void SelectionList::set_element_label_font(Font* font)
+	void SelectionList::set_element_label_font(const Font* font)
 	{
 		element_label_font = font;
 	}

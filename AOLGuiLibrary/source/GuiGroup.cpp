@@ -1,7 +1,6 @@
 #include "agl/GuiGroup.h"
 
 #include <iostream>
-#include <allegro5/allegro_primitives.h>
 
 std::map<std::string, std::vector<std::string>> style_flags = {
 	{"axis", {"", "AGL_HORIZONTAL", "AGL_VERTICAL"}},
@@ -33,7 +32,7 @@ std::map<std::string, std::vector<std::string>> style_flags = {
 
 namespace agl
 {
-	void GuiGroup::draw_hr_line(int mx, int width, int* y)
+	void GuiGroup::draw_hr_line(float mx, int width, float* y)
 	{
 		graphics_handler->draw_line({ mx + 15, *y }, { mx + width - 15, *y }, 1, debug::hr_color);
 
@@ -76,6 +75,7 @@ namespace agl
 	void GuiGroup::add_gui(Gui* gui)
 	{
 		guis.insert(gui);
+		gui->connect_graphics_handler(graphics_handler);
 	}
 
 	void GuiGroup::remove_gui(Gui* gui)
@@ -95,11 +95,11 @@ namespace agl
 
 		if (debug::debug && event_receiver)
 		{
-			int debug_height = 20;
-			int debug_width = 300;
-			int text_height = loaded_fonts["default"]->get_height(debug::font_size);
-			int mx = event_handler->get_mouse_state()->x,
-				my = event_handler->get_mouse_state()->y;
+			float debug_height = 20;
+			float debug_width = 300;
+			float text_height = (float)loaded_fonts["default"]->get_height(debug::font_size);
+			float mx = (float)event_handler->get_mouse_state()->x,
+				my = (float)event_handler->get_mouse_state()->y;
 			debug_height += text_height;
 
 			std::map<
@@ -126,26 +126,23 @@ namespace agl
 				}
 			}
 
-			int current_y = my - debug_height;
+			float current_y = my - debug_height;
 
 			if (my < debug_height)
 				current_y = my;
 
-			int current_x = mx;
+			float current_x = mx;
 			if (mx > screen_width - debug_width)
 				current_x = mx - debug_width;
 
-			al_draw_filled_rectangle(
-				current_x, current_y, current_x + debug_width, current_y + debug_height,
-				debug::background_color.calculated
+			graphics_handler->draw_filled_rectangle(
+				{ current_x, current_y, debug_width, debug_height }, debug::background_color
 			);
 
 			current_y += 10;
-			al_draw_text(
-				loaded_fonts["default"]->get(debug::font_size),
-				debug::default_color.calculated,
-				current_x + 5, current_y, 0,
-				typeid(*event_receiver).name()
+
+			graphics_handler->draw_text(
+				{ current_x + 5, current_y }, typeid(*event_receiver).name(), loaded_fonts["default"], debug::font_size, debug::default_color
 			);
 
 			current_y += text_height + 3;
@@ -153,15 +150,12 @@ namespace agl
 			for (const auto& [key, value] : style_sorted)
 			{
 
-				draw_hr_line(current_x, debug_width, &current_y);
+				draw_hr_line(current_x, (int)debug_width, &current_y);
 
 				std::string style_text = "Derived from \"" + key->name + "\":";
 
-				al_draw_text(
-					loaded_fonts["default"]->get(debug::font_size),
-					debug::stylename_color.calculated,
-					current_x + 5, current_y, 0,
-					style_text.c_str()
+				graphics_handler->draw_text(
+					{ current_x + 5, current_y }, style_text, loaded_fonts["default"], debug::font_size, debug::stylename_color
 				);
 
 				current_y += text_height + 3;
@@ -199,35 +193,25 @@ namespace agl
 						break;
 					}
 
-					al_draw_text(
-						loaded_fonts["default"]->get(debug::font_size),
-						debug::default_color.calculated,
-						current_x + 5, current_y, 0,
-						(rulename + ":").c_str()
+					graphics_handler->draw_text(
+						{ current_x + 5, current_y }, rulename + ":", loaded_fonts["default"], debug::font_size, debug::default_color
 					);
 
-					int valx = current_x + 5 + loaded_fonts["default"]->get_width(
+					float valx = current_x + 5 + loaded_fonts["default"]->get_width(
 						debug::font_size,
 						rulename + ": "
 					);
 
 					if (ruleval.index() == 2)
 					{
-						al_draw_filled_rectangle(
-							valx, current_y, valx + text_height,
-							current_y + text_height,
-							std::get<Color>(ruleval).calculated
-						);
+
+						graphics_handler->draw_filled_rectangle({ valx, current_y, text_height, text_height }, std::get<Color>(ruleval));
 
 						valx += text_height + 2;
 					}
 
-					al_draw_text(
-						loaded_fonts["default"]->get(debug::font_size),
-						value_color.calculated,
-						valx,
-						current_y, 0,
-						value_text.c_str()
+					graphics_handler->draw_text(
+						{ valx, current_y }, value_text, loaded_fonts["default"], debug::font_size, value_color
 					);
 
 					current_y += text_height + 3;
@@ -244,8 +228,8 @@ namespace agl
 			event_receiver = NULL;
 
 		Point mouse_location(
-			event_handler->get_mouse_state()->x,
-			event_handler->get_mouse_state()->y
+			(float)event_handler->get_mouse_state()->x,
+			(float)event_handler->get_mouse_state()->y
 		);
 
 		for (const auto& gui : guis)

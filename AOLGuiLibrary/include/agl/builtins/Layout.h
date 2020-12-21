@@ -1,11 +1,13 @@
 #pragma once
-#include "agl/Block.h"
+#include "../Block.h"
 
 namespace agl::builtins
 {
-    class Flow : public Block
+    class Layout : public Block
     {
     protected:
         virtual void layout_children() = 0;
+    public:
+        virtual void add(Block* child);
     };
 }

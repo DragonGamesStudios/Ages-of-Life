@@ -8,7 +8,7 @@ namespace agl::builtins
 	class ChildrenContainer : public Block
 	{
 	private:
-		void on_child_changed(Event e);
+		void on_child_changed(const Event& e);
 
 	public:
 		ChildrenContainer();
@@ -24,8 +24,8 @@ namespace agl::builtins
 
 		Block* children_container;
 
-		void on_children_container_resized(Event e);
-		void on_scroll(Event e);
+		void on_children_container_resized(const Event& e);
+		void on_scroll(const Event& e);
 
 	public:
 		ScrollBlock();

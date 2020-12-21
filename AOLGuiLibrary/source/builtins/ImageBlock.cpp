@@ -12,7 +12,7 @@ namespace agl::builtins
 		shader = NULL;
 	}
 
-	void ImageBlock::set_image(Image* _image)
+	void ImageBlock::set_image(const Image* _image)
 	{
 		image = _image;
 		desired_width = image->width;
@@ -33,8 +33,8 @@ namespace agl::builtins
 	{
 		if (image)
 		{
-			desired_width = image->width * x;
-			desired_height = image->height * y;
+			desired_width = image->width * (int)x;
+			desired_height = image->height * (int)y;
 		}
 	}
 
@@ -55,12 +55,12 @@ namespace agl::builtins
 					if ((float)image->width / maxwidth < (float)image->height / maxheight)
 					{
 						desired_width = maxwidth;
-						desired_height = ((float)image->width / maxwidth) * maxheight;
+						desired_height = int(((float)image->width / maxwidth) * maxheight);
 					}
 					else
 					{
 						desired_height = maxheight;
-						desired_width = ((float)image->height / maxheight) * maxwidth;
+						desired_width = int(((float)image->height / maxheight) * maxwidth);
 					}
 					break;
 
@@ -68,12 +68,12 @@ namespace agl::builtins
 					if ((float)image->width / maxwidth > (float)image->height / maxheight)
 					{
 						desired_width = maxwidth;
-						desired_height = ((float)image->width / maxwidth) * maxheight;
+						desired_height = int(((float)image->width / maxwidth) * maxheight);
 					}
 					else
 					{
 						desired_height = maxheight;
-						desired_width = ((float)image->height / maxheight) * maxwidth;
+						desired_width = int(((float)image->height / maxheight) * maxwidth);
 					}
 					break;
 
@@ -101,23 +101,23 @@ namespace agl::builtins
 		set_scaling(scaling);
 	}
 
-	void ImageBlock::set_offset(int x, int y)
+	void ImageBlock::set_offset(float x, float y)
 	{
 		set_offset(Point(x, y));
 	}
 
-	void ImageBlock::set_offset(Point offset)
+	void ImageBlock::set_offset(const Point& offset)
 	{
 		image_offset = offset;
 	}
 
-	void ImageBlock::draw_background(Point base_location)
+	void ImageBlock::draw_background(const Point& base_location)
 	{
 		Block::draw_background(base_location);
 
 		if (image)
 		{
-			al_use_shader(shader ? shader->shader : nullptr);
+			graphics_handler->use_shader(shader);
 			
 			if (shader_setup_fn) shader_setup_fn();
 
@@ -127,31 +127,24 @@ namespace agl::builtins
 			{
 
 			case AGL_SIZING_CONTENTBOX:
-				display_point += Point(box.padding.left, box.padding.top);
+				display_point += Point((float)box.padding.left, (float)box.padding.top);
 				[[fallthrough]];
 
 			case AGL_SIZING_PADDINGBOX:
-				display_point += Point(box.border.left, box.border.top);
+				display_point += Point((float)box.border.left, (float)box.border.top);
 				[[fallthrough]];
 
 			case AGL_SIZING_MARGINBOX:
-				display_point += Point(-box.margin.left, -box.margin.top);
+				display_point += Point(-(float)box.margin.left, -(float)box.margin.top);
 				break;
 
 			default:
 				break;
 			}
 
-			al_draw_scaled_bitmap(
-				image->bitmap,
-				0, 0,
-				image->width, image->height,
-				display_point.x, display_point.y,
-				desired_width, desired_height,
-				0
-			);
+			graphics_handler->draw_scaled_image_target(display_point, image, { 0, 0 }, desired_width, desired_height);
 
-			al_use_shader(NULL);
+			graphics_handler->use_shader(0);
 		}
 	}
 
@@ -162,15 +155,15 @@ namespace agl::builtins
 		set_scaling(scaling);
 	}
 
-	void ImageBlock::apply(Style* _style)
+	void ImageBlock::apply(const Style* _style)
 	{
 		Block::apply(_style);
 
-		if (style->values["image_scaling"].source)
-			set_scaling((char)std::get<int>(style->values["image_scaling"].value));
+		if (style->values.at("image_scaling").source)
+			set_scaling((char)std::get<int>(style->values.at("image_scaling").value));
 	}
 
-	void ImageBlock::set_shader(Shader* _shader)
+	void ImageBlock::set_shader(const Shader* _shader)
 	{
 		shader = _shader;
 	}

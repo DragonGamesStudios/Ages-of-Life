@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Base.h"
+#include "EventHandler.h"
 
 #include <vector>
 #include <functional>
@@ -35,7 +36,9 @@ namespace agl
 		Box box;
 		Point location;
 		Color background_color;
-		Style* style;
+		const Style* style;
+
+		GraphicsHandler* graphics_handler;
 
 		bool visibility;
 		bool hover;
@@ -57,35 +60,35 @@ namespace agl
 		bool focus;
 		bool detects_focus;
 
-		virtual void set_up_clipping(Point base_location, int* old_x, int* old_y, int* old_width, int* old_height);
-		virtual void reset_clipping(int old_x, int old_y, int old_width, int old_height);
-		virtual void draw_background(Point base_location);
-		virtual void draw_block(Point base_location);
-		void on_press_drag(Event e);
-		void on_release_drag(Event e);
+		virtual void set_up_clipping(const Point& base_location);
+		virtual void reset_clipping();
+		virtual void draw_background(const Point& base_location);
+		virtual void draw_block(const Point& base_location);
+		void on_press_drag(const Event& e);
+		void on_release_drag(const Event& e);
 
-		void on_press_focus(Event e);
+		void on_press_focus(const Event& e);
 	public:
 		Block();
 		virtual ~Block();
 
 		virtual void set_size(int width, int height);
 
-		int get_width(const std::string getter = "cpbm") const;
-		int get_height(const std::string getter = "cpbm") const;
+		int get_width(const std::string& getter = "cpbm") const;
+		int get_height(const std::string& getter = "cpbm") const;
 
 		int get_inner_width() const;
 		int get_inner_height() const;
 
-		void set_location(int x, int y);
-		void set_location(Point point);
+		void set_location(float x, float y);
+		void set_location(const Point& point);
 
 		Point get_location() const;
 
-		virtual void set_background_color(Color new_color);
+		virtual void set_background_color(const Color& new_color);
 
 		void set_margins(int top, int right, int bottom, int left);
-		void set_margins(BoxValues margins);
+		void set_margins(const BoxValues& margins);
 
 		void set_top_margin(int top);
 		void set_right_margin(int right);
@@ -93,50 +96,50 @@ namespace agl
 		void set_left_margin(int left);
 
 		void set_borders(int top, int right, int bottom, int left);
-		void set_borders(BoxValues borders);
-		void set_borders(BoxColors borders);
+		void set_borders(const BoxValues& borders);
+		void set_borders(const BoxColors& borders);
 		void set_borders(int border_w);
-		void set_borders(Color border_col);
+		void set_borders(const Color& border_col);
 
 		void set_top_border(int top);
 		void set_right_border(int right);
 		void set_bottom_border(int bottom);
 		void set_left_border(int left);
 
-		void set_top_border(Color top);
-		void set_right_border(Color right);
-		void set_bottom_border(Color bottom);
-		void set_left_border(Color left);
+		void set_top_border(const Color& top);
+		void set_right_border(const Color& right);
+		void set_bottom_border(const Color& bottom);
+		void set_left_border(const Color& left);
 
 		void set_paddings(int top, int right, int bottom, int left);
-		void set_paddings(BoxValues margins);
+		void set_paddings(const BoxValues& margins);
 
 		void set_top_padding(int top);
 		void set_right_padding(int right);
 		void set_bottom_padding(int bottom);
 		void set_left_padding(int left);
 
-		void set_box(Box box);
+		void set_box(const Box& box);
 
 		void set_visible(bool visible);
 
 		virtual void add(Block* block);
-		virtual void apply(Style* style);
-		Style* get_style();
+		virtual void apply(const Style* style);
+		const Style* get_style();
 
 		void draw(Point base_location);
 
-		void update(Point mouse_location, Point base_location,
+		void update(const Point& mouse_location, const Point& base_location,
 			Block** event_receiver, Block** focus_listener,
 			bool force_fail = false);
 
 		void add_event_listener(Block* listener);
 		void add_event_source(Block* source);
 
-		void add_event_function(std::function<void(Event)> function);
+		void add_event_function(std::function<void(const Event&)> function);
 
-		void raise_event(Event e);
-		void handle_event(Event e);
+		void raise_event(const Event& e);
+		void handle_event(const Event& e);
 
 		void set_parent(Block* block);
 		Block* get_parent();
@@ -168,7 +171,7 @@ namespace agl
 		void enable_parent_scroll_detection(bool detection);
 
 		void update_scroll_detection();
-		void handle_scroll(Event e);
+		void handle_scroll(const Event& e);
 
 		int get_box_width(char boxname) const;
 		int get_box_height(char boxname) const;
@@ -178,6 +181,8 @@ namespace agl
 		int get_child_index(Block* child);
 		Block* get_child_by_index(int child);
 		int get_children_amount() const;
+
+		void connect_graphics_handler(GraphicsHandler* graphics_handler_);
 
 		Block& operator<<(Block& block);
 	};

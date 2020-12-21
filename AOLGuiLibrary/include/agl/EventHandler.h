@@ -1,6 +1,4 @@
 #pragma once
-#include "allegro5/allegro.h"
-
 #include <vector>
 
 namespace agl
@@ -11,6 +9,8 @@ namespace agl
 		int y;
 		int buttons;
 	};
+
+	class Block;
 
 	struct Event
 	{

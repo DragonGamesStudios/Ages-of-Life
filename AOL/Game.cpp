@@ -18,9 +18,9 @@ Game::Game()
 
 	AOLicon = al_load_bitmap("base/graphics/AOLIcon.png");
 
-	event_manager = new art::MainEventManager(60);
-	keyboard_manager = new art::KeyboardEventManager;
-	display = new art::Display(1900, 1180, "Ages of Life");
+	event_manager = new art::Allegro5MainEventManager(60);
+	keyboard_manager = new art::Allegro5KeyboardEventManager;
+	display = new art::Allegro5Display(1900, 1180, "Ages of Life");
 	event_manager->add_manager(keyboard_manager);
 
 	event_manager->connect_display(display);
@@ -93,40 +93,6 @@ Game::Game()
 	};
 
 	initialize_agl();
-
-	/*
-	DOM_element* test_root = new DOM_element();
-
-	json testrlst = {
-		{"background-color", "#3ef"},
-		{"height", "50vw"},
-	};
-
-	test_root->set_rulesets({testrlst});
-
-	DOM_element* another_test = new DOM_element();
-	//DOM_element* another_test2 = new DOM_element;
-
-	json another = {
-		{"height", "90%"},
-		{"background-color", "brown"},
-		{"margin-top", "5%"},
-		{"background-image", "url(base/graphics/gui/input.png)"},
-		{"background-origin", "content-box"},
-		{"padding", "10px"},
-		{"background-position", "center center"}
-	};
-
-	another_test->set_rulesets({ another });
-	//another_test2->set_rulesets({ another });
-
-	test_root->add_child(another_test);
-	//test_root->add_child(another_test2);
-
-	testgui = new DOM_document(test_root);
-	testgui->calculate();
-	std::cout << "Loaded\n";
-	*/
 }
 
 Game::~Game()
@@ -142,6 +108,7 @@ Game::~Game()
 	delete renderer;
 
 	delete event_handler;
+	delete graphics_handler;
 
 	delete guassian_blur;
 	delete main_menu_background;
@@ -460,10 +427,11 @@ void Game::initialize_agl()
 {
 	agl::debug::init();
 
-	segoeUI_bold = new agl::Font("base/fonts/segoeuib.ttf", { 18, 24, 27, 36, 56 });
+	segoeUI_bold = new agl::Allegro5Font("base/fonts/segoeuib.ttf", { 18, 24, 27, 36, 56 });
 	agl::set_default_font(segoeUI_bold);
 
-	event_handler = new agl::Allegro5EventHandler();
+	event_handler = new agl::Allegro5EventHandler;
+	graphics_handler = new agl::Allegro5GraphicsHandler;
 
 	main_gui_group = new agl::GuiGroup();
 

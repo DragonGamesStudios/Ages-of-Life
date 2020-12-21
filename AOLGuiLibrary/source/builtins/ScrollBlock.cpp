@@ -3,7 +3,7 @@
 
 namespace agl::builtins
 {
-	void ScrollBlock::on_children_container_resized(Event e)
+	void ScrollBlock::on_children_container_resized(const Event& e)
 	{
 		if (e.type == AGL_EVENT_BLOCK_RESIZED && e.source == children_container)
 		{
@@ -15,19 +15,19 @@ namespace agl::builtins
 		}
 	}
 
-	void ScrollBlock::on_scroll(Event e)
+	void ScrollBlock::on_scroll(const Event& e)
 	{
 		if (e.type == AGL_EVENT_SCROLLBAR_SCROLLED && children_container)
 		{
 			if (e.source == vscrollbar)
 				children_container->set_location(Point(
 					children_container->get_location().x,
-					-vscrollbar->get_scroll()
+					-(float)vscrollbar->get_scroll()
 				));
 
 			else if (e.source == hscrollbar)
 				children_container->set_location(Point(
-					-hscrollbar->get_scroll(),
+					-(float)hscrollbar->get_scroll(),
 					children_container->get_location().y
 				));
 		}
@@ -132,7 +132,7 @@ namespace agl::builtins
 		return children_container;
 	}
 
-	void ChildrenContainer::on_child_changed(Event e)
+	void ChildrenContainer::on_child_changed(const Event& e)
 	{
 		if ((e.type == AGL_EVENT_BLOCK_RESIZED || e.type == AGL_EVENT_BLOCK_MOVED) &&
 			e.source->get_parent() == this)

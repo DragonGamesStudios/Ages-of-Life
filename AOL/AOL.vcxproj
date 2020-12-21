@@ -143,12 +143,12 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>../AOLGuiLibrary/include/;..\AOLRenderingToolset\include\;..\AGLAllegro5Backend\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../AOLGuiLibrary/include/;..\AOLRenderingToolset\include\;..\AGLAllegro5Backend\include\;..\ARTAllegro5Backend\include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(SolutionDir)$(Platform)\$(Configuration)\AGLAllegro5Backend.lib;$(SolutionDir)$(Platform)\$(Configuration)\AOLRenderingToolset.lib;$(SolutionDir)$(Platform)\$(Configuration)\AOLGuiLibrary.lib;lib/agui/build/Debug/agui_allegro5.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)$(Platform)\$(Configuration)\ARTAllegro5Backend.lib;$(SolutionDir)$(Platform)\$(Configuration)\AGLAllegro5Backend.lib;$(SolutionDir)$(Platform)\$(Configuration)\AOLRenderingToolset.lib;$(SolutionDir)$(Platform)\$(Configuration)\AOLGuiLibrary.lib;lib/agui/build/Debug/agui_allegro5.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
