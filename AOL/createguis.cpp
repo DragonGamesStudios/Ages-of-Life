@@ -23,15 +23,15 @@ void App::createguis()
 
 	agl::register_shader("guassian-blur", guassian_blur);
 
-	main_menu_background = new agl::Allegro5Image("base/graphics/background.png");
+	main_menu_background = new agl::Allegro5Image("core/graphics/background.png");
 
 	agl::register_image("main-menu-background", main_menu_background);
 
-	agl::Allegro5Image* preview = new agl::Allegro5Image("base/graphics/gui/game-preview-placeholder.png");
+	agl::Allegro5Image* preview = new agl::Allegro5Image("core/graphics/gui/game-preview-placeholder.png");
 
 	agl::register_image("game-preview-placeholder", preview);
 
-	agl::Allegro5Image* close = new agl::Allegro5Image("base/graphics/gui/close.png");
+	agl::Allegro5Image* close = new agl::Allegro5Image("core/graphics/gui/close.png");
 
 	agl::register_image("close-button", close);
 

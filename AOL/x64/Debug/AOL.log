@@ -1,5 +1,2 @@
 ﻿  App.cpp
-  App.h
-  Generowanie kodu...
-x64\Debug\App.obj : warning LNK4042: obiekt określono więcej niż raz; dodatkowe wystąpienia zostały zignorowane
   AOL.vcxproj -> C:\AOL\x64\Debug\AOL.exe

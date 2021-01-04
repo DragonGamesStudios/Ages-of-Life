@@ -13,7 +13,7 @@ App::App()
 	// Set non-pre-multiplied alpha
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 
-	AOLicon = al_load_bitmap("base/graphics/AOLIcon.png");
+	AOLicon = al_load_bitmap("core/graphics/AOLIcon.png");
 
 	event_manager = new art::Allegro5MainEventManager(60);
 	keyboard_manager = new art::Allegro5KeyboardEventManager;
@@ -39,7 +39,7 @@ App::App()
 	base_fs = new art::FileSystem;
 	dict = new art::Dictionary;
 	dict->set_filesystem(base_fs);
-	dict->set_translation_dir_path("base/locale");
+	dict->set_translation_dir_path("core/locale");
 	dict->set_active_language("en");
 
 	appdata_fs = new art::FileSystem(true);
@@ -287,7 +287,7 @@ void App::initialize_agl()
 {
 	agl::debug::init();
 
-	segoeUI_bold = new agl::Allegro5Font("base/fonts/segoeuib.ttf", { 18, 24, 27, 36, 56 });
+	segoeUI_bold = new agl::Allegro5Font("core/fonts/segoeuib.ttf", { 18, 24, 27, 36, 56 });
 	agl::set_default_font(segoeUI_bold);
 
 	event_handler = new agl::Allegro5EventHandler;
