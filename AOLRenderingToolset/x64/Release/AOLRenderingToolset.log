@@ -1,3 +1,9 @@
-﻿  EventManager.cpp
+﻿  Dictionary.cpp
+  Display.cpp
+  EventManager.cpp
+  FileSystem.cpp
   KeyboardEventManager.cpp
+  Layer.cpp
+  MainEventManager.cpp
+  Renderer.cpp
   AOLRenderingToolset.vcxproj -> C:\AOL\x64\Release\AOLRenderingToolset.lib
