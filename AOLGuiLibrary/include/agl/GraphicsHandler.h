@@ -79,6 +79,8 @@ namespace agl
 
 	* void draw_line(const Point& pt1, const Point& pt2, int thickness, const Color& color) const;
 	* 
+	* void draw_rectangle(const Rectangle& rect, int thickness, const Color& color) const;
+	* 
 	* void draw_filled_rectangle(const Rectangle& rect, const Color& color) const;
 	* 
 	* void draw_filled_triangle(const Point& pt1, const Point& pt2, const Point& pt3, const Color& color) const;
@@ -86,6 +88,8 @@ namespace agl
 	* void draw_text(const Point& pt, const std::string& text, const Font* font, const int size, const Color& color) const;
 	* 
 	* draw_scaled_image_target(const Point& pt, const Image* image, const Point& offset, int target_width, int target_height) const;
+	* 
+	* draw_scaled_tinted_image_target(const Point& pt, const Image* image, const Point& offset, int target_width, int target_height, const Color& tint) const;
 	* 
 	* use_shader(const Shader* shader) const;
 	* 
@@ -101,6 +105,8 @@ namespace agl
 	public:
 		virtual void draw_line(const Point& pt1, const Point& pt2, int thickness, const Color& color) const = 0;
 
+		virtual void draw_rectangle(const Rectangle& rect, int thickness, const Color& color) const = 0;
+
 		virtual void draw_filled_rectangle(const Rectangle& rect, const Color& color) const = 0;
 
 		virtual void draw_filled_triangle(const Point& pt1, const Point& pt2, const Point& pt3, const Color& color) const = 0;
@@ -109,6 +115,10 @@ namespace agl
 
 		virtual void draw_scaled_image_target(
 			const Point& pt, const Image* image, const Point& offset, int target_width, int target_height
+		) const = 0;
+
+		virtual void draw_scaled_tinted_image_target(
+			const Point& pt, const Image* image, const Point& offset, int target_width, int target_height, const Color& tint
 		) const = 0;
 
 		virtual void use_shader(const Shader* shader) const = 0;

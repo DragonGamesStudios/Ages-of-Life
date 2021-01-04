@@ -63,6 +63,12 @@
     <ClCompile Include="source\GraphicsHandler.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
+    <ClCompile Include="source\builtins\Dragger.cpp">
+      <Filter>builtins</Filter>
+    </ClCompile>
+    <ClCompile Include="source\TextInput.cpp">
+      <Filter>builtins</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\agl\builtins\Button.h">
@@ -112,6 +118,12 @@
     </ClInclude>
     <ClInclude Include="include\agl\GraphicsHandler.h">
       <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="include\agl\builtins\Dragger.h">
+      <Filter>builtins</Filter>
+    </ClInclude>
+    <ClInclude Include="include\agl\builtins\TextInput.h">
+      <Filter>builtins</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

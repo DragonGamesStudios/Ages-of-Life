@@ -1,4 +1,4 @@
-#include "KeyboardEventManager.h"
+#include "../include/art/KeyboardEventManager.h"
 #include "agl/events.h"
 
 void art::KeyboardEventManager::check_shortcut(int key)

@@ -5,6 +5,8 @@ namespace agl::builtins
 {
 	void Button::dispath_events(const Event& e)
 	{
+		Event raised = e;
+		raised.source = this;
 		if (e.source == this || e.source == label)
 			switch (e.type)
 			{
@@ -23,20 +25,20 @@ namespace agl::builtins
 					else
 						change_background_color(default_background_color);
 					if (click_function)
-						click_function(e, this);
+						click_function(raised, this);
 				}
 				break;
 
 			case AGL_EVENT_BLOCK_HOVER_GAINED:
 				change_background_color(hover_background_color);
 				if (hover_gained_function)
-					hover_gained_function(e, this);
+					hover_gained_function(raised, this);
 				break;
 
 			case AGL_EVENT_BLOCK_HOVER_LOST:
 				change_background_color(default_background_color);
 				if (hover_lost_function)
-					hover_lost_function(e, this);
+					hover_lost_function(raised, this);
 				break;
 
 			default:

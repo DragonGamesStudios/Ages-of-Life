@@ -118,6 +118,11 @@ namespace agl
 		al_draw_line(pt1.x, pt1.y, pt2.x, pt2.y, get_color(color), (float)thickness);
 	}
 
+	void Allegro5GraphicsHandler::draw_rectangle(const Rectangle& rect, int thickness, const Color& color) const
+	{
+		al_draw_rectangle(rect.pt.x, rect.pt.y, rect.pt.x + rect.width, rect.pt.y + rect.height, get_color(color), thickness);
+	}
+
 	void Allegro5GraphicsHandler::draw_filled_rectangle(const Rectangle& rect, const Color& color) const
 	{
 		al_draw_filled_rectangle(rect.pt.x, rect.pt.y, rect.pt.x + rect.width, rect.pt.y + rect.height, get_color(color));
@@ -136,6 +141,11 @@ namespace agl
 	void Allegro5GraphicsHandler::draw_scaled_image_target(const Point& pt, const Image* image, const Point& offset, int target_width, int target_height) const
 	{
 		al_draw_scaled_bitmap(((Allegro5Image*)image)->bitmap, offset.x, offset.y, image->width, image->height, pt.x, pt.y, target_width, target_height, 0);
+	}
+
+	void Allegro5GraphicsHandler::draw_scaled_tinted_image_target(const Point& pt, const Image* image, const Point& offset, int target_width, int target_height, const Color& tint) const
+	{
+		al_draw_tinted_scaled_bitmap(((Allegro5Image*)image)->bitmap, get_color(tint), offset.x, offset.y, image->width, image->height, pt.x, pt.y, target_width, target_height, 0);
 	}
 
 	void Allegro5GraphicsHandler::use_shader(const Shader* shader) const

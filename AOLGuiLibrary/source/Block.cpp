@@ -5,6 +5,11 @@
 
 namespace agl
 {
+	bool operator==(const std::shared_ptr<Block>& p1, const std::shared_ptr<Block>& p2)
+	{
+		return p1.get() == p2.get();
+	}
+
 	Block::Block()
 	{
 		hover = false;
@@ -25,11 +30,12 @@ namespace agl
 	{
 		for (auto& child : this->children)
 		{
-			delete child;
-			child = NULL;
+			//child = NULL;
 		}
 
-		this->children.clear();
+
+		//if (!this->children.empty())
+			//this->children.clear();
 	}
 
 	void Block::set_size(int width, int height)
@@ -178,6 +184,22 @@ namespace agl
 		block->connect_graphics_handler(graphics_handler);
 	}
 
+	void Block::remove(Block* block)
+	{
+		auto it = std::find(children.begin(), children.end(), block);
+
+		if (it != children.end())
+		{
+			//*it = NULL;
+			children.erase(it);
+		}
+	}
+
+	void Block::clear()
+	{
+		children.clear();
+	}
+
 	void Block::apply(const Style* applied_style)
 	{
 		style = applied_style;
@@ -294,7 +316,7 @@ namespace agl
 
 		Point lnw = base_location;
 		Point lse(lnw.x + get_width("cpb"), lnw.y + get_height("cpb"));
-		Point snw(lnw.x + box.border.right, lnw.y + box.border.top);
+		Point snw(lnw.x + box.border.left, lnw.y + box.border.top);
 		Point sse(snw.x + get_width("cp"), snw.y + get_height("cp"));
 
 		Point lne(lse.x, lnw.y);
@@ -600,11 +622,11 @@ namespace agl
 		{
 			parent_scroll_detection = true;
 			for (auto& child : children)
-				update_scroll_detection();
+				child->update_scroll_detection();
 		}
 		else if (scroll_detection)
 			for (auto& child : children)
-				update_scroll_detection();
+				child->update_scroll_detection();
 	}
 
 	void Block::handle_scroll(const Event& e)
@@ -738,6 +760,11 @@ namespace agl
 
 		if (sizing >= AGL_SIZING_BORDERBOX)
 			set_size(get_box_width(sizing), get_box_height(sizing));
+	}
+
+	void Block::set_borders(int border_w)
+	{
+		box.border.top = box.border.right = box.border.bottom = box.border.left = border_w;
 	}
 
 	void Block::set_paddings(int top, int right, int bottom, int left)

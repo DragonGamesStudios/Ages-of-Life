@@ -101,6 +101,11 @@ namespace agl::builtins
 		set_scaling(scaling);
 	}
 
+	void ImageBlock::set_tint(const Color& color)
+	{
+		tint = color;
+	}
+
 	void ImageBlock::set_offset(float x, float y)
 	{
 		set_offset(Point(x, y));
@@ -142,7 +147,7 @@ namespace agl::builtins
 				break;
 			}
 
-			graphics_handler->draw_scaled_image_target(display_point, image, { 0, 0 }, desired_width, desired_height);
+			graphics_handler->draw_scaled_tinted_image_target(display_point, image, { 0, 0 }, desired_width, desired_height, tint);
 
 			graphics_handler->use_shader(0);
 		}

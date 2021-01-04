@@ -24,7 +24,9 @@ TwoPanelGui::TwoPanelGui(
 	int side,
 	art::Dictionary* dict,
 	int preferred_left_width,
-	int preferred_right_width
+	int preferred_right_width,
+	bool add_border,
+	bool add_frame
 )
 {
 	// Setup widths
@@ -41,13 +43,73 @@ TwoPanelGui::TwoPanelGui(
 	gui_ptr->add(&main_frame);
 
 	// Create gui base
-	main_frame.set_size(right_width + left_width, side);
-	main_frame.set_paddings(2, 2, 2, 2);
-	main_frame.set_background_color(agl::Color(93, 35, 0));
+	if (add_frame)
+	{
+		main_frame.set_size(right_width + left_width + 38, side + 58);
+		main_frame.set_background_color(agl::Color(143, 85, 50));
 
-	main_frame.add(&main_flow);
+		content_frame.set_location(15.f, 35.f);
+		agl::Color se(163, 105, 70);
+		agl::Color nw(123, 65, 30);
+		content_frame.set_borders({ nw, se, se, nw });
+		content_frame.set_borders(2);
 
-	main_flow.set_size(right_width + left_width - 4, side);
+		// Label
+		main_frame.add(&frame_label);
+
+		frame_label.apply(bronze_age_label);
+		frame_label.resize_always();
+		frame_label.set_location(15.f, 3.f);
+
+		// Dragger
+		main_frame.add(&dragger);
+
+		dragger.set_location(0, 0);
+		dragger.set_size(right_width + left_width + 38, 35);
+		dragger.set_moved(&main_frame);
+
+		// Close button
+		main_frame.add(&close_button);
+		
+		close_button.set_image(agl::loaded_images["close-button"]);
+		close_button.set_size(24, 24);
+		close_button.set_location(right_width + left_width + 38 - 15 - 28, 4);
+
+		agl::Color cse(203, 145, 110);
+		agl::Color cnw(100, 50, 0);
+		close_button.set_borders(2);
+		close_button.set_borders({ cnw, cse, cse, cnw });
+
+		close_button.set_scaling(AGL_SCALING_TOSIZE);
+		close_button.set_background_color(agl::Color(163, 105, 70));
+		close_button.set_hover_background_color(agl::Color(163, 105, 70));
+		close_button.set_click_background_color(agl::Color(163, 105, 70));
+		close_button.set_tint(agl::Color(100, 50, 0));
+
+		main_frame.set_location(300.f, 300.f);
+	}
+	else
+	{
+		main_frame.set_size(right_width + left_width, side);
+	}
+
+	if (add_border)
+	{
+		agl::Color nw(163, 105, 70);
+		agl::Color se(123, 65, 30);
+		main_frame.set_borders({ nw, se, se, nw });
+		main_frame.set_borders(1);
+	}
+
+	main_frame.add(&content_frame);
+
+	content_frame.set_size(right_width + left_width, side);
+	content_frame.set_paddings(2, 2, 2, 2);
+	content_frame.set_background_color(agl::Color(93, 35, 0));
+
+	content_frame.add(&main_flow);
+
+	main_flow.set_size(right_width + left_width, side);
 	//main_flow.set_background_color(agl::Color(133, 75, 20));
 	//main_flow.set_main_axis_spacing(2);
 
@@ -56,7 +118,7 @@ TwoPanelGui::TwoPanelGui(
 	// Left panel
 	main_flow.add(&options_menu);
 
-	options_menu.set_size(left_width - 20, side - 4);
+	options_menu.set_size(left_width - 16, side);
 	options_menu.set_paddings(1, 1, 1, 1);
 	options_menu.set_background_color(agl::Color(133, 75, 20));
 
@@ -65,7 +127,7 @@ TwoPanelGui::TwoPanelGui(
 
 	options_menu.direct_add(&options_flow);
 
-	options_flow.set_size(left_width - 20, 0);
+	options_flow.set_size(left_width - 16, 0);
 	options_flow.set_single_subflow(true);
 	options_flow.set_main_axis(AGL_VERTICAL);
 	options_flow.set_background_color(agl::Color(0, 0, 0, 0));
@@ -74,7 +136,7 @@ TwoPanelGui::TwoPanelGui(
 
 	main_flow.add(&options_scrollbar);
 
-	options_scrollbar.set_size(10, side - 4);
+	options_scrollbar.set_size(10, side);
 	options_scrollbar.apply(bronze_age_scrollbar);
 	options_scrollbar.set_step(10);
 
@@ -82,13 +144,13 @@ TwoPanelGui::TwoPanelGui(
 	main_flow.add(&content_panel);
 	main_flow.add(&content_scrollbar);
 
-	content_panel.set_size(right_width - 12, side - 4);
+	content_panel.set_size(right_width - 12, side);
 	content_panel.connect_vscrollbar(&content_scrollbar);
 	content_panel.create_children_container();
 	content_panel.set_background_color(agl::Color(133, 75, 20));
 
 	content_scrollbar.apply(bronze_age_scrollbar);
-	content_scrollbar.set_size(10, side - 4);
+	content_scrollbar.set_size(10, side);
 }
 
 void TwoPanelGui::create_buttons(
@@ -100,7 +162,7 @@ void TwoPanelGui::create_buttons(
 	{
 		options_flow.add(buttons[i]);
 
-		buttons[i]->set_size(left_width - 20, 60);
+		buttons[i]->set_size(left_width - 16, 60);
 		buttons[i]->apply(bronze_age_menubutton);
 		buttons[i]->create_label();
 		buttons[i]->apply_to_label(bronze_age_label);
@@ -187,7 +249,7 @@ void MainMenuGui::highlight_shortcut(agl::Event e)
 }
 
 MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary* dict)
-	: TwoPanelGui(gui, screenh, dict, -1, screenw - screenh / 3)
+	: TwoPanelGui(gui, screenh - 4, dict, -1, screenw - screenh / 3 - 4, false, false)
 {
 	std::vector<agl::builtins::Button*> btn_ptrs;
 	for (int i = 0; i < 6; i++)
@@ -239,7 +301,7 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 
 	play_main_label.apply(bronze_age_main_label);
 	play_main_label.set_text("label-play");
-	play_main_label.resize_to_text();
+	play_main_label.resize_always();
 
 	play_gui_flow.add(&play_main_label);
 
@@ -352,6 +414,7 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 
 	options_main_label.apply(bronze_age_main_label);
 	options_main_label.set_text("label-options");
+	options_main_label.resize_always();
 
 	options_gui_flow.add(&options_main_label);
 
@@ -421,6 +484,7 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 
 	licenses_main_label.apply(bronze_age_main_label);
 	licenses_main_label.set_text("label-licenses");
+	licenses_main_label.resize_always();
 
 	std::string licenses_text_text;
 
@@ -587,6 +651,7 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 
 	creators_main_label.apply(bronze_age_main_label);
 	creators_main_label.set_text("label-creators");
+	creators_main_label.resize_always();
 
 	std::vector<std::pair<std::string, std::vector<std::string>>> creators = {
 			{"Programming", {"Michal Margos"}},
@@ -784,4 +849,55 @@ void setup_styles()
 	button_accept->set_value("border_color_right", a_sw);
 	button_accept->set_value("border_color_bottom", a_sw);
 	button_accept->set_value("border_color_left", a_ne);
+}
+
+NewGameGui::NewGameGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary* dict)
+	: TwoPanelGui(gui, screenh/2, dict)
+{
+	frame_label.set_text("label-new-game");
+
+	content_panel.add(&general_section);
+
+	general_section.set_size(content_panel.get_inner_width(), content_panel.get_inner_height());
+	general_section.set_background_color(agl::Color(0, 0, 0, 0));
+
+	general_section.add(&name_label);
+
+	name_label.apply(bronze_age_label);
+	name_label.set_location(5.f, 5.f);
+	name_label.resize_always();
+	name_label.set_text("label-game-name");
+	
+	general_section.add(&name_input);
+
+	name_input.set_size(120, 30);
+	name_input.set_location(5.f, 5.f + name_label.get_text_height() + 5.f);
+	name_input.set_background_color(agl::Color(113, 55, 0));
+	name_input.set_cursor_color(agl::Color(200, 150, 30));
+	name_input.create_label();
+	name_input.apply_to_label(bronze_age_label);
+
+	name_input.set_return_keycode(ALLEGRO_KEY_ENTER);
+	name_input.set_backspace_keycode(ALLEGRO_KEY_BACKSPACE);
+
+	general_section.add(&seed_label);
+
+	seed_label.apply(bronze_age_label);
+	seed_label.set_location(5.f, name_label.get_text_height() + 45.f);
+	seed_label.resize_always();
+	seed_label.set_text("label-game-seed");
+
+	general_section.add(&seed_input);
+
+	seed_input.set_size(120, 30);
+	seed_input.set_location(5.f, 2 * name_label.get_text_height() + 50.f);
+	seed_input.set_background_color(agl::Color(113, 55, 0));
+	seed_input.set_cursor_color(agl::Color(200, 150, 30));
+	seed_input.create_label();
+	seed_input.apply_to_label(bronze_age_label);
+
+	seed_input.set_return_keycode(ALLEGRO_KEY_ENTER);
+	seed_input.set_backspace_keycode(ALLEGRO_KEY_BACKSPACE);
+
+	create_buttons({ "label-general", "label-create" }, { &general_section_btn, &create_btn });
 }

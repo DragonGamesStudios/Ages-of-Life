@@ -5,6 +5,8 @@
 #include <agl/builtins/Scrollbar.h>
 #include <agl/builtins/ScrollBlock.h>
 #include <agl/builtins/Button.h>
+#include <agl/builtins/Dragger.h>
+#include <agl/builtins/TextInput.h>
 
 #include <art/Dictionary.h>
 
@@ -30,7 +32,12 @@ protected:
 	agl::Gui* gui_ptr;
 
 	agl::Block main_frame;
+	agl::Block content_frame;
 	agl::builtins::Flow main_flow;
+
+	// Frame case
+	agl::builtins::Label frame_label;
+	agl::builtins::Dragger dragger;
 
 	// Left panel
 	agl::builtins::ScrollBlock options_menu;
@@ -48,13 +55,14 @@ protected:
 public:
 	TwoPanelGui(
 		agl::Gui* gui, int side, art::Dictionary* dict,
-		int preferred_left_width = -1, int preferred_right_width = -1
+		int preferred_left_width = -1, int preferred_right_width = -1, bool add_border = true, bool add_frame = true
 	);
 
 	void create_buttons(
 		std::vector<std::string> btns,
 		std::vector<agl::builtins::Button*> buttons
 	);
+	agl::builtins::Button close_button;
 };
 
 class MainMenuGui : public TwoPanelGui
@@ -69,13 +77,9 @@ private:
 	agl::builtins::Label play_main_label;
 
 	agl::builtins::Flow play_game_selection_flow;
-	agl::builtins::SelectionList play_game_selection_list;
 	agl::builtins::ImageBlock play_game_selection_preview;
 
 	agl::Block play_main_container;
-	agl::builtins::Button play_new_button;
-	agl::builtins::Button play_load_button;
-	agl::builtins::Button play_delete_button;
 
 	// Options GUI
 	agl::Block options_gui;
@@ -112,7 +116,29 @@ public:
 
 	ShortcutOption debug_category_options[1];
 
+	agl::builtins::Button play_new_button;
+	agl::builtins::Button play_load_button;
+	agl::builtins::Button play_delete_button;
+
+	agl::builtins::SelectionList play_game_selection_list;
+
 	MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary* dict);
+};
+
+class NewGameGui : public TwoPanelGui
+{
+private:
+	agl::builtins::Button general_section_btn;
+	agl::Block general_section;
+	agl::builtins::Label name_label;
+	agl::builtins::Label seed_label;
+
+public:
+	NewGameGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary* dict );
+
+	agl::builtins::Button create_btn;
+	agl::builtins::TextInput name_input;
+	agl::builtins::TextInput seed_input;
 };
 
 std::string shortcut_to_string(int key, int mods);

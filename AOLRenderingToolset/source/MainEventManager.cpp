@@ -1,6 +1,6 @@
-#include "MainEventManager.h"
+#include "../include/art/MainEventManager.h"
 
-#include "agl/events.h"
+#include <agl/events.h>
 
 namespace art
 {

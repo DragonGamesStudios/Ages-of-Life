@@ -31,6 +31,8 @@ namespace agl::builtins
 		void connect_element_container(Flow* container);
 
 		void add_element(const std::string& text);
+		void remove_element(int index);
+		void clear_elements();
 		void set_default_element_background_color(const Color& color);
 		void set_odd_element_background_color(const Color& color);
 		void set_even_element_background_color(const Color& color);
@@ -45,7 +47,7 @@ namespace agl::builtins
 		void unselect_child(int index);
 		
 		std::set<int> get_selected_elements() const;
-		Block* get_element_by_index() const;
+		Block* get_element_by_index(int index) const;
 		int get_element_amount();
 	};
 }

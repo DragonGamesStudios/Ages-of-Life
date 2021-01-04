@@ -1,5 +1,4 @@
-#include "lib/Proto/Proto.h"
-#include "globals.h"
+#include "App.h"
 #include "allegrolib.h"
 
 //#define DOM_CONSTRUCTOR
@@ -13,39 +12,35 @@ void AOL_main()
 	bool AOLok = false;
 	std::string err;
 
-	try {
-		define_colors();
-		define_default_transform();
-
-		Game game;
+	try
+	{
+		App app;
 		
-		game.run();
+		app.run();
 
-		game.quit();
+		app.quit();
 
 		AOLok = true;
 	}
-	catch (std::string& e) {
-		//std::wstring werr = s2ws(e);
-		//err = werr.c_str();
+	catch (std::string& e)
+	{
 		err = e;
 	}
-	catch (std::exception& e) {
-		//std::cout << e.what();
-		//err = werr.c_str();
+	catch (std::exception& e)
+{
 		err = e.what();
 	}
-	catch (const char*& e) {
-		//std::wstring werr = s2ws(e);
-		//err = werr.c_str();
+	catch (const char*& e)
+{
 		err = e;
 	}
-	catch (...) {
-		//err = L"An error occured.";
+	catch (...)
+{
 		err = "An error occured";
 	}
 
-	if (!AOLok) {
+	if (!AOLok)
+{
 		al_show_native_message_box(NULL, "Exception Occured", "The game crashed. Please contact the developer.", ("Error: " + err).c_str(), "Ok", ALLEGRO_MESSAGEBOX_ERROR);
 	}
 }

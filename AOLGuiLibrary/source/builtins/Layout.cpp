@@ -8,4 +8,10 @@ namespace agl::builtins
 		child->add_event_listener(this);
 		layout_children();
 	}
+
+	void Layout::remove(Block* child)
+	{
+		Block::remove(child);
+		layout_children();
+	}
 }

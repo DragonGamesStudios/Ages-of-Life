@@ -23,6 +23,7 @@
     <ClCompile Include="source\Base.cpp" />
     <ClCompile Include="source\Block.cpp" />
     <ClCompile Include="source\builtins\Button.cpp" />
+    <ClCompile Include="source\builtins\Dragger.cpp" />
     <ClCompile Include="source\builtins\Flow.cpp" />
     <ClCompile Include="source\builtins\ImageBlock.cpp" />
     <ClCompile Include="source\builtins\Label.cpp" />
@@ -34,12 +35,14 @@
     <ClCompile Include="source\GraphicsHandler.cpp" />
     <ClCompile Include="source\Gui.cpp" />
     <ClCompile Include="source\GuiGroup.cpp" />
+    <ClCompile Include="source\TextInput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\agl\AOLGuiLibrary.h" />
     <ClInclude Include="include\agl\Base.h" />
     <ClInclude Include="include\agl\Block.h" />
     <ClInclude Include="include\agl\builtins\Button.h" />
+    <ClInclude Include="include\agl\builtins\Dragger.h" />
     <ClInclude Include="include\agl\builtins\Flow.h" />
     <ClInclude Include="include\agl\builtins\ImageBlock.h" />
     <ClInclude Include="include\agl\builtins\Label.h" />
@@ -47,6 +50,7 @@
     <ClInclude Include="include\agl\builtins\Scrollbar.h" />
     <ClInclude Include="include\agl\builtins\ScrollBlock.h" />
     <ClInclude Include="include\agl\builtins\SelectionList.h" />
+    <ClInclude Include="include\agl\builtins\TextInput.h" />
     <ClInclude Include="include\agl\EventHandler.h" />
     <ClInclude Include="include\agl\events.h" />
     <ClInclude Include="include\agl\GraphicsHandler.h" />

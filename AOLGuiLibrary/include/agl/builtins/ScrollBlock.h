@@ -37,7 +37,11 @@ namespace agl::builtins
 		void connect_hscrollbar(Scrollbar* scrollbar);
 
 		virtual void add(Block* block);
+		virtual void clear();
+		virtual void remove(Block* block);
 		virtual void direct_add(Block* block);
+		virtual void direct_remove(Block* block);
+		virtual void direct_clear();
 		
 		int get_total_width();
 		int get_total_height();

@@ -106,6 +106,27 @@ namespace agl::builtins
 		}
 	}
 
+	void SelectionList::remove_element(int index)
+	{
+		std::set<int> corrected;
+
+		for (const int& ind : selected_elements)
+			if (ind < 0)
+				corrected.insert(ind);
+			else if (ind > 0)
+				corrected.insert(ind - 1);
+
+		selected_elements = corrected;
+
+		element_container->remove(get_element_by_index(index));
+	}
+
+	void SelectionList::clear_elements()
+	{
+		if (element_container)
+			element_container->clear();
+	}
+
 	void SelectionList::set_default_element_background_color(const Color& color)
 	{
 		set_odd_element_background_color(color);
@@ -147,6 +168,11 @@ namespace agl::builtins
 		element_label_font = font;
 	}
 
+	void SelectionList::set_element_style(const Style* _style)
+	{
+		element_style = _style;
+	}
+
 	void SelectionList::unselect_all()
 	{
 		if (element_container)
@@ -175,6 +201,14 @@ namespace agl::builtins
 	std::set<int> SelectionList::get_selected_elements() const
 	{
 		return selected_elements;
+	}
+
+	Block* SelectionList::get_element_by_index(int index) const
+	{
+		if (element_container)
+			return element_container->get_child_by_index(index);
+
+		return nullptr;
 	}
 
 	int SelectionList::get_element_amount()

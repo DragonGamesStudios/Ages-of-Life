@@ -8,7 +8,10 @@
   Layout.cpp
   Scrollbar.cpp
   ScrollBlock.cpp
+  SelectionList.cpp
   EventHandler.cpp
+  GraphicsHandler.cpp
+C:\AOL\AOLGuiLibrary\source\GraphicsHandler.cpp(63,34): warning C4267: "return": konwersja z "size_t" do "int", możliwa utrata danych
   Gui.cpp
   GuiGroup.cpp
   AOLGuiLibrary.vcxproj -> C:\AOL\x64\Release\AOLGuiLibrary.lib

@@ -1,2 +1,6 @@
-﻿  Allegro5MainEventManager.cpp
+﻿  Allegro5Display.cpp
+  Allegro5EventManager.cpp
+  Allegro5KeyboardEventManager.cpp
+  Allegro5MainEventManager.cpp
+  Generowanie kodu...
   ARTAllegro5Backend.vcxproj -> C:\AOL\x64\Debug\ARTAllegro5Backend.lib

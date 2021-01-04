@@ -11,6 +11,7 @@ namespace agl
 	private:
 		ALLEGRO_MOUSE_STATE allegro_mouse;
 		void update_mouse_state();
+
 	public:
 		Allegro5EventHandler();
 

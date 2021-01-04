@@ -70,6 +70,8 @@ namespace agl
 	void GuiGroup::register_graphics_handler(GraphicsHandler* handler)
 	{
 		graphics_handler = handler;
+		for (auto& child : guis)
+			child->connect_graphics_handler(handler);
 	}
 
 	void GuiGroup::add_gui(Gui* gui)
@@ -183,7 +185,8 @@ namespace agl
 						value_text = "{"
 							+ std::to_string(std::get<Color>(ruleval).r) + ", "
 							+ std::to_string(std::get<Color>(ruleval).g) + ", "
-							+ std::to_string(std::get<Color>(ruleval).b) + "}";
+							+ std::to_string(std::get<Color>(ruleval).b) + ", "
+							+ std::to_string(std::get<Color>(ruleval).a) + "}";
 						break;
 					case 1:
 						value_color = debug::bool_color;
@@ -244,7 +247,7 @@ namespace agl
 				it->source = event_receiver;
 				event_receiver->raise_event(*it);
 
-				if (focus_listener)
+				if (focus_listener && focus_listener != event_receiver)
 				{
 					it->source = focus_listener;
 					focus_listener->raise_event(*it);

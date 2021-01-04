@@ -19,6 +19,8 @@ namespace agl::builtins
 		Point image_offset;
 		char scaling;
 
+		Color tint;
+
 		const Shader* shader;
 		std::function<void()> shader_setup_fn;
 
@@ -31,6 +33,8 @@ namespace agl::builtins
 		void set_scaling(float x, float y);
 		void set_scaling(char _scaling);
 		void set_display_box(char _box);
+
+		void set_tint(const Color& color);
 
 		void set_offset(float x, float y);
 		void set_offset(const Point& offset);

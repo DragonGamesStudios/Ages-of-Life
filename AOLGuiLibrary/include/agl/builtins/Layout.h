@@ -9,5 +9,6 @@ namespace agl::builtins
         virtual void layout_children() = 0;
     public:
         virtual void add(Block* child);
+        virtual void remove(Block* child);
     };
 }

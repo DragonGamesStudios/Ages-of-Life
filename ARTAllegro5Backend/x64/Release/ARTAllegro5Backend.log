@@ -1,0 +1,5 @@
+﻿  Allegro5Display.cpp
+  Allegro5EventManager.cpp
+  Allegro5KeyboardEventManager.cpp
+  Allegro5MainEventManager.cpp
+  ARTAllegro5Backend.vcxproj -> C:\AOL\x64\Release\ARTAllegro5Backend.lib

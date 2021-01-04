@@ -1,6 +1,8 @@
 #include "..\include\AGLAllegro5Backend\Allegro5EventHandler.h"
 #include <agl/events.h>
 
+#include <map>
+
 namespace agl
 {
 	void Allegro5EventHandler::update_mouse_state()
@@ -62,6 +64,13 @@ namespace agl
 			new_event.keycode = e.keyboard.keycode;
 			new_event.unicode = e.keyboard.unichar;
 			new_event.mods = e.keyboard.modifiers;
+			break;
+
+		case ALLEGRO_EVENT_KEY_DOWN:
+			new_event.type = AGL_EVENT_KEY_PRESSED;
+			new_event.keycode = e.keyboard.keycode;
+			new_event.mods = 0;
+			new_event.unicode = 0;
 			break;
 
 		default:

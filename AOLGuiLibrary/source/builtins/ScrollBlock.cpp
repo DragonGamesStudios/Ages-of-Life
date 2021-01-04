@@ -106,9 +106,37 @@ namespace agl::builtins
 		}
 	}
 
+	void ScrollBlock::clear()
+	{
+		if (children_container)
+			children_container->clear();
+	}
+
+	void ScrollBlock::remove(Block* block)
+	{
+		if (children_container)
+		{
+			children_container->remove(block);
+		}
+		else
+		{
+			direct_remove(block);
+		}
+	}
+
 	void ScrollBlock::direct_add(Block* block)
 	{
 		Block::add(block);
+	}
+
+	void ScrollBlock::direct_remove(Block* block)
+	{
+		Block::remove(block);
+	}
+
+	void ScrollBlock::direct_clear()
+	{
+		Block::clear();
 	}
 
 	int ScrollBlock::get_total_width()

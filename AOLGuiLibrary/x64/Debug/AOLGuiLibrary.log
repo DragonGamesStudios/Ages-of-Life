@@ -5,7 +5,9 @@
 C:\AOL\AOLGuiLibrary\source\GraphicsHandler.cpp(63,34): warning C4267: "return": konwersja z "size_t" do "int", możliwa utrata danych
   Gui.cpp
   GuiGroup.cpp
+  TextInput.cpp
   Button.cpp
+  Dragger.cpp
   Flow.cpp
   ImageBlock.cpp
   Label.cpp

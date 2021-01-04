@@ -49,12 +49,15 @@ namespace agl
 	class Allegro5GraphicsHandler : public GraphicsHandler
 	{
 	private:
-		ALLEGRO_COLOR get_color(const Color& color) const;
 
 	public:
 		Allegro5GraphicsHandler();
 
+		ALLEGRO_COLOR get_color(const Color& color) const;
+
 		void draw_line(const Point& pt1, const Point& pt2, int thickness, const Color& color) const;
+
+		void draw_rectangle(const Rectangle& rect, int thickness, const Color& color) const;
 
 		void draw_filled_rectangle(const Rectangle& rect, const Color& color) const;
 
@@ -64,6 +67,10 @@ namespace agl
 
 		void draw_scaled_image_target(
 			const Point& pt, const Image* image, const Point& offset, int target_width, int target_height
+		) const;
+
+		void draw_scaled_tinted_image_target(
+			const Point& pt, const Image* image, const Point& offset, int target_width, int target_height, const Color& tint
 		) const;
 
 		void use_shader(const Shader* shader) const;

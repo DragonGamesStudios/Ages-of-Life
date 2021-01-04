@@ -16,8 +16,8 @@ namespace agl::builtins
 
 		set_background_color(Color(0, 0, 0, 0));
 
-		base_font = 0;
-		base_size = 0;
+		base_font = loaded_fonts["default"];
+		base_size = debug::font_size;
 
 		resizes_to_content = false;
 	}

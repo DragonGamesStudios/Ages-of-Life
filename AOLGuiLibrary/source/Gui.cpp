@@ -39,6 +39,8 @@ namespace agl
 	void Gui::connect_graphics_handler(GraphicsHandler* handler)
 	{
 		graphics_handler = handler;
+		for (auto& child : children)
+			child->connect_graphics_handler(handler);
 	}
 
 }

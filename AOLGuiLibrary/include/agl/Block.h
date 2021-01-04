@@ -124,6 +124,8 @@ namespace agl
 		void set_visible(bool visible);
 
 		virtual void add(Block* block);
+		virtual void remove(Block* block);
+		virtual void clear();
 		virtual void apply(const Style* style);
 		const Style* get_style();
 

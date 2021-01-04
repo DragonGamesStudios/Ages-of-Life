@@ -175,29 +175,15 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="classes\Age.cpp" />
-    <ClCompile Include="classes\GameObject.cpp" />
-    <ClCompile Include="classes\Technology.cpp" />
     <ClCompile Include="createguis.cpp" />
-    <ClCompile Include="Game.cpp" />
-    <ClCompile Include="globals.h" />
+    <ClCompile Include="App.cpp" />
+    <ClCompile Include="App.h" />
     <ClCompile Include="gui.cpp" />
-    <ClCompile Include="independent-globals.cpp" />
-    <ClCompile Include="lib\Proto\DOM.cpp" />
-    <ClCompile Include="lib\Proto\Proto.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="modding-api.cpp" />
-    <ClCompile Include="Script.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allegrolib.h" />
-    <ClInclude Include="classes\Age.h" />
-    <ClInclude Include="classes\GameObject.h" />
-    <ClInclude Include="classes\Technology.h" />
     <ClInclude Include="gui.h" />
-    <ClInclude Include="independent-globals.h" />
-    <ClInclude Include="lib\Proto\DOM.h" />
-    <ClInclude Include="lib\Proto\Proto.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="helpme.md" />
