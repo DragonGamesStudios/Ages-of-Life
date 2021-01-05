@@ -5,3 +5,11 @@ Ages of Life project provides two backend-independent libraries containing usefu
 
 - Ages of Life GUI Library
 - Ages of Life Rendering Toolset
+
+.. toctree:
+    :maxdepth: 3
+    :caption: Ages of Life GUI Library
+
+    AGL/AGL.rst
+    AGL/Guide.rst
+    AGL/Macros.rst
