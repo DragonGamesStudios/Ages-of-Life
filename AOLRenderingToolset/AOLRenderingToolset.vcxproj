@@ -167,25 +167,32 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\Animation.cpp" />
+    <ClCompile Include="source\ArtImage.cpp" />
+    <ClCompile Include="source\Atlas.cpp" />
+    <ClCompile Include="source\Camera.cpp" />
     <ClCompile Include="source\Dictionary.cpp" />
     <ClCompile Include="source\Display.cpp" />
     <ClCompile Include="source\EventManager.cpp" />
     <ClCompile Include="source\FileSystem.cpp" />
     <ClCompile Include="source\KeyboardEventManager.cpp" />
-    <ClCompile Include="source\Layer.cpp" />
     <ClCompile Include="source\MainEventManager.cpp" />
-    <ClCompile Include="source\Renderer.cpp" />
+    <ClCompile Include="source\Sprite.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\art\Animation.h" />
     <ClInclude Include="include\art\AOLRenderingToolset.h" />
+    <ClInclude Include="include\art\ArtImage.h" />
+    <ClInclude Include="include\art\Atlas.h" />
+    <ClInclude Include="include\art\Color.h" />
     <ClInclude Include="include\art\Dictionary.h" />
     <ClInclude Include="include\art\Display.h" />
     <ClInclude Include="include\art\EventManager.h" />
     <ClInclude Include="include\art\FileSystem.h" />
     <ClInclude Include="include\art\KeyboardEventManager.h" />
-    <ClInclude Include="include\art\Layer.h" />
     <ClInclude Include="include\art\MainEventManager.h" />
-    <ClInclude Include="include\art\Renderer.h" />
+    <ClInclude Include="include\art\Camera.h" />
+    <ClInclude Include="include\art\Sprite.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

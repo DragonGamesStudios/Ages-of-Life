@@ -21,12 +21,14 @@
   <ItemGroup>
     <ClInclude Include="include\ARTAllegro5Backend\Allegro5Display.h" />
     <ClInclude Include="include\ARTAllegro5Backend\Allegro5EventManager.h" />
+    <ClInclude Include="include\ARTAllegro5Backend\Allegro5ArtImage.h" />
     <ClInclude Include="include\ARTAllegro5Backend\Allegro5KeyboardEventManager.h" />
     <ClInclude Include="include\ARTAllegro5Backend\Allegro5MainEventManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Allegro5Display.cpp" />
     <ClCompile Include="src\Allegro5EventManager.cpp" />
+    <ClCompile Include="src\Allegro5ArtImage.cpp" />
     <ClCompile Include="src\Allegro5KeyboardEventManager.cpp" />
     <ClCompile Include="src\Allegro5MainEventManager.cpp" />
   </ItemGroup>

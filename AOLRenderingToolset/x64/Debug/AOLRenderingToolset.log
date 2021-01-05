@@ -1,9 +1,2 @@
-﻿  Dictionary.cpp
-  Display.cpp
-  EventManager.cpp
-  KeyboardEventManager.cpp
-  Layer.cpp
-  MainEventManager.cpp
-  Renderer.cpp
-  Generowanie kodu...
+﻿  Camera.cpp
   AOLRenderingToolset.vcxproj -> C:\AOL\x64\Debug\AOLRenderingToolset.lib

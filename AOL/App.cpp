@@ -43,12 +43,8 @@ App::App()
 	dict->set_active_language("en");
 
 	appdata_fs = new art::FileSystem(true);
+
 	check_appdata();
-
-	renderer = new art::Renderer;
-	gui_layer = new art::Layer(0xff);
-
-	renderer->add_layer(gui_layer);
 
 	for (int i = 0; i < shortcuts.size(); i++)
 	{
@@ -78,8 +74,6 @@ App::~App()
 	delete bronze_age_hflow;
 	delete horizontal_flow;
 	delete bronze_age_scrollbar;
-
-	delete renderer;
 
 	delete event_handler;
 	delete graphics_handler;
@@ -277,7 +271,7 @@ void App::load()
 {
 	createguis();
 }
-
+ 
 void App::quit()
 {
 	al_destroy_bitmap(AOLicon);
@@ -300,14 +294,14 @@ void App::initialize_agl()
 
 void App::draw()
 {
-	gui_layer->draw();
+	main_gui_group->draw();
 }
 
 void App::update(double dt)
 {
 	this->time += dt;
 
-	gui_layer->update(dt);
+	main_gui_group->update();
 
 	this->event_handler->reset_event_queue();
 }

@@ -1,12 +1,10 @@
 ﻿  createguis.cpp
   App.cpp
   App.h
-  gui.cpp
-  main.cpp
 x64\Release\App.obj : warning LNK4042: obiekt określono więcej niż raz; dodatkowe wystąpienia zostały zignorowane
   Trwa generowanie kodu
-  5205 of 5654 functions (92.1%) were compiled, the rest were copied from previous compilation.
-    2702 functions were new in current compilation
-    75 functions had inline decision re-evaluated but remain unchanged
+  340 of 5564 functions ( 6.1%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    245 functions had inline decision re-evaluated but remain unchanged
   Zakończono generowanie kodu
   AOL.vcxproj -> C:\AOL\x64\Release\AOL.exe

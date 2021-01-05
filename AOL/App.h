@@ -2,7 +2,8 @@
 #include "gui.h"
 
 #include <art/Dictionary.h>
-#include <art/Renderer.h>
+#include <art/Sprite.h>
+#include <art/Atlas.h>
 
 #include <AGLAllegro5Backend/Allegro5EventHandler.h>
 #include <AGLAllegro5Backend/Allegro5GraphicsHandler.h>
@@ -10,6 +11,7 @@
 #include <ARTAllegro5Backend/Allegro5MainEventManager.h>
 #include <ARTAllegro5Backend/Allegro5KeyboardEventManager.h>
 #include <ARTAllegro5Backend/Allegro5Display.h>
+#include <ARTAllegro5Backend/Allegro5ArtImage.h>
 
 class App {
 public:
@@ -49,9 +51,6 @@ protected:
 	art::Dictionary* dict;
 
 	art::FileSystem* appdata_fs;
-
-	art::Renderer* renderer;
-	art::Layer* gui_layer;
 
 	std::vector<std::vector<std::pair<int, int>>> shortcuts;
 	std::vector<std::vector<std::function<void(const agl::Event&)>>> shortcut_functions;

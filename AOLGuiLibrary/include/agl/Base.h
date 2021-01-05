@@ -31,7 +31,7 @@ namespace agl
 	};
 
 	struct Box
-	{
+	{	
 		int inner_width = 0;
 		int inner_height = 0;
 		BoxValues margin;

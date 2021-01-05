@@ -9,8 +9,6 @@ void App::createguis()
 
 	// Basic setup
 
-	gui_layer->connect_guigroup(main_gui_group);
-
 	main_gui_group->register_event_handler(event_handler);
 	main_gui_group->register_graphics_handler(graphics_handler);
 

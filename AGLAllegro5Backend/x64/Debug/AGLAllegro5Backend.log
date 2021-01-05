@@ -1,2 +1,4 @@
-﻿  Allegro5GraphicsHandler.cpp
+﻿  Allegro5EventHandler.cpp
+  Allegro5GraphicsHandler.cpp
+  Generowanie kodu...
   AGLAllegro5Backend.vcxproj -> C:\AOL\x64\Debug\AGLAllegro5Backend.lib
