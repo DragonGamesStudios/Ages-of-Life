@@ -12,6 +12,6 @@ There is also moddign API.
    :maxdepth: 3
    :caption: Ages of Life GUI Library
 
-    AGL/AGL.rst
-    AGL/Guide.rst
-    AGL/Macros.rst
+    AGL/AGL
+    AGL/Guide
+    AGL/Macros
