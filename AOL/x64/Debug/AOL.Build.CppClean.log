@@ -4,6 +4,8 @@ c:\aol\aol\x64\debug\main.obj
 c:\aol\aol\x64\debug\gui.obj
 c:\aol\aol\x64\debug\app.obj
 c:\aol\aol\x64\debug\createguis.obj
+c:\aol\aol\x64\debug\luasettings.obj
+c:\aol\aol\x64\debug\luamodloader.obj
 c:\aol\x64\debug\aol.exe
 c:\aol\x64\debug\aol.ilk
 c:\aol\x64\debug\aol.pdb

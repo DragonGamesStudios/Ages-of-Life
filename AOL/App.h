@@ -1,6 +1,9 @@
 #include "allegrolib.h"
 #include "gui.h"
 
+#include "LuaModLoader.h"
+#include "Settings.h"
+
 #include <art/Dictionary.h>
 #include <art/Sprite.h>
 #include <art/Atlas.h>
@@ -25,6 +28,7 @@ public:
 protected:
 	int screenw, screenh;
 
+	// Base
 	ALLEGRO_BITMAP* AOLicon;
 
 	agl::Allegro5Font* segoeUI_bold;
@@ -47,7 +51,7 @@ protected:
 	art::Allegro5KeyboardEventManager* keyboard_manager;
 	art::Allegro5Display* display;
 
-	art::FileSystem* base_fs;
+	art::FileSystem* local_fs;
 	art::Dictionary* dict;
 
 	art::FileSystem* appdata_fs;
@@ -60,6 +64,16 @@ protected:
 
 	double time;
 
+	// Game
+	Settings* settings;
+
+	// Modding
+	LuaModLoader* mod_loader;
+	LuaSettings* mod_settings_loader;
+
+	std::vector<std::string> loaded_mods;
+
+	// Functions
 	void initialize_agl();
 
 	void draw();
@@ -70,6 +84,7 @@ protected:
 	void change_loading_screen(std::string mes, float per);
 
 	void load();
+	void run_file_in_mods(const std::string& file_name);
 
 	void enable_debug(agl::Event e);
 	void shortcut_capture(agl::Event e);

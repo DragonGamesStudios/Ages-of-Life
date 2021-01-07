@@ -36,9 +36,9 @@ App::App()
 		}
 	};
 
-	base_fs = new art::FileSystem;
+	local_fs = new art::FileSystem;
 	dict = new art::Dictionary;
-	dict->set_filesystem(base_fs);
+	dict->set_filesystem(local_fs);
 	dict->set_translation_dir_path("core/locale");
 	dict->set_active_language("en");
 
@@ -62,6 +62,22 @@ App::App()
 	time = al_get_time();
 
 	initialize_agl();
+
+	// Game
+	settings = new Settings;
+
+	// Modding
+	local_fs->add_path_template("__core__", local_fs->get_correct_path("core"));
+
+	mod_loader = new LuaModLoader;
+	mod_settings_loader = new LuaSettings;
+
+	settings->register_l_settings(mod_settings_loader);
+
+	mod_loader->register_l_settings(mod_settings_loader);
+	mod_loader->register_filesystem(appdata_fs);
+
+	mod_settings_loader->register_settings(settings);
 }
 
 App::~App()
@@ -85,7 +101,9 @@ App::~App()
 	delete keyboard_manager;
 	delete display;
 	delete appdata_fs;
-	delete base_fs;
+	delete local_fs;
+
+	delete mod_loader;
 }
 
 void App::enable_debug(agl::Event e)
@@ -270,6 +288,45 @@ void App::close()
 void App::load()
 {
 	createguis();
+
+	std::unordered_map<LoaderStage, std::vector<std::string>> to_run = {
+		{ LoaderStage::STAGE_SETTINGS, { "settings.lua", "settings-fixes.lua", "settings.final-fixes.lua" } }
+	};
+
+	// Mod ordering stage
+	loaded_mods = { "core" };
+
+	// Loading mods
+	for (const auto& [key, value] : to_run)
+	{
+		mod_loader->begin_stage(key);
+
+		for (const auto& file : value)
+			run_file_in_mods(file);
+
+		mod_loader->end_stage();
+	}
+}
+
+void App::run_file_in_mods(const std::string& file_name)
+{
+	for (const auto& mod : loaded_mods)
+	{
+		if (mod == "core")
+			mod_loader->register_filesystem(local_fs);
+		if (!mod_loader->load_mod(mod, file_name))
+		{
+			al_show_native_message_box(
+				display->get_al_display(),
+				"Error",
+				((std::string)"Error while loading mod: " + "mod").c_str(),
+				mod_loader->get_last_error().c_str(), "Ok", ALLEGRO_MESSAGEBOX_ERROR
+			);
+			close();
+		}
+		if (mod == "core")
+			mod_loader->register_filesystem(appdata_fs);
+	}
 }
  
 void App::quit()

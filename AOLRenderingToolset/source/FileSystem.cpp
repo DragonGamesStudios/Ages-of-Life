@@ -38,6 +38,16 @@ namespace art
 		return false;
 	}
 
+	std::string FileSystem::get_directory() const
+	{
+		return current_path.filename().string();
+	}
+
+	fs::path FileSystem::get_current_path() const
+	{
+		return current_path;
+	}
+
 	void FileSystem::exit()
 	{
 		current_path = current_path.parent_path();
@@ -91,9 +101,47 @@ namespace art
 		return true;
 	}
 
-	bool FileSystem::exists(fs::path path) const
+	bool FileSystem::exists(const fs::path& path) const
 	{
-		return fs::exists(current_path / path);
+		return fs::exists(get_correct_path(path));
+	}
+
+	bool FileSystem::add_path_template(const std::string& temp, const fs::path& target)
+	{
+		fs::path correct = target;
+		if (!correct.is_absolute()) correct = current_path / correct;
+
+		size_t s = temp.size();
+		if (s > 4 && temp[0] == temp[1] && temp[1] == temp[s - 1] && temp[s - 1] == temp[s - 2] && temp[s - 2] == '_')
+		{
+			path_templates.insert(std::make_pair(temp, correct));
+			return true;
+		}
+
+		return false;
+	}
+
+	bool FileSystem::is_template(const std::string& name)
+	{
+		size_t s = name.size();
+		return (s > 4 && name[0] == name[1] && name[1] == name[s - 1] && name[s - 1] == name[s - 2] && name[s - 2] == '_');
+	}
+
+	fs::path FileSystem::get_correct_path(const fs::path& path) const
+	{
+		if (path.empty())
+			return current_path;
+
+		std::string root = (*path.begin()).string();
+
+		fs::path rest;
+		for (auto it = ++path.begin(); it != path.end(); it++)
+			rest /= *it;
+
+		if (is_template(root) && path_templates.find(root) != path_templates.end())
+			return path_templates.at(root) / rest;
+
+		return current_path / path;
 	}
 
 	fs::directory_iterator FileSystem::get_files_in_directory(const fs::path& dirname)

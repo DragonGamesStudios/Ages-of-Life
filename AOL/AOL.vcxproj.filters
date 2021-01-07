@@ -13,13 +13,21 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="classes">
+    <Filter Include="Lua API">
+      <UniqueIdentifier>{e37960d3-782b-481c-a77a-f2bf926122d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Prototypes">
       <UniqueIdentifier>{b03bdde8-a976-4abb-8338-6acea1a553f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Prototypes\Prototype">
+      <UniqueIdentifier>{44c9776b-56ad-4739-aefd-7d191d1fd79b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Prototypes\Prototype\BasePrototype">
+      <UniqueIdentifier>{f3b528e4-c352-4f60-ab9c-92a91770725f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="..\Debug\testmod.lua" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -31,10 +39,22 @@
     <ClCompile Include="gui.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
-    <ClCompile Include="App.h">
-      <Filter>Pliki nagłówkowe</Filter>
-    </ClCompile>
     <ClCompile Include="App.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="LuaSettings.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="LuaModLoader.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="Settings.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="lua_fn.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingPrototype.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
   </ItemGroup>
@@ -44,6 +64,33 @@
     </ClInclude>
     <ClInclude Include="gui.h">
       <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaSettings.h">
+      <Filter>Lua API</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaModLoader.h">
+      <Filter>Lua API</Filter>
+    </ClInclude>
+    <ClInclude Include="Prototype.h">
+      <Filter>Prototypes</Filter>
+    </ClInclude>
+    <ClInclude Include="BasePrototype.h">
+      <Filter>Prototypes\Prototype</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingPrototype.h">
+      <Filter>Prototypes\Prototype\BasePrototype</Filter>
+    </ClInclude>
+    <ClInclude Include="App.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="lua_.hpp">
+      <Filter>Lua API</Filter>
+    </ClInclude>
+    <ClInclude Include="Settings.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="lua_fn.h">
+      <Filter>Lua API</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

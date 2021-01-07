@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <map>
 
 namespace art
 {
@@ -11,6 +12,7 @@ namespace art
 	{
 	private:
 		fs::path current_path;
+		std::map<std::string, fs::path> path_templates;
 
 	public:
 		FileSystem(bool appdata = false);
@@ -18,6 +20,8 @@ namespace art
 		bool create_dir(const std::string& dirname);
 		bool delete_dir_recursively(const std::string& dirname);
 		bool enter_dir(const std::string& path);
+		std::string get_directory() const;
+		fs::path get_current_path() const;
 
 		void exit();
 		void exit_to(const fs::path& dirname);
@@ -30,7 +34,12 @@ namespace art
 		bool create_file(const std::string& filename);
 		bool create_file_if_necessary(const std::string& filename);
 
-		bool exists(fs::path path) const;
+		bool exists(const fs::path& path) const;
+
+		bool add_path_template(const std::string& temp, const fs::path& target);
+		static bool is_template(const std::string& name);
+
+		fs::path get_correct_path(const fs::path& path) const;
 
 		fs::directory_iterator get_files_in_directory(const fs::path& dirname);
 	};

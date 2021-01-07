@@ -171,19 +171,31 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="..\Debug\testmod.lua" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="createguis.cpp" />
     <ClCompile Include="App.cpp" />
-    <ClCompile Include="App.h" />
     <ClCompile Include="gui.cpp" />
+    <ClCompile Include="LuaModLoader.cpp" />
+    <ClCompile Include="LuaSettings.cpp" />
+    <ClCompile Include="lua_fn.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SettingPrototype.cpp" />
+    <ClCompile Include="Settings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allegrolib.h" />
+    <ClInclude Include="App.h" />
+    <ClInclude Include="BasePrototype.h" />
     <ClInclude Include="gui.h" />
+    <ClInclude Include="lua_.hpp" />
+    <ClInclude Include="LuaModLoader.h" />
+    <ClInclude Include="LuaSettings.h" />
+    <ClInclude Include="lua_fn.h" />
+    <ClInclude Include="Prototype.h" />
+    <ClInclude Include="SettingPrototype.h" />
+    <ClInclude Include="Settings.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="helpme.md" />
