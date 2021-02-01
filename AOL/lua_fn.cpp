@@ -47,7 +47,7 @@ void push_function(lua_State* L, const lua_fn& fn)
 	void * new_fn = lua_newuserdata(L, sizeof(lua_fn));
 
 	// Set metatable to func
-	lua_getglobal(L, fn_mt);
+	luaL_getmetatable(L, fn_mt);
 	lua_setmetatable(L, -2);
 
 	// Set variable

@@ -16,14 +16,17 @@
     <Filter Include="Lua API">
       <UniqueIdentifier>{e37960d3-782b-481c-a77a-f2bf926122d7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Prototypes">
-      <UniqueIdentifier>{b03bdde8-a976-4abb-8338-6acea1a553f2}</UniqueIdentifier>
+    <Filter Include="Builtins">
+      <UniqueIdentifier>{23fed5bd-b2f8-4e5e-a56c-ccea45e342c5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Prototypes\Prototype">
-      <UniqueIdentifier>{44c9776b-56ad-4739-aefd-7d191d1fd79b}</UniqueIdentifier>
+    <Filter Include="BuiltinsImplementation">
+      <UniqueIdentifier>{295db1b7-b9fc-4d3c-8e0d-44326d51cc53}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Prototypes\Prototype\BasePrototype">
-      <UniqueIdentifier>{f3b528e4-c352-4f60-ab9c-92a91770725f}</UniqueIdentifier>
+    <Filter Include="BuiltinsImplementation\GameObject">
+      <UniqueIdentifier>{687d5257-6f7b-44cb-856c-087915f2a84c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Builtins\GameObject">
+      <UniqueIdentifier>{c2cb0329-8dea-4af8-80fc-e7a98321b026}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -42,19 +45,22 @@
     <ClCompile Include="App.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
-    <ClCompile Include="LuaSettings.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
     <ClCompile Include="LuaModLoader.cpp">
-      <Filter>Pliki źródłowe</Filter>
-    </ClCompile>
-    <ClCompile Include="Settings.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
     <ClCompile Include="lua_fn.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
-    <ClCompile Include="SettingPrototype.cpp">
+    <ClCompile Include="builtins\GameObject.cpp">
+      <Filter>BuiltinsImplementation</Filter>
+    </ClCompile>
+    <ClCompile Include="builtins\Setting.cpp">
+      <Filter>BuiltinsImplementation\GameObject</Filter>
+    </ClCompile>
+    <ClCompile Include="LuaStorage.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="Storage.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
   </ItemGroup>
@@ -65,20 +71,8 @@
     <ClInclude Include="gui.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
-    <ClInclude Include="LuaSettings.h">
-      <Filter>Lua API</Filter>
-    </ClInclude>
     <ClInclude Include="LuaModLoader.h">
       <Filter>Lua API</Filter>
-    </ClInclude>
-    <ClInclude Include="Prototype.h">
-      <Filter>Prototypes</Filter>
-    </ClInclude>
-    <ClInclude Include="BasePrototype.h">
-      <Filter>Prototypes\Prototype</Filter>
-    </ClInclude>
-    <ClInclude Include="SettingPrototype.h">
-      <Filter>Prototypes\Prototype\BasePrototype</Filter>
     </ClInclude>
     <ClInclude Include="App.h">
       <Filter>Pliki nagłówkowe</Filter>
@@ -86,11 +80,23 @@
     <ClInclude Include="lua_.hpp">
       <Filter>Lua API</Filter>
     </ClInclude>
-    <ClInclude Include="Settings.h">
-      <Filter>Pliki nagłówkowe</Filter>
-    </ClInclude>
     <ClInclude Include="lua_fn.h">
       <Filter>Lua API</Filter>
+    </ClInclude>
+    <ClInclude Include="builtins\GameObject.h">
+      <Filter>Builtins</Filter>
+    </ClInclude>
+    <ClInclude Include="builtins\builtins.h">
+      <Filter>Builtins</Filter>
+    </ClInclude>
+    <ClInclude Include="builtins\Setting.h">
+      <Filter>Builtins\GameObject</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaStorage.h">
+      <Filter>Lua API</Filter>
+    </ClInclude>
+    <ClInclude Include="Storage.h">
+      <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

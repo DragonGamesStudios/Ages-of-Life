@@ -1,7 +1,6 @@
-settings:register{
+data:register{
     {
+        type = "setting",
         name = "Hello"
     }
 }
-
-print(settings.raw["Hello"].name)

@@ -2,7 +2,7 @@
 #include "gui.h"
 
 #include "LuaModLoader.h"
-#include "Settings.h"
+#include "Storage.h"
 
 #include <art/Dictionary.h>
 #include <art/Sprite.h>
@@ -65,11 +65,11 @@ protected:
 	double time;
 
 	// Game
-	Settings* settings;
+	Storage* storage;
 
 	// Modding
 	LuaModLoader* mod_loader;
-	LuaSettings* mod_settings_loader;
+	LuaStorage* mod_storage_loader;
 
 	std::vector<std::string> loaded_mods;
 

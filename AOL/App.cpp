@@ -64,20 +64,21 @@ App::App()
 	initialize_agl();
 
 	// Game
-	settings = new Settings;
+	storage = new Storage;
 
 	// Modding
 	local_fs->add_path_template("__core__", local_fs->get_correct_path("core"));
+	local_fs->add_path_template("__base__", local_fs->get_correct_path("base"));
 
 	mod_loader = new LuaModLoader;
-	mod_settings_loader = new LuaSettings;
+	mod_storage_loader = new LuaStorage;
 
-	settings->register_l_settings(mod_settings_loader);
+	storage->register_l_storage(mod_storage_loader);
 
-	mod_loader->register_l_settings(mod_settings_loader);
+	mod_loader->register_l_storage(mod_storage_loader);
 	mod_loader->register_filesystem(appdata_fs);
 
-	mod_settings_loader->register_settings(settings);
+	mod_storage_loader->register_storage(storage);
 }
 
 App::~App()
@@ -290,11 +291,15 @@ void App::load()
 	createguis();
 
 	std::unordered_map<LoaderStage, std::vector<std::string>> to_run = {
-		{ LoaderStage::STAGE_SETTINGS, { "settings.lua", "settings-fixes.lua", "settings.final-fixes.lua" } }
+		{ LoaderStage::STAGE_SETTINGS, { "settings.lua", "settings-fixes.lua", "settings-final-fixes.lua" } },
+		{ LoaderStage::STAGE_PROTOTYPES, { "prototypes.lua", "prototypes-fixes.lua", "prototypes-final-fixes.lua" } },
+		{ LoaderStage::STAGE_DATA, { "data.lua", "data-fixes.lua", "data-final-fixes.lua" } },
+		// Settings migrations stage is executed in migrations directory, if there is one
+		{ LoaderStage::STAGE_SETTINGS_MIGRATIONS, { "migrations/settings.lua", "migrations/settings-fixes.lua", "migrations/settings-final-fixes.lua" } },
 	};
 
 	// Mod ordering stage
-	loaded_mods = { "core" };
+	loaded_mods = { "core", "base" };
 
 	// Loading mods
 	for (const auto& [key, value] : to_run)
@@ -312,19 +317,19 @@ void App::run_file_in_mods(const std::string& file_name)
 {
 	for (const auto& mod : loaded_mods)
 	{
-		if (mod == "core")
+		if (mod == "core" || mod == "base")
 			mod_loader->register_filesystem(local_fs);
 		if (!mod_loader->load_mod(mod, file_name))
 		{
 			al_show_native_message_box(
 				display->get_al_display(),
 				"Error",
-				((std::string)"Error while loading mod: " + "mod").c_str(),
+				((std::string)"Error while loading mod: " + mod).c_str(),
 				mod_loader->get_last_error().c_str(), "Ok", ALLEGRO_MESSAGEBOX_ERROR
 			);
 			close();
 		}
-		if (mod == "core")
+		if (mod == "core" || mod == "base")
 			mod_loader->register_filesystem(appdata_fs);
 	}
 }

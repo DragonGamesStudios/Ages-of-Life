@@ -1,11 +1,15 @@
 c:\aol\aol\x64\debug\vc142.pdb
 c:\aol\aol\x64\debug\vc142.idb
+c:\aol\aol\x64\debug\settings.obj
+c:\aol\aol\x64\debug\settingprototype.obj
+c:\aol\aol\x64\debug\prototype.obj
 c:\aol\aol\x64\debug\main.obj
+c:\aol\aol\x64\debug\lua_fn.obj
+c:\aol\aol\x64\debug\luasettings.obj
+c:\aol\aol\x64\debug\luamodloader.obj
 c:\aol\aol\x64\debug\gui.obj
 c:\aol\aol\x64\debug\app.obj
 c:\aol\aol\x64\debug\createguis.obj
-c:\aol\aol\x64\debug\luasettings.obj
-c:\aol\aol\x64\debug\luamodloader.obj
 c:\aol\x64\debug\aol.exe
 c:\aol\x64\debug\aol.ilk
 c:\aol\x64\debug\aol.pdb
