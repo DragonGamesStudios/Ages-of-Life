@@ -180,6 +180,7 @@
     <ClCompile Include="App.cpp" />
     <ClCompile Include="gui.cpp" />
     <ClCompile Include="LuaModLoader.cpp" />
+    <ClCompile Include="LuaSaveSystem.cpp" />
     <ClCompile Include="LuaStorage.cpp" />
     <ClCompile Include="lua_fn.cpp" />
     <ClCompile Include="main.cpp" />
@@ -192,6 +193,7 @@
     <ClInclude Include="builtins\GameObject.h" />
     <ClInclude Include="builtins\Setting.h" />
     <ClInclude Include="gui.h" />
+    <ClInclude Include="LuaSaveSystem.h" />
     <ClInclude Include="lua_.hpp" />
     <ClInclude Include="LuaModLoader.h" />
     <ClInclude Include="LuaStorage.h" />

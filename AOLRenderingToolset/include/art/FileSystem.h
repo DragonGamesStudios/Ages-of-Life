@@ -31,8 +31,16 @@ namespace art
 		std::ifstream open_file(const std::string& path) const;
 		std::ifstream open_file(const fs::path& path) const;
 
+		std::ofstream open_ofile(const std::string& path) const;
+		std::ofstream open_ofile(const fs::path& path) const;
+
 		bool create_file(const std::string& filename);
 		bool create_file_if_necessary(const std::string& filename);
+
+		bool delete_file(const std::string& filename);
+		bool delete_file(const fs::path& filename);
+		bool delete_file_if_exists(const std::string& filename);
+		bool delete_file_if_exists(const fs::path& filename);
 
 		bool exists(const fs::path& path) const;
 

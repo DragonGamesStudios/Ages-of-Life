@@ -63,6 +63,9 @@
     <ClCompile Include="Storage.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
+    <ClCompile Include="LuaSaveSystem.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allegrolib.h">
@@ -97,6 +100,9 @@
     </ClInclude>
     <ClInclude Include="Storage.h">
       <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaSaveSystem.h">
+      <Filter>Lua API</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

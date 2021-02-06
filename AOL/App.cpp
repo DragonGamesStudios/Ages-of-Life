@@ -43,6 +43,7 @@ App::App()
 	dict->set_active_language("en");
 
 	appdata_fs = new art::FileSystem(true);
+	save_fs = new art::FileSystem(true);
 
 	check_appdata();
 
@@ -72,13 +73,27 @@ App::App()
 
 	mod_loader = new LuaModLoader;
 	mod_storage_loader = new LuaStorage;
+	mod_savesystem = new LuaSaveSystem;
 
 	storage->register_l_storage(mod_storage_loader);
 
 	mod_loader->register_l_storage(mod_storage_loader);
+	mod_loader->register_l_savesystem(mod_savesystem);
 	mod_loader->register_filesystem(appdata_fs);
 
+	mod_savesystem->register_filesystem(save_fs);
+
 	mod_storage_loader->register_storage(storage);
+
+	to_run = {
+		{ LoaderStage::STAGE_SETTINGS, { "settings.lua", "settings-fixes.lua", "settings-final-fixes.lua" } },
+		{ LoaderStage::STAGE_PROTOTYPES, { "prototypes.lua", "prototypes-fixes.lua", "prototypes-final-fixes.lua" } },
+		{ LoaderStage::STAGE_DATA, { "data.lua", "data-fixes.lua", "data-final-fixes.lua" } },
+		// Settings migrations stage is executed in migrations directory, if there is one
+		{ LoaderStage::STAGE_SETTINGS_MIGRATIONS, { "migrations/settings.lua", "migrations/settings-fixes.lua", "migrations/settings-final-fixes.lua" } },
+		{ LoaderStage::STAGE_NEW_GAME, { "new-game.lua", "new-game-fixes.lua", "new-game-final-fixes.lua" } },
+	};
+	loaded_mods = { "core", "base" };
 }
 
 App::~App()
@@ -177,7 +192,7 @@ bool App::can_save_be_created(const std::string& savename) const
 			return false;
 	}
 
-	return true;
+	return !savename.empty();
 }
 
 void App::reload_saves()
@@ -202,12 +217,23 @@ void App::reload_saves()
 
 void App::create_game(const std::string& name, long long seed)
 {
-	appdata_fs->enter_dir("saves");
+	save_fs->enter_dir("saves");
 
-	appdata_fs->create_dir(name);
-	appdata_fs->enter_dir(name);
+	save_fs->create_dir(name);
+	save_fs->enter_dir(name);
 
-	appdata_fs->exit_to("AOL");
+	// Mod save space
+	save_fs->create_dir("mod-data");
+	save_fs->enter_dir("mod-data");
+
+	mod_loader->begin_stage(LoaderStage::STAGE_NEW_GAME);
+
+	for (const auto& file : to_run[LoaderStage::STAGE_NEW_GAME])
+		run_file_in_mods(file);
+
+	mod_loader->end_stage();
+
+	save_fs->exit_to("AOL");
 	reload_saves();
 }
 
@@ -256,6 +282,10 @@ void App::check_appdata()
 
 	// Mods directory
 	appdata_fs->create_dir_if_necessary("mods");
+
+	// Locate save_fs
+	save_fs->enter_dir("AOL");
+	save_fs->enter_dir("saves");
 }
 
 void App::run()
@@ -290,27 +320,41 @@ void App::load()
 {
 	createguis();
 
-	std::unordered_map<LoaderStage, std::vector<std::string>> to_run = {
-		{ LoaderStage::STAGE_SETTINGS, { "settings.lua", "settings-fixes.lua", "settings-final-fixes.lua" } },
-		{ LoaderStage::STAGE_PROTOTYPES, { "prototypes.lua", "prototypes-fixes.lua", "prototypes-final-fixes.lua" } },
-		{ LoaderStage::STAGE_DATA, { "data.lua", "data-fixes.lua", "data-final-fixes.lua" } },
-		// Settings migrations stage is executed in migrations directory, if there is one
-		{ LoaderStage::STAGE_SETTINGS_MIGRATIONS, { "migrations/settings.lua", "migrations/settings-fixes.lua", "migrations/settings-final-fixes.lua" } },
-	};
-
 	// Mod ordering stage
-	loaded_mods = { "core", "base" };
 
 	// Loading mods
-	for (const auto& [key, value] : to_run)
-	{
-		mod_loader->begin_stage(key);
 
-		for (const auto& file : value)
-			run_file_in_mods(file);
+	// Loading settings
+	mod_loader->begin_stage(LoaderStage::STAGE_SETTINGS);
 
-		mod_loader->end_stage();
-	}
+	for (const auto& file : to_run[LoaderStage::STAGE_SETTINGS])
+		run_file_in_mods(file);
+
+	mod_loader->end_stage();
+
+	// Migrating settings
+	mod_loader->begin_stage(LoaderStage::STAGE_SETTINGS_MIGRATIONS);
+
+	for (const auto& file : to_run[LoaderStage::STAGE_SETTINGS_MIGRATIONS])
+		run_file_in_mods(file);
+
+	mod_loader->end_stage();
+
+	// Loading prototypes
+	mod_loader->begin_stage(LoaderStage::STAGE_PROTOTYPES);
+
+	for (const auto& file : to_run[LoaderStage::STAGE_PROTOTYPES])
+		run_file_in_mods(file);
+
+	mod_loader->end_stage();
+
+	// Loading data
+	mod_loader->begin_stage(LoaderStage::STAGE_DATA);
+
+	for (const auto& file : to_run[LoaderStage::STAGE_DATA])
+		run_file_in_mods(file);
+
+	mod_loader->end_stage();
 }
 
 void App::run_file_in_mods(const std::string& file_name)
@@ -324,7 +368,7 @@ void App::run_file_in_mods(const std::string& file_name)
 			al_show_native_message_box(
 				display->get_al_display(),
 				"Error",
-				((std::string)"Error while loading mod: " + mod).c_str(),
+				((std::string)"Error while executing mod: " + mod).c_str(),
 				mod_loader->get_last_error().c_str(), "Ok", ALLEGRO_MESSAGEBOX_ERROR
 			);
 			close();

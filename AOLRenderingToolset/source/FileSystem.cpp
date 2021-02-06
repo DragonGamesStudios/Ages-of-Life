@@ -82,6 +82,16 @@ namespace art
 		return std::ifstream(current_path / path);
 	}
 
+	std::ofstream FileSystem::open_ofile(const std::string& path) const
+	{
+		return std::ofstream(current_path / path);
+	}
+
+	std::ofstream FileSystem::open_ofile(const fs::path& path) const
+	{
+		return std::ofstream(current_path / path);
+	}
+
 	bool FileSystem::create_file(const std::string& filename)
 	{
 		std::ofstream f(filename);
@@ -97,6 +107,32 @@ namespace art
 	{
 		if (!exists(filename))
 			return create_file(filename);
+
+		return true;
+	}
+
+	bool FileSystem::delete_file(const std::string& filename)
+	{
+		return fs::remove(filename);
+	}
+
+	bool FileSystem::delete_file(const fs::path& filename)
+	{
+		return fs::remove(filename);
+	}
+
+	bool FileSystem::delete_file_if_exists(const std::string& filename)
+	{
+		if (exists(filename))
+			return fs::remove(filename);
+
+		return true;
+	}
+
+	bool FileSystem::delete_file_if_exists(const fs::path& filename)
+	{
+		if (exists(filename))
+			return fs::remove(filename);
 
 		return true;
 	}

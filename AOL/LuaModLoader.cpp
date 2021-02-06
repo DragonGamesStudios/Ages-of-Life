@@ -113,192 +113,6 @@ std::filesystem::path LuaModLoader::correct_path(const std::string& lua_path)
 	return result;
 }
 
-bool LuaModLoader::move_lua_value(lua_State* from, lua_State* to, int from_idx, bool first_call)
-{
-	lua_pushvalue(from, from_idx);
-
-	std::set<const void*>::iterator table_ptr;
-	const void* ptr = 0;
-
-	switch (lua_type(from, -1))
-	{
-	case LUA_TNIL:
-		lua_pushnil(to);
-		break;
-
-	case LUA_TNUMBER:
-		lua_pushnumber(to, lua_tonumber(from, -1));
-		break;
-
-	case LUA_TBOOLEAN:
-		lua_pushboolean(to, lua_toboolean(from, -1));
-		break;
-
-	case LUA_TFUNCTION:
-		lua_pushcfunction(to, lua_tocfunction(from, -1));
-		break;
-
-	case LUA_TLIGHTUSERDATA:
-		lua_pushlightuserdata(to, lua_touserdata(from, -1));
-		break;
-
-	case LUA_TSTRING:
-		lua_pushstring(to, lua_tostring(from, -1));
-		break;
-
-	case LUA_TTABLE:
-		ptr = lua_topointer(from, -1);
-		table_ptr = cyclic_data_memory.find(ptr);
-		
-		if (table_ptr == cyclic_data_memory.end())
-		{
-			cyclic_data_memory.insert(ptr);
-
-			lua_newtable(to);
-
-			lua_pushnil(from);
-			while (lua_next(from, -2))
-			{
-				move_lua_value(from, to, -2, false);
-				move_lua_value(from, to, -1, false);
-
-				if (lua_isnil(to, -2))
-				{
-					if (first_call)
-						cyclic_data_memory.clear();
-					return false;
-				}
-
-				lua_settable(to, -3);
-
-				lua_pop(from, 1);
-			}
-		}
-		else
-		{
-			throw std::runtime_error("Recursive data detected");
-		}
-
-		break;
-
-	default:
-		lua_pushnil(to);
-		if (first_call)
-			cyclic_data_memory.clear();
-		return false;
-		break;
-	}
-
-	lua_pop(from, 1);
-
-	if (first_call)
-		cyclic_data_memory.clear();
-
-	return true;
-}
-
-bool LuaModLoader::are_same(lua_State* L1, lua_State* L2, int idx1, int idx2, bool first_call)
-{
-	bool same = false;
-	int tab1_len = 0;
-	int tab2_len = 0;
-
-	// Push values
-	lua_pushvalue(L1, idx1);
-	lua_pushvalue(L2, idx2);
-
-	// Typecheck
-	if (lua_type(L1, -1) != lua_type(L2, -1))
-		same = false;
-	else
-	{
-		switch (lua_type(L1, -1))
-		{
-		case LUA_TNIL:
-			same = true;
-			break;
-
-		case LUA_TNUMBER:
-			same = lua_tonumber(L1, -1) == lua_tonumber(L2, -1);
-			break;
-
-		case LUA_TSTRING:
-			same = std::string(lua_tostring(L1, -1)) == lua_tostring(L2, -1);
-			break;
-
-		case LUA_TBOOLEAN:
-			same = lua_toboolean(L1, -1) == lua_toboolean(L2, -1);
-			break;
-
-		case LUA_TLIGHTUSERDATA:
-			same = lua_topointer(L1, -1) == lua_topointer(L2, -1);
-			break;
-
-		case LUA_TFUNCTION:
-			same = lua_tocfunction(L1, -1) == lua_tocfunction(L2, -1);
-			break;
-
-		case LUA_TUSERDATA:
-			same = lua_topointer(L1, -1) == lua_topointer(L2, -1);
-			break;
-
-		case LUA_TTHREAD:
-			same = lua_tothread(L1, -1) == lua_tothread(L2, -1);
-			break;
-
-		case LUA_TTABLE:
-			// Table comparison
-			std::cout << "Hi\n";
-			lua_pushnil(L1);
-			while (lua_next(L1, -2))
-			{
-				move_lua_value(L1, L2, -2);
-				lua_rawget(L2, -2);
-
-				std::cout << "L1:\n";
-				print_stack(L1);
-				std::cout << "L2:\n";
-				print_stack(L2);
-
-				same = are_same(L1, L2, -1, -1, false);
-
-				lua_pop(L2, 1);
-
-				// Clear
-				tab1_len++;
-				lua_pop(L1, 1);
-
-				if (!same)
-					break;
-			}
-
-			lua_pushnil(L2);
-			while (lua_next(L2, -2))
-			{
-				tab2_len++;
-				lua_pop(L2, 1);
-			}
-
-			if (tab1_len != tab2_len)
-				same = false;
-
-			break;
-
-		default:
-			break;
-		}
-	}
-
-	// Clear stack
-	lua_pop(L1, 1);
-	lua_pop(L2, 1);
-
-	if (first_call)
-		cyclic_data_memory.clear();
-
-	return same;
-}
-
 void LuaModLoader::print_stack(lua_State* stack)
 {
 	for (int i = 1; i <= lua_gettop(stack); i++)
@@ -332,6 +146,7 @@ std::string LuaModLoader::get_string(lua_State* L, int idx)
 LuaModLoader::LuaModLoader()
 {
 	l_storage = 0;
+	l_savesystem = 0;
 	executed_state = 0;
 	mod_state = 0;
 	current_stage = LoaderStage::STAGE_NONE;
@@ -341,6 +156,7 @@ LuaModLoader::LuaModLoader()
 		{LoaderStage::STAGE_SETTINGS, {"setting"}},
 		{LoaderStage::STAGE_PROTOTYPES, {}},
 		{LoaderStage::STAGE_DATA, {}},
+		{LoaderStage::STAGE_NEW_GAME, {}},
 	};
 }
 
@@ -369,24 +185,40 @@ void LuaModLoader::register_l_storage(LuaStorage* ls)
 	l_storage = ls;
 }
 
+void LuaModLoader::register_l_savesystem(LuaSaveSystem* ls)
+{
+	l_savesystem = ls;
+}
+
 void LuaModLoader::begin_stage(LoaderStage stage)
 {
 	current_stage = stage;
 
-	executed_state = luaL_newstate();
-	prepare_state(executed_state);
-	l_storage->prepare_state(executed_state, allowed_prototypes[current_stage]);
+	if (current_stage != LoaderStage::STAGE_NEW_GAME)
+	{
+		executed_state = luaL_newstate();
+		prepare_state(executed_state);
+		l_storage->prepare_state(executed_state, allowed_prototypes[current_stage]);
+	}
 }
 
 bool LuaModLoader::end_stage()
 {
-	if (!l_storage->load_prototypes(executed_state, allowed_prototypes[current_stage]))
-		return false;
+	if ((int)current_stage & ((int)LoaderStage::STAGE_SETTINGS | (int)LoaderStage::STAGE_DATA | (int)LoaderStage::STAGE_PROTOTYPES))
+	{
+		if (!l_storage->load_prototypes(executed_state, allowed_prototypes[current_stage]))
+			return false;
+	}
+	else if (current_stage == LoaderStage::STAGE_NEW_GAME)
+		l_savesystem->save_mods();
 
 	current_stage = LoaderStage::STAGE_NONE;
 
-	lua_close(executed_state);
-	executed_state = 0;
+	if (executed_state)
+	{
+		lua_close(executed_state);
+		executed_state = 0;
+	}
 
 	return true;
 }
@@ -409,22 +241,29 @@ bool LuaModLoader::load_mod(const std::string& mod_name, const std::filesystem::
 		prepare_state(mod_state);
 		l_storage->prepare_state(mod_state, allowed_prototypes[current_stage]);
 
+		if (current_stage == LoaderStage::STAGE_NEW_GAME)
+			l_savesystem->prepare_state(mod_state, mod_name);
+
 		if (!fs->exists(file_to_run))
 		{
 			std::cout << "Skipping\n";
 			return true;
 		}
 
-		// Move data
-		lua_getglobal(executed_state, "data");
-		lua_getfield(executed_state, -1, "raw");
+		// Migrating data
+		if ((int)current_stage & ((int)LoaderStage::STAGE_SETTINGS | (int)LoaderStage::STAGE_DATA | (int)LoaderStage::STAGE_PROTOTYPES))
+		{
+			// Move data
+			lua_getglobal(executed_state, "data");
+			lua_getfield(executed_state, -1, "raw");
 
-		lua_getglobal(mod_state, "data");
-		move_lua_value(executed_state, mod_state, -1);
-		lua_setfield(mod_state, -2, "raw");
+			lua_getglobal(mod_state, "data");
+			move_lua_value(executed_state, mod_state, -1);
+			lua_setfield(mod_state, -2, "raw");
 
-		lua_pop(mod_state, 1);
-		lua_pop(executed_state, 2);
+			lua_pop(mod_state, 1);
+			lua_pop(executed_state, 2);
+		}
 
 		// Execute the file
 		if (luaL_dofile(mod_state, (fs->get_correct_path(file_to_run)).string().c_str()) != LUA_OK)
@@ -433,109 +272,114 @@ bool LuaModLoader::load_mod(const std::string& mod_name, const std::filesystem::
 			return false;
 		}
 
-		// Getting the tables
-		lua_getglobal(mod_state, "data");
-		if (lua_isnil(mod_state, -1))
+		// Loading data
+		if ((int)current_stage & ((int)LoaderStage::STAGE_SETTINGS | (int)LoaderStage::STAGE_DATA | (int)LoaderStage::STAGE_PROTOTYPES))
 		{
-			lua_close(mod_state);
-			return true;
-		}
+			// Getting the tables
+			lua_getglobal(mod_state, "data");
+			if (lua_isnil(mod_state, -1))
+			{
+				lua_close(mod_state);
+				return true;
+			}
 
-		lua_pushstring(mod_state, "raw");
-		lua_rawget(mod_state, -2);
-		if (lua_isnil(mod_state, -1))
-		{
-			lua_close(mod_state);
-			return true;
-		}
-
-		lua_getglobal(executed_state, "data");
-		if (lua_isnil(executed_state, -1))
-		{
-			lua_close(mod_state);
-			lua_pop(executed_state, 1);
-			last_error = "For some reason table `data` in the executed state was nil.";
-			return false;
-		}
-
-		lua_getfield(executed_state, -1, "raw");
-		if (lua_isnil(executed_state, -1))
-		{
-			lua_close(mod_state);
-			lua_pop(executed_state, 2);
-			last_error = "For some reason table `data.raw` in the executed state was nil.";
-			return false;
-		}
-
-		// Comparison (history loading)
-		for (const auto& prototype_type : allowed_prototypes[current_stage])
-		{
-			lua_pushstring(mod_state, prototype_type.c_str());
+			lua_pushstring(mod_state, "raw");
 			lua_rawget(mod_state, -2);
 			if (lua_isnil(mod_state, -1))
 			{
-				lua_pop(mod_state, -1);
-				continue;
+				lua_close(mod_state);
+				return true;
 			}
 
-			lua_getfield(executed_state, -1, prototype_type.c_str());
-
-			lua_pushnil(mod_state);
-			while (lua_next(mod_state, -2))
+			lua_getglobal(executed_state, "data");
+			if (lua_isnil(executed_state, -1))
 			{
-				std::string p_name = lua_tostring(mod_state, -2);
-
-				// Name check
-				lua_pushstring(mod_state, "name");
-				lua_rawget(mod_state, -2);
-				std::string actual_name = lua_tostring(mod_state, -1);
-				if (actual_name != p_name)
-				{
-					last_error = "Prototype name: " + actual_name + " is not the same as expected " + p_name + ". Avoid editing prototype's name.";
-					lua_close(mod_state);
-					lua_settop(executed_state, 0);
-					return false;
-				}
-				lua_pop(mod_state, 1);
-
-				// Type check
-				lua_pushstring(mod_state, "type");
-				lua_rawget(mod_state, -2);
-				std::string actual_type = lua_tostring(mod_state, -1);
-				if (actual_type != prototype_type)
-				{
-					last_error = "Prototype type: " + actual_name + " is not the same as expected " + prototype_type + ". Avoid editing prototype's type.";
-					lua_close(mod_state);
-					lua_settop(executed_state, 0);
-					return false;
-				}
-				lua_pop(mod_state, 1);
-
-				lua_getfield(executed_state, -1, p_name.c_str());
-
-				if (!lua_isnil(executed_state, -1))
-				{
-					// This prototype was edited or left as it was
-					if (!are_same(mod_state, executed_state, -1, -1))
-						prototype_histories[prototype_type][p_name].push_back(mod_name);
-				}
-				else
-				{
-					// This is a new prototype: create new history
-					prototype_histories[prototype_type].insert({ p_name, {mod_name} });
-				}
-
+				lua_close(mod_state);
 				lua_pop(executed_state, 1);
-				move_lua_value(mod_state, executed_state, -1);
-				lua_setfield(executed_state, -2, p_name.c_str());
-				lua_pop(executed_state, 1);
-
-				lua_pop(mod_state, 1);
+				last_error = "For some reason table `data` in the executed state was nil.";
+				return false;
 			}
+
+			lua_getfield(executed_state, -1, "raw");
+			if (lua_isnil(executed_state, -1))
+			{
+				lua_close(mod_state);
+				lua_pop(executed_state, 2);
+				last_error = "For some reason table `data.raw` in the executed state was nil.";
+				return false;
+			}
+
+			// Comparison (history loading)
+			for (const auto& prototype_type : allowed_prototypes[current_stage])
+			{
+				lua_pushstring(mod_state, prototype_type.c_str());
+				lua_rawget(mod_state, -2);
+				if (lua_isnil(mod_state, -1))
+				{
+					lua_pop(mod_state, -1);
+					continue;
+				}
+
+				lua_getfield(executed_state, -1, prototype_type.c_str());
+
+				lua_pushnil(mod_state);
+				while (lua_next(mod_state, -2))
+				{
+					std::string p_name = lua_tostring(mod_state, -2);
+
+					// Name check
+					lua_pushstring(mod_state, "name");
+					lua_rawget(mod_state, -2);
+					std::string actual_name = lua_tostring(mod_state, -1);
+					if (actual_name != p_name)
+					{
+						last_error = "Prototype name: " + actual_name + " is not the same as expected " + p_name + ". Avoid editing prototype's name.";
+						lua_close(mod_state);
+						lua_settop(executed_state, 0);
+						return false;
+					}
+					lua_pop(mod_state, 1);
+
+					// Type check
+					lua_pushstring(mod_state, "type");
+					lua_rawget(mod_state, -2);
+					std::string actual_type = lua_tostring(mod_state, -1);
+					if (actual_type != prototype_type)
+					{
+						last_error = "Prototype type: " + actual_name + " is not the same as expected " + prototype_type + ". Avoid editing prototype's type.";
+						lua_close(mod_state);
+						lua_settop(executed_state, 0);
+						return false;
+					}
+					lua_pop(mod_state, 1);
+
+					lua_getfield(executed_state, -1, p_name.c_str());
+
+					if (!lua_isnil(executed_state, -1))
+					{
+						// This prototype was edited or left as it was
+						if (!are_same(mod_state, executed_state, -1, -1))
+							prototype_histories[prototype_type][p_name].push_back(mod_name);
+					}
+					else
+					{
+						// This is a new prototype: create new history
+						prototype_histories[prototype_type].insert({ p_name, {mod_name} });
+					}
+
+					lua_pop(executed_state, 1);
+					move_lua_value(mod_state, executed_state, -1);
+					lua_setfield(executed_state, -2, p_name.c_str());
+					lua_pop(executed_state, 1);
+
+					lua_pop(mod_state, 1);
+				}
+			}
+
+			// Finalizing
+			lua_pop(executed_state, 2);
 		}
 
-		// Finalizing
-		lua_pop(executed_state, 2);
 
 		lua_close(mod_state);
 		fs->exit();

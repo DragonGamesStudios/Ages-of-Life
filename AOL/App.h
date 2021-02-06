@@ -55,6 +55,7 @@ protected:
 	art::Dictionary* dict;
 
 	art::FileSystem* appdata_fs;
+	art::FileSystem* save_fs;
 
 	std::vector<std::vector<std::pair<int, int>>> shortcuts;
 	std::vector<std::vector<std::function<void(const agl::Event&)>>> shortcut_functions;
@@ -70,8 +71,10 @@ protected:
 	// Modding
 	LuaModLoader* mod_loader;
 	LuaStorage* mod_storage_loader;
+	LuaSaveSystem* mod_savesystem;
 
 	std::vector<std::string> loaded_mods;
+	std::unordered_map<LoaderStage, std::vector<std::string>> to_run;
 
 	// Functions
 	void initialize_agl();
