@@ -37,9 +37,12 @@ App::App()
 	};
 
 	local_fs = new art::FileSystem;
-	dict = new art::Dictionary;
+	dict = new art::CfgDictionary;
 	dict->set_filesystem(local_fs);
-	dict->set_translation_dir_path("core/locale");
+	dict->set_dict_path_function(std::bind(&App::get_locale_paths, this, std::placeholders::_1, std::placeholders::_2));
+
+	dict->add_locale_path(local_fs->get_current_path() / "core/locale");
+
 	dict->set_active_language("en");
 
 	appdata_fs = new art::FileSystem(true);
@@ -66,12 +69,14 @@ App::App()
 
 	// Game
 	storage = new Storage;
+	active_game = 0;
 
 	// Modding
 	local_fs->add_path_template("__core__", local_fs->get_correct_path("core"));
 	local_fs->add_path_template("__base__", local_fs->get_correct_path("base"));
 
 	mod_loader = new LuaModLoader;
+	mod_executor = new LuaModExecutor;
 	mod_storage_loader = new LuaStorage;
 	mod_savesystem = new LuaSaveSystem;
 
@@ -80,6 +85,8 @@ App::App()
 	mod_loader->register_l_storage(mod_storage_loader);
 	mod_loader->register_l_savesystem(mod_savesystem);
 	mod_loader->register_filesystem(appdata_fs);
+
+	mod_executor->register_l_savesystem(mod_savesystem);
 
 	mod_savesystem->register_filesystem(save_fs);
 
@@ -217,8 +224,6 @@ void App::reload_saves()
 
 void App::create_game(const std::string& name, long long seed)
 {
-	save_fs->enter_dir("saves");
-
 	save_fs->create_dir(name);
 	save_fs->enter_dir(name);
 
@@ -233,7 +238,7 @@ void App::create_game(const std::string& name, long long seed)
 
 	mod_loader->end_stage();
 
-	save_fs->exit_to("AOL");
+	save_fs->exit_to("saves");
 	reload_saves();
 }
 
@@ -271,6 +276,46 @@ void App::delete_game(const std::string& name)
 	appdata_fs->delete_dir_recursively(((fs::path)"saves" / name).string());
 }
 
+void App::handle_load_game(const agl::Event& e)
+{
+	if (!main_menu_gui->play_game_selection_list.get_selected_elements().empty())
+	{
+		main_menu_gui->close_subguis();
+
+		int selected_index = *main_menu_gui->play_game_selection_list.get_selected_elements().begin();
+
+		main_menu_gui->play_game_selection_list.unselect_child(selected_index);
+
+		auto selected = main_menu_gui->play_game_selection_list.get_element_by_index(selected_index);
+
+		std::string loaded = ((agl::builtins::Label*)selected->get_child_by_index(0))->get_text();
+
+		load_game(loaded);
+	}
+}
+
+void App::load_game(const std::string& name)
+{
+	change_loading_screen("Loading...");
+
+	save_fs->enter_dir(name);
+
+	active_game = new Game;
+
+	active_game->register_filesystem(save_fs);
+	
+	if (!active_game->load(appdata_fs, local_fs, &loaded_mods, active_configuration))
+	{
+		al_show_native_message_box(
+			display->get_al_display(),
+			"Error",
+			((std::string)"Error while executing mod: " + active_game->get_mod_error().first).c_str(),
+			(active_game->get_mod_error().second.message + "\n\n" + active_game->get_mod_error().second.traceback).c_str(), "Ok", ALLEGRO_MESSAGEBOX_ERROR
+		);
+		close();
+	}
+}
+
 void App::check_appdata()
 {
 	// AOL directory
@@ -286,6 +331,19 @@ void App::check_appdata()
 	// Locate save_fs
 	save_fs->enter_dir("AOL");
 	save_fs->enter_dir("saves");
+}
+
+std::vector<fs::path> App::get_locale_paths(const fs::path& d_path, const std::string& language)
+{
+	std::vector<fs::path> ret;
+
+	for (const auto& f : local_fs->get_files_in_directory(d_path / language))
+	{
+		if (f.path().extension() == ".cfg")
+			ret.push_back(f.path());
+	}
+
+	return ret;
 }
 
 void App::run()
@@ -321,6 +379,9 @@ void App::load()
 	createguis();
 
 	// Mod ordering stage
+
+	for (const auto& mod : loaded_mods)
+		active_configuration.insert({ mod, "1.0.0" });
 
 	// Loading mods
 
@@ -369,7 +430,7 @@ void App::run_file_in_mods(const std::string& file_name)
 				display->get_al_display(),
 				"Error",
 				((std::string)"Error while executing mod: " + mod).c_str(),
-				mod_loader->get_last_error().c_str(), "Ok", ALLEGRO_MESSAGEBOX_ERROR
+				(mod_loader->get_last_error().message + "\n\n" + mod_loader->get_last_error().traceback).c_str(), "Ok", ALLEGRO_MESSAGEBOX_ERROR
 			);
 			close();
 		}
@@ -410,6 +471,9 @@ void App::update(double dt)
 	main_gui_group->update();
 
 	this->event_handler->reset_event_queue();
+
+	if (active_game)
+		active_game->update(dt);
 }
 
 void App::change_loading_screen(std::string mes, float per)

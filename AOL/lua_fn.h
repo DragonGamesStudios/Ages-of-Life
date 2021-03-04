@@ -2,6 +2,7 @@
 #include "lua_.hpp"
 
 #include <nlohmann/json.hpp>
+#include <art/FileSystem.h>
 
 #include <set>
 #include <deque>
@@ -29,3 +30,34 @@ json lua_table_to_json(lua_State* L, int idx, std::set<const void*> cyclic_data_
 json json_from_lua(lua_State* L, int idx, std::set<const void*> cyclic_data_memory = {});
 void lua_from_json(lua_State* L, const json& json_object);
 json get_json_value(const json& object, std::deque<std::pair<std::string, int>>& keys);
+
+// Require
+std::filesystem::path correct_path(const std::string& lua_path);
+int lua_require(lua_State* L, art::FileSystem* fs);
+void prepare_default_state(lua_State* L, art::FileSystem* fs);
+
+// Typecheck
+bool fn_typecheck(lua_State* L, int idx, int l_type, const std::string& expected, bool error = true);
+
+// Print stack
+void print_stack(lua_State* stack);
+std::string get_string(lua_State* L, int idx);
+
+// Lua function storing
+struct LuaFunction
+{
+	std::string data;
+};
+
+int lf_writer(lua_State* L, const void* b, size_t size, void* ud);
+
+const char* lf_reader(lua_State* L, void* ud, size_t* size);
+
+// Error handling
+int generic_error_handler(lua_State* L);
+
+struct LuaError
+{
+	std::string message;
+	std::string traceback;
+};

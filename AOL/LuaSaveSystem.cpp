@@ -3,23 +3,19 @@
 
 int LuaSaveSystem::get_saved(lua_State* L)
 {
+	check_active(L);
+
 	std::string mod = current_mod;
 
 	if (lua_type(L, 1) == LUA_TSTRING)
 		mod = lua_tostring(L, 1);
 	else if (lua_gettop(L))
-	{
-		lua_pushstring(L, ((std::string)"Invalid argument #1. Expected string/nil, got " + lua_typename(L, lua_type(L, 1))).c_str());
-		lua_error(L);
-	}
+		luaL_error(L, ((std::string)"Invalid argument #1. Expected string/nil, got " + lua_typename(L, lua_type(L, 1))).c_str());
 
 	auto it = mod_saves.find(mod);
 
 	if (it == mod_saves.end())
-	{
-		lua_pushstring(L, "Mod with the given name does not exist.");
-		lua_error(L);
-	}
+		luaL_error(L, "Mod with the given name does not exist.");
 
 	lua_from_json(L, it->second);
 
@@ -28,6 +24,8 @@ int LuaSaveSystem::get_saved(lua_State* L)
 
 int LuaSaveSystem::get_value_from_saved(lua_State* L)
 {
+	check_active(L);
+
 	json ret;
 
 	std::string mod = current_mod;
@@ -48,10 +46,7 @@ int LuaSaveSystem::get_value_from_saved(lua_State* L)
 	auto it = mod_saves.find(mod);
 
 	if (it == mod_saves.end())
-	{
-		lua_pushstring(L, "Mod with the given name does not exist.");
-		lua_error(L);
-	}
+		luaL_error(L, "Mod with the given name does not exist.");
 
 	std::deque<std::pair<std::string, int>> keys;
 
@@ -67,10 +62,7 @@ int LuaSaveSystem::get_value_from_saved(lua_State* L)
 		else if (lua_type(L, -1) == LUA_TNUMBER)
 			key.second = (int)lua_tointeger(L, -1) - 1;
 		else
-		{
-			lua_pushstring(L, ((std::string)"Invalid key queue element type. String or number expected, got " + lua_typename(L, lua_type(L, -1))).c_str());
-			lua_error(L);
-		}
+			luaL_error(L, ((std::string)"Invalid key queue element type. String or number expected, got " + lua_typename(L, lua_type(L, -1))).c_str());
 
 		keys.push_back(key);
 
@@ -92,20 +84,19 @@ int LuaSaveSystem::get_value_from_saved(lua_State* L)
 
 int LuaSaveSystem::save(lua_State* L)
 {
+	check_active(L);
+
 	if (lua_type(L, 1) == LUA_TTABLE)
 	{
 		mod_saves[current_mod] = lua_table_to_json(L, 1);
 	}
 	else
-	{
-		lua_pushstring(L, ((std::string)"Invalid argument 1. Table expected, got " + lua_typename(L, lua_type(L, 1))).c_str());
-		lua_error(L);
-	}
+		luaL_error(L, ((std::string)"Invalid argument 1. Table expected, got " + lua_typename(L, lua_type(L, 1))).c_str());
 
 	return 0;
 }
 
-LuaSaveSystem::LuaSaveSystem()
+LuaSaveSystem::LuaSaveSystem() : LuaModule()
 {
 	fs = 0;
 }
@@ -144,6 +135,10 @@ void LuaSaveSystem::prepare_state(lua_State* L, const std::string& mod)
 	lua_setglobal(L, "savesystem");
 }
 
+void LuaSaveSystem::prepare_state(lua_State* L)
+{
+}
+
 void LuaSaveSystem::save_mods()
 {
 	for (const auto& [mod, mod_save] : mod_saves)
@@ -154,9 +149,19 @@ void LuaSaveSystem::save_mods()
 		}
 		else
 		{
+			std::string dumped_json = mod_save.dump();
+
+			if (dumped_json.size() >= (1 << 20))
+				throw std::runtime_error((std::string)"Save file of mod with name " + mod + " exceeds size limit of 1 MiB.");
+
 			auto mod_file = fs->open_ofile(mod + ".json");
-			mod_file << std::setw(4) << mod_save << std::endl;
+			mod_file << dumped_json;
 			mod_file.close();
 		}
 	}
+}
+
+void LuaSaveSystem::set_current_mod(const std::string& mod)
+{
+	current_mod = mod;
 }

@@ -2,18 +2,9 @@
 
 #include "LuaStorage.h"
 #include "LuaSaveSystem.h"
+#include "LoaderStage.h"
 
-enum class LoaderStage {
-	STAGE_NONE = 0,
-	STAGE_SETTINGS = 1,
-	STAGE_DATA = 2,
-	STAGE_SETTINGS_MIGRATIONS = 4,
-	STAGE_PROTOTYPES = 8,
-	STAGE_RUNTIME = 16,
-	STAGE_NEW_GAME = 32
-};
-
-
+#include "lua_fn.h"
 
 class LuaModLoader
 {
@@ -26,19 +17,14 @@ private:
 
 	LoaderStage current_stage;
 
-	std::string last_error;
+	LuaError last_error;
 	art::FileSystem* fs;
 
 	std::map<LoaderStage, std::vector<std::string>> allowed_prototypes;
 
 	std::map<std::string, std::map<std::string, std::vector<std::string>>> prototype_histories;
 
-	void prepare_state(lua_State* L);
 	int require(lua_State* L);
-	std::filesystem::path correct_path(const std::string& lua_path);
-
-	void print_stack(lua_State* stack);
-	std::string get_string(lua_State* L, int idx);
 
 public:
 	LuaModLoader();
@@ -54,5 +40,5 @@ public:
 	LoaderStage get_current_stage() const;
 
 	bool load_mod(const std::string& mod_name, const std::filesystem::path& file_to_run);
-	std::string get_last_error();
+	LuaError get_last_error();
 };

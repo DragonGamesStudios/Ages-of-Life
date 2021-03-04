@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lua_.hpp"
+#include "LuaModule.h"
 
 #include <art/FileSystem.h>
 
@@ -8,7 +8,7 @@
 
 using json = nlohmann::json;
 
-class LuaSaveSystem
+class LuaSaveSystem : public LuaModule
 {
 private:
 	art::FileSystem* fs;
@@ -26,5 +26,9 @@ public:
 
 	void register_filesystem(art::FileSystem* filesystem);
 	void prepare_state(lua_State* L, const std::string& mod);
+	// To make compiler happy
+	void prepare_state(lua_State* L);
 	void save_mods();
+
+	void set_current_mod(const std::string& mod);
 };

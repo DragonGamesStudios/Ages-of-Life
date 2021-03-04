@@ -5,7 +5,7 @@
 
 void App::createguis()
 {
-	change_loading_screen(dict->get("loading-guis1"));
+	change_loading_screen(dict->format({ "loading-message.loading-guis" }));
 
 	// Basic setup
 
@@ -72,6 +72,10 @@ void App::createguis()
 
 	main_menu_gui->play_delete_button.set_click_function(
 		std::bind(&App::handle_delete_game, this, std::placeholders::_1)
+	);
+
+	main_menu_gui->play_load_button.set_click_function(
+		std::bind(&App::handle_load_game, this, std::placeholders::_1)
 	);
 
 	// New Game

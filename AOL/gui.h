@@ -59,8 +59,9 @@ public:
 	);
 
 	void create_buttons(
-		std::vector<std::string> btns,
-		std::vector<agl::builtins::Button*> buttons
+		std::vector<art::LocalisedString> btns,
+		std::vector<agl::builtins::Button*> buttons,
+		art::Dictionary* dict
 	);
 	agl::builtins::Button close_button;
 };
@@ -108,7 +109,7 @@ private:
 
 	void open_subgui(agl::Event e, agl::builtins::Button* btn);
 	void generate_shortcut_options(
-		ShortcutOption ops[], std::string ops_texts[], int size, int category, art::Dictionary* dict
+		ShortcutOption ops[], art::LocalisedString ops_texts[], int size, int category, art::Dictionary* dict
 	);
 	void highlight_shortcut(agl::Event e);
 public:
@@ -123,6 +124,8 @@ public:
 	agl::builtins::SelectionList play_game_selection_list;
 
 	MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary* dict);
+
+	void close_subguis();
 };
 
 class NewGameGui : public TwoPanelGui

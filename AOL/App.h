@@ -2,9 +2,10 @@
 #include "gui.h"
 
 #include "LuaModLoader.h"
-#include "Storage.h"
 
-#include <art/Dictionary.h>
+#include "Game.h"
+
+#include <art/CfgDictionary.h>
 #include <art/Sprite.h>
 #include <art/Atlas.h>
 
@@ -52,7 +53,7 @@ protected:
 	art::Allegro5Display* display;
 
 	art::FileSystem* local_fs;
-	art::Dictionary* dict;
+	art::CfgDictionary* dict;
 
 	art::FileSystem* appdata_fs;
 	art::FileSystem* save_fs;
@@ -67,14 +68,18 @@ protected:
 
 	// Game
 	Storage* storage;
+	Game* active_game;
 
 	// Modding
 	LuaModLoader* mod_loader;
+	LuaModExecutor* mod_executor;
 	LuaStorage* mod_storage_loader;
 	LuaSaveSystem* mod_savesystem;
 
 	std::vector<std::string> loaded_mods;
 	std::unordered_map<LoaderStage, std::vector<std::string>> to_run;
+
+	std::map<std::string, std::string> active_configuration;
 
 	// Functions
 	void initialize_agl();
@@ -103,5 +108,10 @@ protected:
 	void handle_delete_game(const agl::Event& e);
 	void delete_game(const std::string& name);
 
+	void handle_load_game(const agl::Event& e);
+	void load_game(const std::string& name);
+
 	void check_appdata();
+
+	std::vector<fs::path> get_locale_paths(const fs::path& d_path, const std::string& language);
 };

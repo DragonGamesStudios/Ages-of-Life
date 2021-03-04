@@ -17,10 +17,7 @@ int on_garbage_collection(lua_State* L)
 {
 	lua_fn* f = static_cast<lua_fn*>(luaL_checkudata(L, 1, fn_mt));
 	if (!f)
-	{
-		lua_pushstring(L, "C++ error: problem with function deleteion");
-		lua_error(L);
-	}
+		luaL_error(L, "C++ error: problem with function deleteion");
 	else
 	{
 		f->~lua_fn();
@@ -94,7 +91,8 @@ bool are_same(lua_State* L1, lua_State* L2, int idx1, int idx2, std::set<const v
 			break;
 
 		case LUA_TFUNCTION:
-			same = lua_tocfunction(L1, -1) == lua_tocfunction(L2, -1);
+			same = lua_topointer(L1, -1) == lua_topointer(L2, -1);
+
 			break;
 
 		case LUA_TUSERDATA:
@@ -165,6 +163,7 @@ bool move_lua_value(lua_State* from, lua_State* to, int from_idx, std::set<const
 
 	std::set<const void*>::iterator table_ptr;
 	const void* ptr = 0;
+	LuaFunction f;
 
 	switch (lua_type(from, -1))
 	{
@@ -181,7 +180,12 @@ bool move_lua_value(lua_State* from, lua_State* to, int from_idx, std::set<const
 		break;
 
 	case LUA_TFUNCTION:
-		lua_pushcfunction(to, lua_tocfunction(from, -1));
+		if (lua_dump(from, lf_writer, &f, false) != 0)
+			throw std::runtime_error("Something went wrong when copying Lua function.");
+		
+		if (lua_load(to, lf_reader, &f, (std::stringstream() << "Function: " << (void*)&f.data).str().c_str(), 0) != LUA_OK)
+			throw std::runtime_error("Something went wrong when copying Lua function.");
+
 		break;
 
 	case LUA_TLIGHTUSERDATA:
@@ -349,6 +353,62 @@ json get_json_value(const json& object, std::deque<std::pair<std::string, int>>&
 	}
 }
 
+std::filesystem::path correct_path(const std::string& lua_path)
+{
+	std::string word;
+	std::filesystem::path result;
+
+	for (const char c : lua_path)
+	{
+		if (c != '.')
+			word.push_back(c);
+		else if (!word.empty())
+		{
+			result /= word;
+			word.clear();
+		}
+	}
+
+	word += ".lua";
+
+	if (!word.empty())
+	{
+		result /= word;
+		word.clear();
+	}
+
+	return result;
+}
+
+int lua_require(lua_State* L, art::FileSystem* fs)
+{
+	std::string err;
+
+	if (!lua_isstring(L, -1))
+		err = (std::string)"Invalid argument to 'require'. String expected, got " + lua_typename(L, lua_type(L, -1)) + ".\n";
+
+	if (!err.empty())
+		luaL_error(L, err.c_str());
+
+	std::filesystem::path executed_file = correct_path(lua_tostring(L, -1));
+
+	if (!fs->exists(executed_file))
+		err = "File on path " + executed_file.string() + " not found.\n";
+
+	if (!err.empty())
+		luaL_error(L, err.c_str());
+
+	int beginning_stack_size = lua_gettop(L);
+
+	// Execute the file
+	if (luaL_dofile(L, (fs->get_correct_path(executed_file)).string().c_str()) != LUA_OK)
+		luaL_error(L, lua_tostring(L, -1));
+
+	int end_stack_size = lua_gettop(L);
+
+	return end_stack_size - beginning_stack_size;
+}
+
 json lua_table_to_json(lua_State* L, int idx, std::set<const void*> cyclic_data_memory)
 {
 	json ret;
@@ -411,4 +471,134 @@ json lua_table_to_json(lua_State* L, int idx, std::set<const void*> cyclic_data_
 	lua_pop(L, 1);
 
 	return ret;
+}
+
+void prepare_default_state(lua_State* L, art::FileSystem* fs)
+{
+	luaL_requiref(L, "_G", luaopen_base, 1);
+	luaL_requiref(L, "math", luaopen_math, 1);
+	luaL_requiref(L, "string", luaopen_string, 1);
+	luaL_requiref(L, "table", luaopen_table, 1);
+	luaL_requiref(L, "debug", luaopen_debug, 1);
+
+	lua_settop(L, 0);
+
+	// Cpp function metatable
+	luaL_newmetatable(L, fn_mt);
+
+	// __call field (func())
+	lua_pushcfunction(L, on_call);
+	lua_setfield(L, -2, "__call");
+
+	// __tostring field (tostring(func))
+	lua_pushcfunction(L, on_tostring);
+	lua_setfield(L, -2, "__tostring");
+
+	// __gc field (garbage collection)
+	lua_pushcfunction(L, on_garbage_collection);
+	lua_setfield(L, -2, "__gc");
+
+	// Pop
+	lua_pop(L, 1);
+
+	// Disable unsafe functions
+	lua_getglobal(L, "_G");
+
+	lua_pushnil(L);
+	lua_setfield(L, -2, "dofile");
+
+	lua_pushnil(L);
+	lua_setfield(L, -2, "loadfile");
+
+	lua_pop(L, 1);
+
+	// Load require function
+	push_function(L, std::bind(lua_require, std::placeholders::_1, fs));
+	lua_setglobal(L, "require");
+}
+
+// Typecheck
+bool fn_typecheck(lua_State* L, int idx, int l_type, const std::string& expected, bool error)
+{
+	if (lua_type(L, idx) != l_type)
+	{
+		if (!error) return false;
+
+		std::stringstream err;
+		err << "Invalid argument " << idx << " type. " << expected << "expected, got " << lua_typename(L, lua_type(L, idx)) << '.';
+		luaL_error(L, err.str().c_str());
+
+		return false;
+	}
+
+	return true;
+}
+
+// Print stack
+void print_stack(lua_State* stack)
+{
+	for (int i = 1; i <= lua_gettop(stack); i++)
+	{
+		std::cout << i << ". " << lua_typename(stack, lua_type(stack, i)) << "\t" << get_string(stack, i) << "\n";
+	}
+}
+
+std::string get_string(lua_State* L, int idx)
+{
+	switch (lua_type(L, idx))
+	{
+	case LUA_TTABLE:
+		return ((std::stringstream)"table " << lua_topointer(L, idx)).str();
+		break;
+
+	case LUA_TNUMBER:
+		return std::to_string(lua_tonumber(L, idx));
+		break;
+
+	case LUA_TSTRING:
+		return lua_tostring(L, idx);
+		break;
+
+	default:
+		return "nil";
+		break;
+	}
+}
+
+// Lua function storage
+const char* lf_reader(lua_State* L, void* ud, size_t* size)
+{
+	LuaFunction* lf = (LuaFunction*)ud;
+
+	*size = lf->data.size();
+	return lf->data.size() ? lf->data.c_str() : 0;
+}
+
+int lf_writer(lua_State* L, const void* b, size_t size, void* ud)
+{
+	LuaFunction* lf = (LuaFunction*)ud;
+
+	lf->data += std::string((const char*)b, size);
+
+	return 0;
+}
+
+// Error handling
+int generic_error_handler(lua_State* L)
+{
+	// Ensure stack size
+	lua_settop(L, 1);
+
+	// Create new error table
+	lua_newtable(L);
+
+	// Get the message
+	lua_pushvalue(L, -2);
+	lua_setfield(L, -2, "message");
+
+	// Get the traceback
+	luaL_traceback(L, L, 0, 0);
+	lua_setfield(L, -2, "traceback");
+
+	return 1;
 }

@@ -17,11 +17,11 @@ union SettingValue
 	~SettingValue();
 };
 
-class Setting : public GameObject
+class LuaSettingPrototype : public LuaGameObjectPrototype
 {
 private:
 	std::string setting_type;
-	SettingValue value;
+	SettingValue default_value;
 	std::vector<SettingValue> possible_values;
 
 public:

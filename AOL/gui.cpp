@@ -154,8 +154,9 @@ TwoPanelGui::TwoPanelGui(
 }
 
 void TwoPanelGui::create_buttons(
-	std::vector<std::string> btns,
-	std::vector<agl::builtins::Button*> buttons
+	std::vector<art::LocalisedString> btns,
+	std::vector<agl::builtins::Button*> buttons,
+	art::Dictionary* dict
 )
 {
 	for (int i = 0; i < btns.size(); i++)
@@ -167,7 +168,7 @@ void TwoPanelGui::create_buttons(
 		buttons[i]->create_label();
 		buttons[i]->apply_to_label(bronze_age_label);
 		buttons[i]->set_text_size(24);
-		buttons[i]->set_text(btns[i]);
+		dict->set_label_key(buttons[i]->get_label(), btns[i]);
 	}
 
 	options_flow.resize_to_content();
@@ -175,8 +176,7 @@ void TwoPanelGui::create_buttons(
 
 void MainMenuGui::open_subgui(agl::Event e, agl::builtins::Button* btn)
 {
-	for (int i = 0; i < 5; i++)
-		subguis[i]->set_visible(false);
+	close_subguis();
 
 	subguis[options_flow.get_child_index(btn)]->set_visible(true);
 
@@ -190,7 +190,7 @@ void MainMenuGui::open_subgui(agl::Event e, agl::builtins::Button* btn)
 }
 
 void MainMenuGui::generate_shortcut_options(
-	ShortcutOption ops[], std::string ops_texts[], int size, int category, art::Dictionary* dict
+	ShortcutOption ops[], art::LocalisedString ops_texts[], int size, int category, art::Dictionary* dict
 )
 {
 	for (int i = 0; i < size; i++)
@@ -205,8 +205,7 @@ void MainMenuGui::generate_shortcut_options(
 		ops[i].label.set_size(200, 30);
 		ops[i].label.set_horizontal_align(AGL_ALIGN_CENTER);
 		ops[i].label.set_vertical_align(AGL_ALIGN_CENTER);
-		ops[i].label.set_text(ops_texts[i]);
-		dict->register_label(&ops[i].label);
+		dict->set_label_key(&ops[i].label, ops_texts[i]);
 
 		ops[i].container.add(&ops[i].label);
 
@@ -255,16 +254,16 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 	for (int i = 0; i < 6; i++)
 		btn_ptrs.push_back(&main_menu_buttons[i]);
 	
-	std::vector<std::string> btn_texts = {
-		"label-play",
-		"label-options",
-		"label-licenses",
-		"label-creators",
-		"label-mods",
-		"label-quit"
+	std::vector<art::LocalisedString> btn_texts = {
+		{"gui-element.play"},
+		{"gui-element.options"},
+		{"gui-element.licenses"},
+		{"gui-element.creators"},
+		{"gui-element.mods"},
+		{"gui-element.quit"}
 	};
 
-	create_buttons(btn_texts, btn_ptrs);
+	create_buttons(btn_texts, btn_ptrs, dict);
 
 	content_panel.direct_add(&main_menu_background);
 
@@ -300,7 +299,7 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 	play_gui_flow.set_single_subflow(true);
 
 	play_main_label.apply(bronze_age_main_label);
-	play_main_label.set_text("label-play");
+	dict->set_label_key(&play_main_label, { "gui-element.play" });
 	play_main_label.resize_always();
 
 	play_gui_flow.add(&play_main_label);
@@ -349,7 +348,7 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 	play_load_button.create_label();
 	play_load_button.apply_to_label(bronze_age_label);
 	play_load_button.set_text_color(agl::Color(0, 0, 0));
-	play_load_button.set_text("label-load-game");
+	dict->set_label_key(play_load_button.get_label(), { "gui-element.load-game" });
 
 	play_main_container.add(&play_load_button);
 
@@ -361,7 +360,7 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 	play_new_button.create_label();
 	play_new_button.apply_to_label(bronze_age_label);
 	play_new_button.set_text_color(agl::Color(0, 0, 0));
-	play_new_button.set_text("label-create-game");
+	dict->set_label_key(play_new_button.get_label(), { "gui-element.create" });
 
 	play_main_container.add(&play_new_button);
 
@@ -373,7 +372,7 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 	play_delete_button.create_label();
 	play_delete_button.apply_to_label(bronze_age_label);
 	play_delete_button.set_text_color(agl::Color(0, 0, 0));
-	play_delete_button.set_text("label-delete");
+	dict->set_label_key(play_delete_button.get_label(), { "gui-element.delete" });
 
 	play_main_container.add(&play_delete_button);
 
@@ -413,13 +412,13 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 	options_gui_flow.set_single_subflow(true);
 
 	options_main_label.apply(bronze_age_main_label);
-	options_main_label.set_text("label-options");
+	dict->set_label_key(&options_main_label, { "gui-element.label-options" });
 	options_main_label.resize_always();
 
 	options_gui_flow.add(&options_main_label);
 
-	std::string options_category_names[categories] = {
-		"options-category-debugging"
+	art::LocalisedString options_category_names[categories] = {
+		{"setting-category.debugging"}
 	};
 
 	int ops_sizes[categories] = { 1 };
@@ -434,12 +433,11 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 		options_category_labels[category].set_size(options_gui_flow.get_inner_width(), 30);
 		options_category_labels[category].set_horizontal_align(AGL_ALIGN_CENTER);
 		options_category_labels[category].set_vertical_align(AGL_ALIGN_CENTER);
-		options_category_labels[category].set_text(options_category_names[category]);
-		dict->register_label(&options_category_labels[category]);
+		dict->set_label_key(&options_category_labels[category], options_category_names[category]);
 
 		options_category_containers[category].add(&options_category_labels[category]);
 
-		std::string debug_names[1] = { "options-debugging-style-debug" };
+		art::LocalisedString debug_names[1] = { {"shortcut-name.style-debug"} };
 
 		generate_shortcut_options(debug_category_options, debug_names, 1, category, dict);
 
@@ -483,7 +481,7 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 	licenses_gui_flow.add(&licenses_text);
 
 	licenses_main_label.apply(bronze_age_main_label);
-	licenses_main_label.set_text("label-licenses");
+	dict->set_label_key(&licenses_main_label, { "gui-element.licenses" });
 	licenses_main_label.resize_always();
 
 	std::string licenses_text_text;
@@ -650,7 +648,7 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 	creators_gui_flow.add(&creators_text);
 
 	creators_main_label.apply(bronze_age_main_label);
-	creators_main_label.set_text("label-creators");
+	dict->set_label_key(&creators_main_label, { "gui-element.creators" });
 	creators_main_label.resize_always();
 
 	std::vector<std::pair<std::string, std::vector<std::string>>> creators = {
@@ -710,23 +708,12 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 	);
 
 	content_scrollbar.set_step(content_panel.get_children_container()->get_height() / 100);
+}
 
-	// Label registration
-	dict->register_label(main_menu_buttons[0].get_label());
-	dict->register_label(main_menu_buttons[1].get_label());
-	dict->register_label(main_menu_buttons[2].get_label());
-	dict->register_label(main_menu_buttons[3].get_label());
-	dict->register_label(main_menu_buttons[4].get_label());
-	dict->register_label(main_menu_buttons[5].get_label());
-
-	dict->register_label(play_delete_button.get_label());
-	dict->register_label(play_new_button.get_label());
-	dict->register_label(play_load_button.get_label());
-
-	dict->register_label(&play_main_label);
-	dict->register_label(&options_main_label);
-	dict->register_label(&licenses_main_label);
-	dict->register_label(&creators_main_label);
+void MainMenuGui::close_subguis()
+{
+	for (int i = 0; i < 5; i++)
+		subguis[i]->set_visible(false);
 }
 
 std::string shortcut_to_string(int key, int mods)
@@ -854,7 +841,7 @@ void setup_styles()
 NewGameGui::NewGameGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary* dict)
 	: TwoPanelGui(gui, screenh/2, dict)
 {
-	frame_label.set_text("label-new-game");
+	dict->set_label_key(&frame_label, { "gui-element.new-game" });
 
 	content_panel.add(&general_section);
 
@@ -866,7 +853,7 @@ NewGameGui::NewGameGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary*
 	name_label.apply(bronze_age_label);
 	name_label.set_location(5.f, 5.f);
 	name_label.resize_always();
-	name_label.set_text("label-game-name");
+	dict->set_label_key(&name_label, {"gui-element.name"});
 	
 	general_section.add(&name_input);
 
@@ -885,7 +872,7 @@ NewGameGui::NewGameGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary*
 	seed_label.apply(bronze_age_label);
 	seed_label.set_location(5.f, name_label.get_text_height() + 45.f);
 	seed_label.resize_always();
-	seed_label.set_text("label-game-seed");
+	dict->set_label_key(&seed_label, { "setting-name.game-seed" });
 
 	general_section.add(&seed_input);
 
@@ -899,5 +886,5 @@ NewGameGui::NewGameGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary*
 	seed_input.set_return_keycode(ALLEGRO_KEY_ENTER);
 	seed_input.set_backspace_keycode(ALLEGRO_KEY_BACKSPACE);
 
-	create_buttons({ "label-general", "label-create" }, { &general_section_btn, &create_btn });
+	create_buttons({ {"gui-element.general"}, {"gui-element.create"} }, { &general_section_btn, &create_btn }, dict);
 }

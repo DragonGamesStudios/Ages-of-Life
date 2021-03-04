@@ -9,8 +9,8 @@ LuaStorage::LuaStorage()
 {
 	storage = 0;
 	builtin_prototypes = {
-		{"game-object", GameObject::class_id},
-		{"setting", Setting::class_id}
+		{"game-object", LuaGameObjectPrototype::class_id},
+		{"setting", LuaSettingPrototype::class_id}
 	};
 }
 
@@ -65,11 +65,11 @@ bool LuaStorage::load_prototype(lua_State* L)
 	{
 		switch (type_it->second)
 		{
-		case GameObject::class_id:
+		case LuaGameObjectPrototype::class_id:
 			std::cout << "Registering game-object";
 			break;
 
-		case Setting::class_id:
+		case LuaSettingPrototype::class_id:
 			std::cout << "Registering setting";
 			break;
 		}
@@ -116,8 +116,7 @@ int LuaStorage::register_prototypes(lua_State* L)
 	if (!lua_istable(L, 2))
 	{
 		err = (std::string)"Invalid argument. Table expected, got " + lua_typename(L, lua_type(L, -1)) + ".\n";
-		lua_pushstring(L, err.c_str());
-		lua_error(L);
+		luaL_error(L, err.c_str());
 	}
 
 	// Preparing settings.raw
@@ -169,10 +168,7 @@ int LuaStorage::register_prototypes(lua_State* L)
 			err = "Invalid prototype. Unknown type " + p_type + ".\n";
 
 		if (!err.empty())
-		{
-			lua_pushstring(L, err.c_str());
-			lua_error(L);
-		}
+			luaL_error(L, err.c_str());
 
 		// Table registration
 		/*

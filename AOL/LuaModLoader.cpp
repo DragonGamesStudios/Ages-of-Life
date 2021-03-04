@@ -4,143 +4,9 @@
 #include <iostream>
 #include <sstream>
 
-void LuaModLoader::prepare_state(lua_State* L)
-{
-	luaL_requiref(L, "_G", luaopen_base, 1);
-	luaL_requiref(L, "math", luaopen_math, 1);
-	luaL_requiref(L, "string", luaopen_string, 1);
-	luaL_requiref(L, "table", luaopen_table, 1);
-	luaL_requiref(L, "debug", luaopen_debug, 1);
-
-	lua_settop(L, 0);
-
-	// Cpp function metatable
-	luaL_newmetatable(L, fn_mt);
-
-	// __call field (func())
-	lua_pushcfunction(L, on_call);
-	lua_setfield(L, -2, "__call");
-
-	// __tostring field (tostring(func))
-	lua_pushcfunction(L, on_tostring);
-	lua_setfield(L, -2, "__tostring");
-
-	// __gc field (garbage collection)
-	lua_pushcfunction(L, on_garbage_collection);
-	lua_setfield(L, -2, "__gc");
-
-	// Pop
-	lua_pop(L, 1);
-
-	// Disable unsafe functions
-	lua_getglobal(L, "_G");
-
-	lua_pushnil(L);
-	lua_setfield(L, -2, "dofile");
-
-	lua_pushnil(L);
-	lua_setfield(L, -2, "loadfile");
-
-	lua_pop(L, 1);
-
-	// Load require function
-	push_function(L, std::bind(&LuaModLoader::require, this, std::placeholders::_1));
-	lua_setglobal(L, "require");
-}
-
 int LuaModLoader::require(lua_State* L)
 {
-	std::string err;
-
-	if (!lua_isstring(L, -1))
-		err = (std::string)"Invalid argument to 'require'. String expected, got " + lua_typename(L, lua_type(L, -1)) + ".\n";
-
-	if (!err.empty())
-	{
-		lua_pushstring(L, err.c_str());
-		lua_error(L);
-	}
-
-	std::filesystem::path executed_file = correct_path(lua_tostring(L, -1));
-
-	if (!fs->exists(executed_file) )
-		err = "File on path " + executed_file.string() + " not found.\n";
-
-	if (!err.empty())
-	{
-		lua_pushstring(L, err.c_str());
-		lua_error(L);
-	}
-
-	int beginning_stack_size = lua_gettop(mod_state);
-
-	// Execute the file
-	if (luaL_dofile(mod_state, (fs->get_correct_path(executed_file)).string().c_str()) != LUA_OK)
-	{
-		lua_pushstring(L, lua_tostring(mod_state, -1));
-		lua_error(L);
-	}
-
-	int end_stack_size = lua_gettop(mod_state);
-
-	return end_stack_size - beginning_stack_size;
-}
-
-std::filesystem::path LuaModLoader::correct_path(const std::string& lua_path)
-{
-	std::string word;
-	std::filesystem::path result;
-
-	for (const char c : lua_path)
-	{
-		if (c != '.')
-			word.push_back(c);
-		else if (!word.empty())
-		{
-			result /= word;
-			word.clear();
-		}
-	}
-
-	word += ".lua";
-
-	if (!word.empty())
-	{
-		result /= word;
-		word.clear();
-	}
-
-	return result;
-}
-
-void LuaModLoader::print_stack(lua_State* stack)
-{
-	for (int i = 1; i <= lua_gettop(stack); i++)
-	{
-		std::cout << i << ". "<< lua_typename(stack, lua_type(stack, i)) << "\t" << get_string(stack, i) << "\n";
-	}
-}
-
-std::string LuaModLoader::get_string(lua_State* L, int idx)
-{
-	switch (lua_type(L, idx))
-	{
-	case LUA_TTABLE:
-		return ((std::stringstream)"table " << lua_topointer(L, idx)).str();
-		break;
-
-	case LUA_TNUMBER:
-		return std::to_string(lua_tonumber(L, idx));
-		break;
-
-	case LUA_TSTRING:
-		return lua_tostring(L, idx);
-		break;
-
-	default:
-		return "nil";
-		break;
-	}
+	return lua_require(L, fs);
 }
 
 LuaModLoader::LuaModLoader()
@@ -188,6 +54,7 @@ void LuaModLoader::register_l_storage(LuaStorage* ls)
 void LuaModLoader::register_l_savesystem(LuaSaveSystem* ls)
 {
 	l_savesystem = ls;
+	ls->set_active(true);
 }
 
 void LuaModLoader::begin_stage(LoaderStage stage)
@@ -197,7 +64,7 @@ void LuaModLoader::begin_stage(LoaderStage stage)
 	if (current_stage != LoaderStage::STAGE_NEW_GAME)
 	{
 		executed_state = luaL_newstate();
-		prepare_state(executed_state);
+		prepare_default_state(executed_state, fs);
 		l_storage->prepare_state(executed_state, allowed_prototypes[current_stage]);
 	}
 }
@@ -232,23 +99,21 @@ bool LuaModLoader::load_mod(const std::string& mod_name, const std::filesystem::
 {
 	try
 	{
-		std::cout << "Loading mod " << mod_name << "...\n";
 
 		fs->enter_dir(mod_name);
 
+		if (!fs->exists(file_to_run))
+		{
+			return true;
+		}
+
 		// Create a new state
 		mod_state = luaL_newstate();
-		prepare_state(mod_state);
+		prepare_default_state(mod_state, fs);
 		l_storage->prepare_state(mod_state, allowed_prototypes[current_stage]);
 
 		if (current_stage == LoaderStage::STAGE_NEW_GAME)
 			l_savesystem->prepare_state(mod_state, mod_name);
-
-		if (!fs->exists(file_to_run))
-		{
-			std::cout << "Skipping\n";
-			return true;
-		}
 
 		// Migrating data
 		if ((int)current_stage & ((int)LoaderStage::STAGE_SETTINGS | (int)LoaderStage::STAGE_DATA | (int)LoaderStage::STAGE_PROTOTYPES))
@@ -265,12 +130,30 @@ bool LuaModLoader::load_mod(const std::string& mod_name, const std::filesystem::
 			lua_pop(executed_state, 2);
 		}
 
+		// Prepare error handler
+		lua_pushcfunction(mod_state, generic_error_handler);
+
 		// Execute the file
-		if (luaL_dofile(mod_state, (fs->get_correct_path(file_to_run)).string().c_str()) != LUA_OK)
+		if ((luaL_loadfile(mod_state, (fs->get_correct_path(file_to_run)).string().c_str()) || lua_pcall(mod_state, 0, LUA_MULTRET, 1)) != LUA_OK)
 		{
-			last_error = lua_tostring(mod_state, -1);
+			lua_getfield(mod_state, -1, "message");
+
+			if (lua_type(mod_state, -1) == LUA_TTABLE)
+				last_error.message = ((std::stringstream)"table 0x" << lua_topointer(mod_state, -1)).str();
+			else
+				last_error.message = lua_tostring(mod_state, -1);
+
+			lua_pop(mod_state, 1);
+
+			lua_getfield(mod_state, -1, "traceback");
+			last_error.traceback = lua_tostring(mod_state, -1);
+
+			lua_pop(mod_state, 1);
+
 			return false;
 		}
+
+		lua_settop(mod_state, 0);
 
 		// Loading data
 		if ((int)current_stage & ((int)LoaderStage::STAGE_SETTINGS | (int)LoaderStage::STAGE_DATA | (int)LoaderStage::STAGE_PROTOTYPES))
@@ -296,7 +179,7 @@ bool LuaModLoader::load_mod(const std::string& mod_name, const std::filesystem::
 			{
 				lua_close(mod_state);
 				lua_pop(executed_state, 1);
-				last_error = "For some reason table `data` in the executed state was nil.";
+				last_error.message = "For some reason table `data` in the executed state was nil.";
 				return false;
 			}
 
@@ -305,7 +188,7 @@ bool LuaModLoader::load_mod(const std::string& mod_name, const std::filesystem::
 			{
 				lua_close(mod_state);
 				lua_pop(executed_state, 2);
-				last_error = "For some reason table `data.raw` in the executed state was nil.";
+				last_error.message = "For some reason table `data.raw` in the executed state was nil.";
 				return false;
 			}
 
@@ -333,7 +216,7 @@ bool LuaModLoader::load_mod(const std::string& mod_name, const std::filesystem::
 					std::string actual_name = lua_tostring(mod_state, -1);
 					if (actual_name != p_name)
 					{
-						last_error = "Prototype name: " + actual_name + " is not the same as expected " + p_name + ". Avoid editing prototype's name.";
+						last_error.message = "Prototype name: " + actual_name + " is not the same as expected " + p_name + ". Avoid editing prototype's name.";
 						lua_close(mod_state);
 						lua_settop(executed_state, 0);
 						return false;
@@ -346,7 +229,7 @@ bool LuaModLoader::load_mod(const std::string& mod_name, const std::filesystem::
 					std::string actual_type = lua_tostring(mod_state, -1);
 					if (actual_type != prototype_type)
 					{
-						last_error = "Prototype type: " + actual_name + " is not the same as expected " + prototype_type + ". Avoid editing prototype's type.";
+						last_error.message = "Prototype type: " + actual_name + " is not the same as expected " + prototype_type + ". Avoid editing prototype's type.";
 						lua_close(mod_state);
 						lua_settop(executed_state, 0);
 						return false;
@@ -384,16 +267,16 @@ bool LuaModLoader::load_mod(const std::string& mod_name, const std::filesystem::
 		lua_close(mod_state);
 		fs->exit();
 	}
-	catch (std::exception& e)
+	catch (const std::exception& e)
 	{
-		last_error = e.what();
+		last_error.message = e.what();
 		return false;
 	}
 
 	return true;
 }
 
-std::string LuaModLoader::get_last_error()
+LuaError LuaModLoader::get_last_error()
 {
 	return last_error;
 }

@@ -171,10 +171,12 @@
     <ClCompile Include="source\ArtImage.cpp" />
     <ClCompile Include="source\Atlas.cpp" />
     <ClCompile Include="source\Camera.cpp" />
+    <ClCompile Include="source\CfgDictionary.cpp" />
     <ClCompile Include="source\Dictionary.cpp" />
     <ClCompile Include="source\Display.cpp" />
     <ClCompile Include="source\EventManager.cpp" />
     <ClCompile Include="source\FileSystem.cpp" />
+    <ClCompile Include="source\JSONDictionary.cpp" />
     <ClCompile Include="source\KeyboardEventManager.cpp" />
     <ClCompile Include="source\MainEventManager.cpp" />
     <ClCompile Include="source\Sprite.cpp" />
@@ -184,11 +186,13 @@
     <ClInclude Include="include\art\AOLRenderingToolset.h" />
     <ClInclude Include="include\art\ArtImage.h" />
     <ClInclude Include="include\art\Atlas.h" />
+    <ClInclude Include="include\art\CfgDictionary.h" />
     <ClInclude Include="include\art\Color.h" />
     <ClInclude Include="include\art\Dictionary.h" />
     <ClInclude Include="include\art\Display.h" />
     <ClInclude Include="include\art\EventManager.h" />
     <ClInclude Include="include\art\FileSystem.h" />
+    <ClInclude Include="include\art\JSONDictionary.h" />
     <ClInclude Include="include\art\KeyboardEventManager.h" />
     <ClInclude Include="include\art\MainEventManager.h" />
     <ClInclude Include="include\art\Camera.h" />

@@ -28,6 +28,9 @@
     <Filter Include="Builtins\GameObject">
       <UniqueIdentifier>{c2cb0329-8dea-4af8-80fc-e7a98321b026}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Events">
+      <UniqueIdentifier>{23f86720-447d-468e-89dd-4bc2db4bdd51}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -64,6 +67,27 @@
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
     <ClCompile Include="LuaSaveSystem.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="LuaModExecutor.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="LuaRemote.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="LuaEventHandler.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="LuaModule.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
+    <ClCompile Include="events\GameEvent.cpp">
+      <Filter>Events</Filter>
+    </ClCompile>
+    <ClCompile Include="LuaGameScript.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
   </ItemGroup>
@@ -103,6 +127,30 @@
     </ClInclude>
     <ClInclude Include="LuaSaveSystem.h">
       <Filter>Lua API</Filter>
+    </ClInclude>
+    <ClInclude Include="LoaderStage.h">
+      <Filter>Lua API</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaModExecutor.h">
+      <Filter>Lua API</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaRemote.h">
+      <Filter>Lua API</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaEventHandler.h">
+      <Filter>Lua API</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaGameScript.h">
+      <Filter>Lua API</Filter>
+    </ClInclude>
+    <ClInclude Include="Game.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaModule.h">
+      <Filter>Lua API</Filter>
+    </ClInclude>
+    <ClInclude Include="events\GameEvent.h">
+      <Filter>Events</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

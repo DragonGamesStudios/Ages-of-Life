@@ -1,0 +1,11 @@
+#pragma once
+
+enum class LoaderStage {
+	STAGE_NONE = 0,
+	STAGE_SETTINGS = 1,
+	STAGE_DATA = 2,
+	STAGE_SETTINGS_MIGRATIONS = 4,
+	STAGE_PROTOTYPES = 8,
+	STAGE_RUNTIME = 16,
+	STAGE_NEW_GAME = 32
+};

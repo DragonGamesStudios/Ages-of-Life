@@ -32,7 +32,7 @@ namespace art
 	{
 		if (exists(path))
 		{
-			current_path /= path;
+			current_path = get_correct_path(path);
 			return true;
 		}
 		return false;
@@ -168,6 +168,9 @@ namespace art
 		if (path.empty())
 			return current_path;
 
+		if (path.has_root_path())
+			return path;
+
 		std::string root = (*path.begin()).string();
 
 		fs::path rest;
@@ -182,7 +185,7 @@ namespace art
 
 	fs::directory_iterator FileSystem::get_files_in_directory(const fs::path& dirname)
 	{
-		return fs::directory_iterator(current_path / dirname);
+		return fs::directory_iterator(get_correct_path(dirname));
 	}
 
 }

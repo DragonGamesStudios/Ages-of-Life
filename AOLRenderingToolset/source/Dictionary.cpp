@@ -1,55 +1,147 @@
 #include "..\include\art\Dictionary.h"
-#include <fmt/format.h>
 
 #include <agl/events.h>
 
+#include <sstream>
+
+#define LOCALISED_LL 0
+#define LOCALISED_LD 1
+#define LOCALISED_STR 2
+#define	LOCALISED_VEC 3
+
 namespace art
 {
-	void Dictionary::on_new_text_translate(agl::Event e)
+
+	std::string Dictionary::get_format_arg(std::string::iterator& c, const std::vector<std::string>& format_args) const
 	{
-		if (
-			registered_labels.find((agl::builtins::Label*)e.source) == registered_labels.end() &&
-			e.type == AGL_EVENT_TEXT_CHANGED
-			)
+		std::string passed;
+		std::string number_str;
+		int number_int = 0;
+		int underscores = 0;
+		bool read_number = false;
+
+		while (number_str.empty() && underscores != 2)
 		{
-			auto lbl = (agl::builtins::Label*) e.source;
-			keys[lbl] = { lbl->get_text(), format_args };
-			lbl->set_text(get(lbl->get_text()), false);
+			passed.push_back(*c);
+
+			if (!read_number)
+			{
+				if (*c == '_')
+					underscores++;
+				else
+					return passed;
+
+				if (underscores == 2)
+				{
+					read_number = true;
+				}
+			}
+			else
+			{
+				underscores = 0;
+
+				if (*c >= '0' && *c <= '9')
+					number_str.push_back(*c);
+				else if (*c == '_')
+				{
+					read_number = false;
+					continue;
+				}
+				else
+					return passed;
+
+			}
+			c++;
 		}
+
+		number_int = std::stoi(number_str);
+
+		if (number_int < 0 || number_int >= format_args.size())
+			return "Undefined argument: __" + number_str + "__";
+
+		return format_args.at(number_int);
 	}
 
 	Dictionary::Dictionary()
 	{
 		filesys = 0;
+		dict.insert({ "", {} });
+		dict_func = [](const fs::path& d_path, const std::string& language) -> std::vector<fs::path> {
+			return { d_path / language };
+		};
 	}
 
-	void Dictionary::set_translation_dir_path(std::string path)
+	void Dictionary::add_locale_path(const fs::path& path)
 	{
-		dict_path = path;
+		dict_paths.push_back(path);
 	}
 
-	void Dictionary::set_active_language(std::string _language)
+	void Dictionary::clear_locale_paths()
+	{
+		dict_paths.clear();
+	}
+
+	void Dictionary::set_dict_path_function(const dict_path_function& dfunc)
+	{
+		dict_func = dfunc;
+	}
+
+	void Dictionary::set_active_language(const std::string& _language)
 	{
 		language = _language;
 		dict.clear();
 		if (filesys)
 		{
-			filesys->open_file(dict_path / (language + ".json")) >> dict;
+			reload_dictionary();
 		}
 
 		for (auto& lbl : registered_labels)
 		{
-			set_format_args(keys[lbl].second);
-			lbl->set_text(keys[lbl].first, false);
+			lbl->set_text(format(keys[lbl]));
 		}
 	}
 
-	std::string Dictionary::get(std::string key)
+	std::string Dictionary::get_raw(const std::string& key) const
 	{
-		// TODO: add support for both arg formats: vector and map
-		auto it = dict.find(key);
-		if (it != dict.end())
-			return format(*it, format_args);
+		std::string group;
+		std::string value;
+
+		std::string::const_iterator c = key.begin();
+
+		while (c != key.end() && *c != '.')
+		{
+			group.push_back(*c);
+			c++;
+		}
+
+		if (c != key.end())
+			c++;
+
+		for (; c != key.end(); c++)
+		{
+			value.push_back(*c);
+		}
+
+		if (!group.empty())
+		{
+			auto group_it = dict.find(group);
+
+			if (group_it != dict.end())
+			{
+				auto value_it = group_it->second.find(value);
+
+				if (value_it != group_it->second.end())
+					return value_it->second;
+			}
+		}
+		else
+		{
+			auto& group_dict = dict.at("");
+			auto value_it = group_dict.find(value);
+
+			if (value_it != group_dict.end())
+				return value_it->second;
+		}
 
 		return "Translation for key \"" + key + "\" not found.";
 	}
@@ -59,92 +151,129 @@ namespace art
 		filesys = fsys;
 	}
 
-	std::string Dictionary::format(std::string original, std::vector<std::string>& args)
+	std::string Dictionary::format(const LocalisedString& s, bool localised_expected) const
 	{
-		std::string formatted;
-		bool key_listening = false;
-		bool ignore_next = false;
-		std::string key;
+		std::stringstream formatted;
 
-		for (const char c : original)
+		if (localised_expected && s.index() != LOCALISED_STR)
+			throw std::runtime_error("Incorrect localised string. First element of vector should be a string.");
+		
+		switch (s.index())
 		{
-			if (c == '/')
-				ignore_next = true;
-			else if (!ignore_next && c == '{')
-				key_listening = true;
-			else if (!ignore_next && c == '}')
-			{
-				key_listening = false;
-				int index = std::stoi(key);
+		case LOCALISED_LL:
+			formatted << std::get<long long>(s);
+			break;
 
-				if (index > 0 && index < args.size())
-					formatted += args[index];
-				else
-					formatted += "Arg not found at index " + key;
-				key.clear();
+		case LOCALISED_LD:
+			formatted << std::get<long double>(s);
+			break;
+
+		case LOCALISED_STR:
+			if (localised_expected && !std::get<std::string>(s).empty())
+				formatted << get_raw(std::get<std::string>(s));
+			else
+				formatted << std::get<std::string>(s);
+
+			break;
+
+		case LOCALISED_VEC:
+			std::vector<std::string> to_format;
+
+			bool expect_string = true;
+
+			for (const auto& arg : std::get<std::vector<LocalisedString>>(s))
+			{
+				to_format.push_back(format(arg, expect_string));
+
+				expect_string = false;
+			}
+
+			// Compose result
+
+			if (to_format[0].empty())
+			{
+				auto f_it = to_format.begin();
+				std::advance(f_it, 1);
+
+				for (; f_it != to_format.end(); f_it++)
+					formatted << *f_it;
 			}
 			else
 			{
-				if (!key_listening)
-					formatted.push_back(c);
-				else
-					key.push_back(c);
+				std::string::iterator c = to_format[0].begin();
+				bool ignore_next = false;
+
+				while (c != to_format[0].end())
+				{
+					if (!ignore_next)
+					{
+						if (*c == '\\')
+							ignore_next = true;
+						else if (*c == '_')
+						{
+							formatted << get_format_arg(c, to_format);
+							c--;
+						}
+						else
+							formatted << *c;
+					}
+					else
+					{
+						if (*c == 'n')
+							formatted << '\n';
+						else
+							formatted << *c;
+					}
+
+					c++;
+				}
 			}
 		}
 
-		return formatted;
+		return formatted.str();
 	}
 
-	std::string Dictionary::format(std::string original, std::map<std::string, std::string>& args)
+	void Dictionary::reload_dictionary()
 	{
-		std::string formatted;
-		bool key_listening = false;
-		bool ignore_next = false;
-		std::string key;
+		dict.clear();
+		dict.insert({ "", {} });
 
-		for (const char c : original)
+		for (const auto& d_path : dict_paths)
 		{
-			if (c == '/')
-				ignore_next = true;
-			else if (!ignore_next && c == '{')
-				key_listening = true;
-			else if (!ignore_next && c == '}')
+			for (const auto& f_path : dict_func(d_path, language))
 			{
-				key_listening = false;
-				auto it = args.find(key);
-				if (it != args.end())
-					formatted += args[key];
-				else
-					formatted += "Arg not found at key " + key;
-				key.clear();
-			}
-			else
-			{
-				if (!key_listening)
-					key.push_back(c);
-				else
-					formatted.push_back(c);
+				load_dictionary_file(f_path);
 			}
 		}
-
-		return formatted;
 	}
 
-	void Dictionary::register_label(agl::builtins::Label* lbl)
+	void Dictionary::set_label_key(agl::builtins::Label* lbl, const LocalisedString& key)
 	{
 		registered_labels.insert(lbl);
 
-		std::string lt = lbl->get_text();
+		keys[lbl] = key;
 
-		keys.insert({ lbl, {lt, { format_args }} });
-
-		if (!lt.empty())
-			lbl->set_text(get(lt), false);
+		lbl->set_text(format(key), false);
 	}
 
-	void Dictionary::set_format_args(std::vector<std::string> args)
+	LocalisedString::LocalisedString(std::initializer_list<LocalisedString> initializers)
 	{
-		format_args = args;
+		*this = std::vector<LocalisedString>(initializers);
+	}
+
+	LocalisedString::LocalisedString(const std::string& initializers)
+	{
+		*this = initializers;
+	}
+
+	LocalisedString::LocalisedString(long long initializers)
+	{
+		*this = initializers;
+	}
+
+	LocalisedString::LocalisedString(long double initializers)
+	{
+		*this = initializers;
 	}
 
 }

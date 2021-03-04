@@ -3,7 +3,7 @@
 #include <string>
 #include <functional>
 
-class GameObject
+struct LuaGameObjectPrototype
 {
 private:
 	std::string name;
