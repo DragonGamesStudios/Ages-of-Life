@@ -25,10 +25,6 @@ void App::createguis()
 
 	agl::register_image("main-menu-background", main_menu_background);
 
-	agl::Allegro5Image* preview = new agl::Allegro5Image("core/graphics/gui/game-preview-placeholder.png");
-
-	agl::register_image("game-preview-placeholder", preview);
-
 	agl::Allegro5Image* close = new agl::Allegro5Image("core/graphics/gui/close.png");
 
 	agl::register_image("close-button", close);
@@ -45,6 +41,17 @@ void App::createguis()
 	new_game_gui_instance->set_z_index(1);
 
 	new_game_gui = new NewGameGui(new_game_gui_instance, screenw, screenh, dict);
+
+	for (const auto& [_, scenario] : scenarios)
+	{
+		if (scenario.is_local)
+			new_game_gui->builtin_scenarios_sl.add_element(scenario.dict->format({ "scenario-name" }), scenario.name);
+		else
+			new_game_gui->mod_scenarios_sl.add_element(scenario.dict->format({ "scenario-name" }), scenario.name);
+	}
+
+	new_game_gui->builtin_scenarios_sl.set_size(new_game_gui->builtin_scenarios_sl.get_inner_width(), new_game_gui->builtin_scenarios_sl.get_element_amount() * 30);
+	new_game_gui->mod_scenarios_sl.set_size(new_game_gui->mod_scenarios_sl.get_inner_width(), new_game_gui->mod_scenarios_sl.get_element_amount() * 30);
 
 	// Binding
 
@@ -91,7 +98,12 @@ void App::createguis()
 
 	gui_closers.insert({ &new_game_gui->create_btn, new_game_gui_instance });
 
+	new_game_gui->set_scenario_handler(std::bind(&App::on_scenario_selected, this, std::placeholders::_1, std::placeholders::_2));
+
 	// Opening the Main menu
 	main_gui_group->add_gui(main_menu_gui_instance);
 	reload_saves();
+
+	// Set default 'freeplay' scenario
+	new_game_gui->builtin_scenarios_sl.select_child("freeplay");
 }

@@ -5,6 +5,7 @@ Game::Game()
 {
 	storage = 0;
 	save_fs = 0;
+	tick = 0;
 
 	mod_executor = new LuaModExecutor;
 
@@ -28,14 +29,21 @@ Game::~Game()
 	delete mod_executor;
 }
 
-bool Game::load(art::FileSystem* appdata_fs, art::FileSystem* local_fs, const std::vector<std::string>* mod_order, const std::map<std::string, std::string>& conf)
+bool Game::load(art::FileSystem* appdata_fs, art::FileSystem* local_fs, const std::vector<std::string>& mod_order, const std::map<std::string, version_t>& conf, const GameData& g_data)
 {
-	mod_executor->set_mod_order(mod_order);
+	// Load base data
+	base_data = g_data;
+
+	// Mod order
+	auto m_order = mod_order;
+	m_order.push_back(base_data.scenario->path.string());
+
+	mod_executor->set_mod_order(m_order);
 
 	// control.lua
 	mod_executor->prepare_control();
 
-	for (auto mod_it = mod_order->begin(); mod_it != mod_order->end(); mod_it++)
+	for (auto mod_it = m_order.begin(); mod_it != m_order.end(); mod_it++)
 	{
 		auto mod = *mod_it;
 		if (mod == "core" || mod == "base")
@@ -56,18 +64,17 @@ bool Game::load(art::FileSystem* appdata_fs, art::FileSystem* local_fs, const st
 	mod_executor->run_on_load();
 
 	// Dispatch configuration
-	auto saved_conf = conf;
 	bool should_raise = false;
 
-	if (saved_conf.size() != conf.size())
+	if (base_data.mod_config.size() != conf.size())
 		should_raise = true;
 	else
 	{
 		for (const auto& [mod, version] : conf)
 		{
-			auto conf_it = saved_conf.find(mod);
+			auto conf_it = base_data.mod_config.find(mod);
 
-			if (conf_it == saved_conf.end() || conf_it->second != version)
+			if (conf_it == base_data.mod_config.end() || conf_it->second != version)
 			{
 				should_raise = true;
 				break;
@@ -76,7 +83,7 @@ bool Game::load(art::FileSystem* appdata_fs, art::FileSystem* local_fs, const st
 	}
 
 	if (should_raise)
-		mod_executor->run_on_configuration_changed(saved_conf, conf);
+		mod_executor->run_on_configuration_changed(base_data.mod_config, conf);
 
 	// on_ready
 	mod_executor->run_on_ready();

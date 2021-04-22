@@ -17,6 +17,7 @@ namespace agl::builtins
 		image = _image;
 		desired_width = image->width;
 		desired_height = image->height;
+		set_scaling(scaling);
 	}
 
 	void ImageBlock::set_desired_width(int _width)
@@ -40,10 +41,10 @@ namespace agl::builtins
 
 	void ImageBlock::set_scaling(char _scaling)
 	{
+		scaling = _scaling;
+
 		if (image)
 		{
-			scaling = _scaling;
-
 			if (scaling)
 			{
 				int maxwidth = get_box_width(display_box);

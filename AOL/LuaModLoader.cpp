@@ -104,6 +104,7 @@ bool LuaModLoader::load_mod(const std::string& mod_name, const std::filesystem::
 
 		if (!fs->exists(file_to_run))
 		{
+			fs->exit();
 			return true;
 		}
 
@@ -265,6 +266,8 @@ bool LuaModLoader::load_mod(const std::string& mod_name, const std::filesystem::
 
 
 		lua_close(mod_state);
+		mod_state = 0;
+
 		fs->exit();
 	}
 	catch (const std::exception& e)

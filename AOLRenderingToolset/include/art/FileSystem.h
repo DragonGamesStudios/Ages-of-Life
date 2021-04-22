@@ -20,6 +20,7 @@ namespace art
 		bool create_dir(const std::string& dirname);
 		bool delete_dir_recursively(const std::string& dirname);
 		bool enter_dir(const std::string& path);
+		bool enter_dir(const fs::path& path);
 		std::string get_directory() const;
 		fs::path get_current_path() const;
 

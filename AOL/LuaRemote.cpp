@@ -128,6 +128,9 @@ int LuaRemote::call(lua_State* L)
 	lua_pushstring(L, iname.c_str());
 	lua_rawget(L, -2);
 
+	if (lua_isnil(L, -1))
+		luaL_error(L, "Interface does not exist");
+
 	lua_pushstring(L, fname.c_str());
 	lua_rawget(L, -2);
 

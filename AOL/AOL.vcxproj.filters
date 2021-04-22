@@ -90,6 +90,9 @@
     <ClCompile Include="LuaGameScript.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
+    <ClCompile Include="confvers.cpp">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allegrolib.h">
@@ -151,6 +154,9 @@
     </ClInclude>
     <ClInclude Include="events\GameEvent.h">
       <Filter>Events</Filter>
+    </ClInclude>
+    <ClInclude Include="confvers.h">
+      <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

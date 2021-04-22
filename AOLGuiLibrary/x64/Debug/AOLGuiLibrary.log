@@ -1,17 +1,2 @@
-﻿  AOLGuiLibrary.cpp
-  Base.cpp
-  Block.cpp
-  Gui.cpp
-  GuiGroup.cpp
-  TextInput.cpp
-  Button.cpp
-  Dragger.cpp
-  Flow.cpp
-  ImageBlock.cpp
-  Label.cpp
-  Layout.cpp
-  ScrollBlock.cpp
-  Scrollbar.cpp
-  SelectionList.cpp
-  Generowanie kodu...
+﻿  SelectionList.cpp
   AOLGuiLibrary.vcxproj -> C:\AOL\x64\Debug\AOLGuiLibrary.lib

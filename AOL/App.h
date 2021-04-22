@@ -17,6 +17,21 @@
 #include <ARTAllegro5Backend/Allegro5Display.h>
 #include <ARTAllegro5Backend/Allegro5ArtImage.h>
 
+struct Mod
+{
+	std::string code_name;
+	std::string full_name;
+	std::string description;
+	version_t version;
+	std::vector<std::tuple<std::string, version_t, char>> dependencies;
+	version_t aol_version;
+	std::string homepage;
+	std::string author;
+	std::string contact;
+	agl::Image* thumbnail;
+	bool has_thumbnail = true;
+};
+
 class App {
 public:
 	App();
@@ -54,6 +69,7 @@ protected:
 
 	art::FileSystem* local_fs;
 	art::CfgDictionary* dict;
+	std::set<std::string> supported_languages;
 
 	art::FileSystem* appdata_fs;
 	art::FileSystem* save_fs;
@@ -69,6 +85,9 @@ protected:
 	// Game
 	Storage* storage;
 	Game* active_game;
+	std::string selected_scenario;
+
+	std::map<std::string, GameData> games;
 
 	// Modding
 	LuaModLoader* mod_loader;
@@ -76,10 +95,12 @@ protected:
 	LuaStorage* mod_storage_loader;
 	LuaSaveSystem* mod_savesystem;
 
-	std::vector<std::string> loaded_mods;
+	std::vector<std::string> ordered_mods;
+	std::map<std::string, Mod> loaded_mods;
 	std::unordered_map<LoaderStage, std::vector<std::string>> to_run;
+	std::map<std::string, Scenario> scenarios;
 
-	std::map<std::string, std::string> active_configuration;
+	std::map<std::string, version_t> active_configuration;
 
 	// Functions
 	void initialize_agl();
@@ -93,8 +114,12 @@ protected:
 
 	void load();
 	void run_file_in_mods(const std::string& file_name);
+	void analyze_mod(const fs::path& mod_path, Mod* mod, art::FileSystem* mod_fs);
+	void analyze_scenario(const fs::path& scenario_path, Scenario* scenario, art::FileSystem* mod_fs);
+	version_t get_version(const std::string& version_str) const;
+	std::pair<bool, std::tuple<std::string, version_t, char>> get_dependency(const json& dep_json);
 
-	void enable_debug(agl::Event e);
+	void enable_debug(const agl::Event& e);
 	void shortcut_capture(agl::Event e);
 
 	void open_gui(const agl::Event& e);
@@ -110,6 +135,8 @@ protected:
 
 	void handle_load_game(const agl::Event& e);
 	void load_game(const std::string& name);
+
+	void on_scenario_selected(char src, const std::string& scenario_name);
 
 	void check_appdata();
 

@@ -1,16 +1,19 @@
 ﻿  AOLGuiLibrary.cpp
   Base.cpp
   Block.cpp
-  Gui.cpp
-  GuiGroup.cpp
-  TextInput.cpp
   Button.cpp
   Dragger.cpp
   Flow.cpp
   ImageBlock.cpp
   Label.cpp
   Layout.cpp
-  ScrollBlock.cpp
   Scrollbar.cpp
+  ScrollBlock.cpp
   SelectionList.cpp
+  EventHandler.cpp
+  GraphicsHandler.cpp
+C:\AOL\AOLGuiLibrary\source\GraphicsHandler.cpp(63,2): warning C4267: "return": konwersja z "size_t" do "int", możliwa utrata danych
+  Gui.cpp
+  GuiGroup.cpp
+  TextInput.cpp
   AOLGuiLibrary.vcxproj -> C:\AOL\x64\Release\AOLGuiLibrary.lib

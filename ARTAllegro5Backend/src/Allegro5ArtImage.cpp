@@ -16,6 +16,15 @@ namespace art
 		source = 0;
 	}
 
+	Allegro5ArtImage::Allegro5ArtImage(ALLEGRO_BITMAP* bmp)
+	{
+		bitmap = bmp;
+		width = al_get_bitmap_width(bmp);
+		height = al_get_bitmap_height(bmp);
+		x = y = 0;
+		source = 0;
+	}
+
 	Allegro5ArtImage::Allegro5ArtImage(const ArtImage* reg_source, int reg_x, int reg_y, int reg_w, int reg_h)
 		: ArtImage(reg_source, reg_x, reg_y, reg_w, reg_h)
 	{

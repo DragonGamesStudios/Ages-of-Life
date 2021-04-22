@@ -130,7 +130,7 @@ namespace agl::builtins
 			std::vector<std::string> setter_args;
 			std::string setter_arg;
 
-			for (const char c : text)
+			for (const char c : text + " ")
 			{
 				// TODO: Rich text support testing
 
@@ -343,6 +343,7 @@ namespace agl::builtins
 	void Label::resize_always()
 	{
 		resizes_to_content = true;
+		resize_to_text();
 	}
 
 	void Label::set_text_wrap(bool wrap)

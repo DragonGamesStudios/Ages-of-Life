@@ -21,6 +21,7 @@ class LuaSettingPrototype : public LuaGameObjectPrototype
 {
 private:
 	std::string setting_type;
+	std::string scenario;
 	SettingValue default_value;
 	std::vector<SettingValue> possible_values;
 

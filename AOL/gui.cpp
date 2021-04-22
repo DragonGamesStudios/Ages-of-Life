@@ -23,12 +23,16 @@ TwoPanelGui::TwoPanelGui(
 	agl::Gui* gui,
 	int side,
 	art::Dictionary* dict,
+	int subgui_amount_,
 	int preferred_left_width,
 	int preferred_right_width,
 	bool add_border,
 	bool add_frame
 )
 {
+	subgui_amount = subgui_amount_;
+	subguis = new agl::Block * [subgui_amount];
+
 	// Setup widths
 	left_width = preferred_left_width;
 	if (preferred_left_width == -1)
@@ -174,7 +178,7 @@ void TwoPanelGui::create_buttons(
 	options_flow.resize_to_content();
 }
 
-void MainMenuGui::open_subgui(agl::Event e, agl::builtins::Button* btn)
+void TwoPanelGui::open_subgui(agl::Event e, agl::builtins::Button* btn)
 {
 	close_subguis();
 
@@ -187,6 +191,12 @@ void MainMenuGui::open_subgui(agl::Event e, agl::builtins::Button* btn)
 		content_panel.get_children_container()->get_total_height(false, false)
 	);
 	content_scrollbar.set_step(content_panel.get_children_container()->get_height() / 100);
+}
+
+void TwoPanelGui::close_subguis()
+{
+	for (int i = 0; i < subgui_amount; i++)
+		subguis[i]->set_visible(false);
 }
 
 void MainMenuGui::generate_shortcut_options(
@@ -248,7 +258,7 @@ void MainMenuGui::highlight_shortcut(agl::Event e)
 }
 
 MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary* dict)
-	: TwoPanelGui(gui, screenh - 4, dict, -1, screenw - screenh / 3 - 4, false, false)
+	: TwoPanelGui(gui, screenh - 4, dict, 5, -1, screenw - screenh / 3 - 4, false, false)
 {
 	std::vector<agl::builtins::Button*> btn_ptrs;
 	for (int i = 0; i < 6; i++)
@@ -328,7 +338,7 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 	play_game_selection_preview.set_size(
 		(play_gui_flow.get_inner_width() - 100) / 2, (play_gui_flow.get_inner_width() - 100) / 2
 	);
-	play_game_selection_preview.set_image(agl::loaded_images["game-preview-placeholder"]);
+	play_game_selection_preview.set_image(agl::loaded_images["missing-preview"]);
 	play_game_selection_preview.set_scaling(AGL_SCALING_TOSIZE);
 
 	play_game_selection_flow.add(&play_game_selection_preview);
@@ -412,8 +422,8 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 	options_gui_flow.set_single_subflow(true);
 
 	options_main_label.apply(bronze_age_main_label);
-	dict->set_label_key(&options_main_label, { "gui-element.label-options" });
 	options_main_label.resize_always();
+	dict->set_label_key(&options_main_label, { "gui-element.options" });
 
 	options_gui_flow.add(&options_main_label);
 
@@ -710,12 +720,6 @@ MainMenuGui::MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionar
 	content_scrollbar.set_step(content_panel.get_children_container()->get_height() / 100);
 }
 
-void MainMenuGui::close_subguis()
-{
-	for (int i = 0; i < 5; i++)
-		subguis[i]->set_visible(false);
-}
-
 std::string shortcut_to_string(int key, int mods)
 {
 	std::string ret;
@@ -838,10 +842,45 @@ void setup_styles()
 	button_accept->set_value("border_color_left", a_ne);
 }
 
+void NewGameGui::on_scenario_selected(const agl::Event& e, char which)
+{
+	if (e.type != AGL_EVENT_ELEMENT_SELECTED)
+		return;
+
+	const auto& selected_builtin = builtin_scenarios_sl.get_selected_elements();
+	auto element_builtin = selected_builtin.empty() ? -1 : *selected_builtin.begin();
+
+	const auto& selected_mod = mod_scenarios_sl.get_selected_elements();
+	auto element_mod = selected_mod.empty() ? -1 : *selected_mod.begin();
+
+	if (which == 'b')
+	{
+		if (e.keycode != selected_scenario || element_mod != -1)
+		{
+			selected_scenario = e.keycode;
+			on_scenario_chosen(which, builtin_scenarios_sl.get_key_by_index(selected_scenario));
+		}
+
+		mod_scenarios_sl.unselect_all();
+	}
+	else
+	{
+		if (e.keycode != selected_scenario || element_builtin != -1)
+		{
+			selected_scenario = e.keycode;
+			on_scenario_chosen(which, mod_scenarios_sl.get_key_by_index(selected_scenario));
+		}
+
+		builtin_scenarios_sl.unselect_all();
+	}
+}
+
 NewGameGui::NewGameGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary* dict)
-	: TwoPanelGui(gui, screenh/2, dict)
+	: TwoPanelGui(gui, screenh/2, dict, 2)
 {
 	dict->set_label_key(&frame_label, { "gui-element.new-game" });
+
+	selected_scenario = -1;
 
 	content_panel.add(&general_section);
 
@@ -886,5 +925,143 @@ NewGameGui::NewGameGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary*
 	seed_input.set_return_keycode(ALLEGRO_KEY_ENTER);
 	seed_input.set_backspace_keycode(ALLEGRO_KEY_BACKSPACE);
 
-	create_buttons({ {"gui-element.general"}, {"gui-element.create"} }, { &general_section_btn, &create_btn }, dict);
+	general_section_btn.set_click_function(
+		std::bind(&NewGameGui::open_subgui, this, std::placeholders::_1, std::placeholders::_2)
+	);
+
+	subguis[0] = &general_section;
+
+	content_panel.add(&scenario_section);
+
+	scenario_section.set_size(content_panel.get_inner_width() - 2, content_panel.get_inner_height() - 2);
+	scenario_section.set_paddings(1, 1, 1, 1);
+	scenario_section.set_main_axis(AGL_HORIZONTAL);
+	scenario_section.set_main_axis_spacing(2);
+	scenario_section.set_background_color(agl::Color(0, 0, 0, 0));
+
+	scenario_section.add(&scenario_selection_panel);
+
+	scenario_selection_panel.set_size(scenario_section.get_inner_width() / 2 - 14, scenario_section.get_inner_height());
+
+	scenario_selection_panel.set_background_color(agl::Color(143, 85, 30));
+
+	scenario_selection_panel.connect_vscrollbar(&scenario_selection_sb);
+	scenario_selection_panel.connect_children_container(&scenario_selection_flow);
+
+	scenario_selection_panel.direct_add(&scenario_selection_flow);
+
+	scenario_selection_flow.set_size(scenario_selection_panel.get_inner_width(), scenario_selection_panel.get_inner_height());
+	scenario_selection_flow.set_single_subflow(true);
+	scenario_selection_flow.set_main_axis(AGL_VERTICAL);
+	scenario_selection_flow.set_background_color(agl::Color(0, 0, 0, 0));
+
+	// Builtin scenarios - label
+	scenario_selection_flow.add(&builtin_scenarios_label);
+
+	builtin_scenarios_label.apply(bronze_age_label);
+	builtin_scenarios_label.set_size(scenario_selection_flow.get_inner_width(), 30);
+	builtin_scenarios_label.set_horizontal_align(AGL_ALIGN_CENTER);
+	builtin_scenarios_label.set_vertical_align(AGL_ALIGN_CENTER);
+	dict->set_label_key(&builtin_scenarios_label, {"gui-element.builtin-scenarios"});
+
+	// Selection
+	builtin_scenarios_sl.set_background_color(agl::Color(0, 0, 0, 0));
+	builtin_scenarios_sl.set_element_label_font(agl::loaded_fonts["default"]);
+	builtin_scenarios_sl.set_element_label_size(18);
+	builtin_scenarios_sl.set_element_label_color(agl::Color(255, 210, 103));
+	builtin_scenarios_sl.set_element_paddings(1);
+	builtin_scenarios_sl.set_odd_element_background_color(agl::Color(255, 255, 255, 30));
+	builtin_scenarios_sl.set_element_height(30);
+	builtin_scenarios_sl.set_size(
+		scenario_selection_flow.get_inner_width(), 100
+	);
+	builtin_scenarios_sl.create_element_container();
+
+	scenario_selection_flow.add(&builtin_scenarios_sl);
+
+	builtin_scenarios_sl.add_event_function(std::bind(&NewGameGui::on_scenario_selected, this, std::placeholders::_1, 'b'));
+
+	mod_scenarios_sl.set_background_color(agl::Color(0, 0, 0, 0));
+	mod_scenarios_sl.set_element_label_font(agl::loaded_fonts["default"]);
+	mod_scenarios_sl.set_element_label_size(18);
+	mod_scenarios_sl.set_element_label_color(agl::Color(255, 210, 103));
+	mod_scenarios_sl.set_element_paddings(1);
+	mod_scenarios_sl.set_odd_element_background_color(agl::Color(255, 255, 255, 30));
+	mod_scenarios_sl.set_element_height(30);
+	mod_scenarios_sl.set_size(
+		scenario_selection_flow.get_inner_width(), 100
+	);
+	mod_scenarios_sl.create_element_container();
+
+	scenario_selection_flow.add(&mod_scenarios_sl);
+
+	mod_scenarios_sl.add_event_function(std::bind(&NewGameGui::on_scenario_selected, this, std::placeholders::_1, 'm'));
+
+	// Mod scenarios - label
+	scenario_selection_flow.add(&mod_scenarios_label);
+
+	mod_scenarios_label.apply(bronze_age_label);
+	mod_scenarios_label.set_size(scenario_selection_flow.get_inner_width(), 30);
+	mod_scenarios_label.set_horizontal_align(AGL_ALIGN_CENTER);
+	mod_scenarios_label.set_vertical_align(AGL_ALIGN_CENTER);
+	dict->set_label_key(&mod_scenarios_label, { "gui-element.mod-scenarios" });
+
+	scenario_section.add(&scenario_selection_sb);
+
+	scenario_selection_sb.set_size(10, scenario_section.get_inner_height() - 2);
+	scenario_selection_sb.apply(bronze_age_scrollbar);
+	scenario_selection_sb.set_step(10);
+
+	// Scenarios - info flow
+	scenario_section.add(&scenario_info_flow);
+
+	scenario_info_flow.set_main_axis(AGL_VERTICAL);
+	scenario_info_flow.set_background_color(agl::Color(0, 0, 0, 0));
+	scenario_info_flow.set_single_subflow(true);
+	scenario_info_flow.set_size(scenario_section.get_inner_width() / 2, scenario_section.get_inner_height());
+	scenario_info_flow.set_main_axis_spacing(2);
+
+	// Scenarios - preview
+	scenario_info_flow.add(&scenario_info_preview);
+
+	scenario_info_preview.set_size(scenario_info_flow.get_inner_width(), scenario_info_flow.get_inner_height() / 2);
+	scenario_info_preview.set_scaling(AGL_SCALING_TOSIZE);
+	scenario_info_preview.set_image(agl::loaded_images["missing-preview"]);
+	scenario_info_preview.set_background_color(agl::Color(0, 0, 0, 0));
+
+	// Scenarios - title
+	scenario_info_flow.add(&scenario_info_title);
+
+	scenario_info_title.resize_always();
+	scenario_info_title.apply(bronze_age_label);
+	scenario_info_title.set_base_size(24);
+	scenario_info_title.set_text("NO SCENARIO SELECTED");
+
+	// Scenarios - description
+	scenario_info_flow.add(&scenario_info_description);
+
+	scenario_info_description.apply(bronze_age_label);
+	scenario_info_description.set_multiline(true);
+	scenario_info_description.set_text_wrap(true);
+	scenario_info_description.set_base_size(14);
+	scenario_info_description.set_size(scenario_info_flow.get_inner_width(), scenario_info_flow.get_inner_height() / 2 - 4 - scenario_info_title.get_height());
+	scenario_info_description.set_text("NO SCENARIO SELECTED");
+
+	scenario_section.set_visible(false);
+	scenario_section_btn.set_click_function(
+		std::bind(&NewGameGui::open_subgui, this, std::placeholders::_1, std::placeholders::_2)
+	);
+
+	subguis[1] = &scenario_section;
+
+	create_buttons(
+		{ {"gui-element.general"}, {"gui-element.scenario"}, {"gui-element.scenario-options"}, {"gui-element.create"} },
+		{ &general_section_btn, &scenario_section_btn, &create_btn, &scenario_options_section_btn },
+		dict
+	);
+}
+
+void NewGameGui::set_scenario_handler(const std::function<void(char, const std::string&)>& f)
+{
+	on_scenario_chosen = f;
 }

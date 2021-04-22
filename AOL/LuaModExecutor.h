@@ -14,7 +14,7 @@ private:
 	std::map<std::string, lua_State*> mod_states;
 
 	LuaError last_error;
-	const std::vector<std::string>* mod_order;
+	std::vector<std::string> mod_order;
 
 	art::FileSystem* fs;
 
@@ -38,13 +38,13 @@ public:
 
 	LuaError get_last_error() const;
 
-	void set_mod_order(const std::vector<std::string>* order);
+	void set_mod_order(const std::vector<std::string>& order);
 
 	void prepare_control();
 	void unprepare_control();
 
 	void run_on_load();
-	void run_on_configuration_changed(const std::map<std::string, std::string>& old_conf, const std::map<std::string, std::string>& new_conf);
+	void run_on_configuration_changed(const std::map<std::string, version_t>& old_conf, const std::map<std::string, version_t>& new_conf);
 	void run_on_ready();
 	void run_on_save();
 

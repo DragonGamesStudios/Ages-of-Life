@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 
 #include <agl/AOLGuiLibrary.h>
 #include <agl/builtins/SelectionList.h>
@@ -52,9 +53,14 @@ protected:
 	int left_width;
 	int right_width;
 
+	agl::Block** subguis;
+	int subgui_amount;
+
+	void open_subgui(agl::Event e, agl::builtins::Button* btn);
+
 public:
 	TwoPanelGui(
-		agl::Gui* gui, int side, art::Dictionary* dict,
+		agl::Gui* gui, int side, art::Dictionary* dict, int subgui_amount_,
 		int preferred_left_width = -1, int preferred_right_width = -1, bool add_border = true, bool add_frame = true
 	);
 
@@ -64,6 +70,8 @@ public:
 		art::Dictionary* dict
 	);
 	agl::builtins::Button close_button;
+
+	void close_subguis();
 };
 
 class MainMenuGui : public TwoPanelGui
@@ -104,10 +112,6 @@ private:
 	agl::builtins::Label creators_text;
 
 	agl::Block mods_gui;
-
-	agl::Block* subguis[5];
-
-	void open_subgui(agl::Event e, agl::builtins::Button* btn);
 	void generate_shortcut_options(
 		ShortcutOption ops[], art::LocalisedString ops_texts[], int size, int category, art::Dictionary* dict
 	);
@@ -124,24 +128,50 @@ public:
 	agl::builtins::SelectionList play_game_selection_list;
 
 	MainMenuGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary* dict);
-
-	void close_subguis();
 };
 
 class NewGameGui : public TwoPanelGui
 {
 private:
+	int selected_scenario;
+	std::function<void(char, const std::string&)> on_scenario_chosen;
+	void on_scenario_selected(const agl::Event& e, char which);
+
+	// General
 	agl::builtins::Button general_section_btn;
 	agl::Block general_section;
 	agl::builtins::Label name_label;
 	agl::builtins::Label seed_label;
 
+	// Scenario
+	agl::builtins::Button scenario_section_btn;
+	agl::builtins::Flow scenario_section;
+	agl::builtins::ScrollBlock scenario_selection_panel;
+	agl::builtins::Scrollbar scenario_selection_sb;
+	agl::builtins::Flow scenario_selection_flow;
+	agl::builtins::Label builtin_scenarios_label;
+	agl::builtins::Label mod_scenarios_label;
+
+	// Scenario information
+	agl::builtins::Flow scenario_info_flow;
+
+	// Scenario options
+	agl::builtins::Button scenario_options_section_btn;
+
 public:
 	NewGameGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary* dict );
+
+	void set_scenario_handler(const std::function<void(char, const std::string&)>& f);
 
 	agl::builtins::Button create_btn;
 	agl::builtins::TextInput name_input;
 	agl::builtins::TextInput seed_input;
+	agl::builtins::SelectionList builtin_scenarios_sl;
+	agl::builtins::SelectionList mod_scenarios_sl;
+
+	agl::builtins::ImageBlock scenario_info_preview;
+	agl::builtins::Label scenario_info_title;
+	agl::builtins::Label scenario_info_description;
 };
 
 std::string shortcut_to_string(int key, int mods);

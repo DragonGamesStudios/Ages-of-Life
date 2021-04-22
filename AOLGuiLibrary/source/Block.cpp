@@ -509,7 +509,7 @@ namespace agl
 		for (const auto& listener : event_listeners)
 			listener->handle_event(e);
 
-		if (parent_scroll_detection && e.type == AGL_EVENT_MOUSE_MOVED && e.dz)
+		if (!scroll_detection && parent_scroll_detection && e.type == AGL_EVENT_MOUSE_MOVED && e.dz)
 			handle_scroll(e);
 	}
 
@@ -606,11 +606,13 @@ namespace agl
 	void Block::enable_scroll_detection(bool detection)
 	{
 		scroll_detection = detection;
+		update_scroll_detection();
 	}
 
 	void Block::enable_parent_scroll_detection(bool detection)
 	{
 		parent_scroll_detection = detection;
+		update_scroll_detection();
 	}
 
 	void Block::update_scroll_detection()

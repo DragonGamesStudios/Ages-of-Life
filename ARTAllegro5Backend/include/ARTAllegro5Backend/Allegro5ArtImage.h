@@ -13,6 +13,7 @@ namespace art
 		ALLEGRO_BITMAP* bitmap;
 
 		Allegro5ArtImage(const std::string& path);
+		Allegro5ArtImage(ALLEGRO_BITMAP* bmp);
 		Allegro5ArtImage(const ArtImage* reg_source, int reg_x, int reg_y, int reg_w, int reg_h);
 		~Allegro5ArtImage();
 

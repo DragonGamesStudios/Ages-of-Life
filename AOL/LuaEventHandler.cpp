@@ -108,7 +108,7 @@ void LuaEventHandler::run_on_load(lua_State* L)
 	run_arg0_ret0(on_load, L);
 }
 
-void LuaEventHandler::run_on_configuration_changed(const std::map<std::string, std::string>& configuration, bool was_changed, lua_State* L)
+void LuaEventHandler::run_on_configuration_changed(const std::map<std::string, version_t>& configuration, bool was_changed, lua_State* L)
 {
 	auto fn_it = on_configuration_changed.find(L);
 
@@ -120,7 +120,13 @@ void LuaEventHandler::run_on_configuration_changed(const std::map<std::string, s
 
 		for (const auto& [key, value] : configuration)
 		{
-			lua_pushstring(L, value.c_str());
+			lua_newtable(L);
+			lua_pushinteger(L, value[0]);
+			lua_rawseti(L, -2, 1);
+			lua_pushinteger(L, value[1]);
+			lua_rawseti(L, -2, 2);
+			lua_pushinteger(L, value[2]);
+			lua_rawseti(L, -2, 3);
 			lua_setfield(L, -2, key.c_str());
 		}
 

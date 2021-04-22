@@ -4,6 +4,12 @@
 #include <atlstr.h>
 #include <agl/events.h>
 
+#define MOD_DEP_CONFLICT 0b1
+#define MOD_DEP_OPTIONAL 0b01
+#define MOD_DEP_EQUAL 0b001
+#define MOD_DEP_GREATER 0b0001
+#define MOD_DEP_LESS 0b00001
+
 agl::Color black(0, 0, 0);
 agl::Color loading_screen_bg(20, 20, 20);
 agl::Color white(255, 255, 255);
@@ -35,6 +41,8 @@ App::App()
 			std::bind(&App::enable_debug, this, std::placeholders::_1)
 		}
 	};
+
+	supported_languages = { "en", "pl" };
 
 	local_fs = new art::FileSystem;
 	dict = new art::CfgDictionary;
@@ -100,7 +108,6 @@ App::App()
 		{ LoaderStage::STAGE_SETTINGS_MIGRATIONS, { "migrations/settings.lua", "migrations/settings-fixes.lua", "migrations/settings-final-fixes.lua" } },
 		{ LoaderStage::STAGE_NEW_GAME, { "new-game.lua", "new-game-fixes.lua", "new-game-final-fixes.lua" } },
 	};
-	loaded_mods = { "core", "base" };
 }
 
 App::~App()
@@ -127,9 +134,17 @@ App::~App()
 	delete local_fs;
 
 	delete mod_loader;
+
+	for (const auto& [_, scenario] : scenarios)
+		if (scenario.has_preview)
+			delete scenario.preview;
+
+	for (const auto& mod : loaded_mods)
+		if (mod.second.has_thumbnail)
+			delete mod.second.thumbnail;
 }
 
-void App::enable_debug(agl::Event e)
+void App::enable_debug(const agl::Event& e)
 {
 	agl::debug::debug = !agl::debug::debug;
 }
@@ -206,20 +221,42 @@ void App::reload_saves()
 {
 	main_menu_gui->play_game_selection_list.clear_elements();
 
-	std::map<fs::file_time_type, fs::path, std::greater<fs::file_time_type>> saves;
+	std::map<fs::file_time_type, std::string, std::greater<fs::file_time_type>> saves;
 
 	for (const auto& f : appdata_fs->get_files_in_directory("saves"))
 	{
 		if (f.is_directory())
 		{
-			saves.insert({ f.last_write_time(), f.path().filename() });
+			saves.insert({ f.last_write_time(), f.path().filename().string() });
 		}
 	}
 
+	appdata_fs->enter_dir((fs::path)"saves");
+
 	for (const auto& [key, value] : saves)
 	{
-		main_menu_gui->play_game_selection_list.add_element(value.string());
+		main_menu_gui->play_game_selection_list.add_element(value, value);
+		
+		auto f = appdata_fs->open_file((fs::path)value / "base.dat");
+
+		GameData data;
+		std::string scenario;
+
+		if (f.is_open())
+		{
+			load_base_data(f, data.aol_version, scenario, data.mod_config);
+		}
+
+		f.close();
+
+		auto it = scenarios.find(scenario);
+
+		data.scenario = it != scenarios.end() ? &it->second : nullptr;
+
+		games.insert({ value, data });
 	}
+
+	appdata_fs->exit();
 }
 
 void App::create_game(const std::string& name, long long seed)
@@ -229,7 +266,7 @@ void App::create_game(const std::string& name, long long seed)
 
 	// Mod save space
 	save_fs->create_dir("mod-data");
-	save_fs->enter_dir("mod-data");
+	save_fs->enter_dir((fs::path)"mod-data");
 
 	mod_loader->begin_stage(LoaderStage::STAGE_NEW_GAME);
 
@@ -238,7 +275,15 @@ void App::create_game(const std::string& name, long long seed)
 
 	mod_loader->end_stage();
 
+	save_fs->exit();
+
+	// Create general save file
+	std::ofstream of = save_fs->open_ofile((fs::path)"base.dat");
+	save_base_data(of, selected_scenario, active_configuration);
+	of.close();
+
 	save_fs->exit_to("saves");
+
 	reload_saves();
 }
 
@@ -286,9 +331,7 @@ void App::handle_load_game(const agl::Event& e)
 
 		main_menu_gui->play_game_selection_list.unselect_child(selected_index);
 
-		auto selected = main_menu_gui->play_game_selection_list.get_element_by_index(selected_index);
-
-		std::string loaded = ((agl::builtins::Label*)selected->get_child_by_index(0))->get_text();
+		std::string loaded = main_menu_gui->play_game_selection_list.get_key_by_index(selected_index);
 
 		load_game(loaded);
 	}
@@ -304,7 +347,7 @@ void App::load_game(const std::string& name)
 
 	active_game->register_filesystem(save_fs);
 	
-	if (!active_game->load(appdata_fs, local_fs, &loaded_mods, active_configuration))
+	if (!active_game->load(appdata_fs, local_fs, ordered_mods, active_configuration, games[name]))
 	{
 		al_show_native_message_box(
 			display->get_al_display(),
@@ -314,13 +357,30 @@ void App::load_game(const std::string& name)
 		);
 		close();
 	}
+
+	new_game_gui->builtin_scenarios_sl.select_child("freeplay");
+}
+
+void App::on_scenario_selected(char src, const std::string& scenario_name)
+{
+	auto& scenario = scenarios.at(scenario_name);
+
+	new_game_gui->scenario_info_preview.set_image(scenario.preview);
+	new_game_gui->scenario_info_title.set_text(scenario_name);
+
+	if (scenario.dict->has_key("scenario-description"))
+		new_game_gui->scenario_info_description.set_text(scenario.dict->format({ "scenario-description" }));
+	else
+		new_game_gui->scenario_info_description.set_text("");
+
+	selected_scenario = scenario_name;
 }
 
 void App::check_appdata()
 {
 	// AOL directory
 	appdata_fs->create_dir_if_necessary("AOL");
-	appdata_fs->enter_dir("AOL");
+	appdata_fs->enter_dir((fs::path)"AOL");
 
 	// Saves directory
 	appdata_fs->create_dir_if_necessary("saves");
@@ -329,15 +389,30 @@ void App::check_appdata()
 	appdata_fs->create_dir_if_necessary("mods");
 
 	// Locate save_fs
-	save_fs->enter_dir("AOL");
-	save_fs->enter_dir("saves");
+	save_fs->enter_dir((fs::path)"AOL");
+	save_fs->enter_dir((fs::path)"saves");
 }
 
 std::vector<fs::path> App::get_locale_paths(const fs::path& d_path, const std::string& language)
 {
 	std::vector<fs::path> ret;
+	std::string lan = "en";
 
-	for (const auto& f : local_fs->get_files_in_directory(d_path / language))
+	if (local_fs->exists(d_path / language))
+		lan = language;
+	else if (!local_fs->exists(d_path / "en"))
+	{
+		for (const auto& f : local_fs->get_files_in_directory(d_path))
+		{
+			if (f.is_directory() && supported_languages.find(f.path().filename().string()) != supported_languages.end())
+			{
+				lan = language;
+				break;
+			}
+		}
+	}
+
+	for (const auto& f : local_fs->get_files_in_directory(d_path / lan))
 	{
 		if (f.path().extension() == ".cfg")
 			ret.push_back(f.path());
@@ -376,14 +451,44 @@ void App::close()
 
 void App::load()
 {
-	createguis();
+	// Load missing preview image
+	agl::Allegro5Image* preview = new agl::Allegro5Image("core/graphics/gui/missing-preview.png");
+
+	agl::register_image("missing-preview", preview);
+
+	// Mod analysis stage
+	Mod core;
+	analyze_mod("core", &core, local_fs);
+
+	Mod base;
+	analyze_mod("base", &base, local_fs);
+
+	loaded_mods.insert({ "code", core });
+	loaded_mods.insert({ "base", base });
+
+	Mod new_mod;
+	appdata_fs->enter_dir((fs::path)"mods");
+
+	for (const auto& path : appdata_fs->get_files_in_directory("."))
+	{
+		analyze_mod(path.path(), &new_mod, appdata_fs);
+		loaded_mods.insert({ new_mod.code_name, new_mod });
+	}
 
 	// Mod ordering stage
+	ordered_mods.push_back("core");
 
-	for (const auto& mod : loaded_mods)
-		active_configuration.insert({ mod, "1.0.0" });
+	for (const auto& [_, mod] : loaded_mods)
+	{
+		if (mod.code_name != "core")
+			ordered_mods.push_back(mod.code_name);
+	}
+
+	for (const auto& [_, mod] : loaded_mods)
+		active_configuration.insert({ mod.code_name, mod.version });
 
 	// Loading mods
+
 
 	// Loading settings
 	mod_loader->begin_stage(LoaderStage::STAGE_SETTINGS);
@@ -416,11 +521,16 @@ void App::load()
 		run_file_in_mods(file);
 
 	mod_loader->end_stage();
+
+	appdata_fs->exit_to("AOL");
+
+	// Guis
+	createguis();
 }
 
 void App::run_file_in_mods(const std::string& file_name)
 {
-	for (const auto& mod : loaded_mods)
+	for (const auto& mod : ordered_mods)
 	{
 		if (mod == "core" || mod == "base")
 			mod_loader->register_filesystem(local_fs);
@@ -429,7 +539,7 @@ void App::run_file_in_mods(const std::string& file_name)
 			al_show_native_message_box(
 				display->get_al_display(),
 				"Error",
-				((std::string)"Error while executing mod: " + mod).c_str(),
+				((std::string)"Error while executing mod: " + loaded_mods[mod].full_name).c_str(),
 				(mod_loader->get_last_error().message + "\n\n" + mod_loader->get_last_error().traceback).c_str(), "Ok", ALLEGRO_MESSAGEBOX_ERROR
 			);
 			close();
@@ -437,6 +547,257 @@ void App::run_file_in_mods(const std::string& file_name)
 		if (mod == "core" || mod == "base")
 			mod_loader->register_filesystem(appdata_fs);
 	}
+}
+
+void App::analyze_mod(const fs::path& mod_path, Mod* mod, art::FileSystem* mod_fs)
+{
+	json info;
+	auto info_f = mod_fs->open_file(mod_path / "info.json");
+
+	if (!info_f.good())
+	{
+		return;
+	}
+
+	info_f >> info;
+
+	info_f.close();
+
+	// code_name
+	auto info_it = info.find("name");
+
+	if (info_it != info.end())
+		mod->code_name = info_it.value();
+	else
+		throw std::runtime_error("Mod: " + mod_path.string() + "; Missing info.json parameter: 'name'");
+
+	// author
+	info_it = info.find("author");
+
+	if (info_it != info.end())
+		mod->author = info_it.value();
+
+	// aol_version
+	info_it = info.find("aol_version");
+
+	if (info_it != info.end())
+		mod->aol_version = get_version(info_it.value());
+	else
+		throw std::runtime_error("Mod: " + mod->code_name + "; Missing info.json parameter: 'aol_version'");
+
+	// contact
+	info_it = info.find("contact");
+
+	if (info_it != info.end())
+		mod->contact = info_it.value();
+
+	// dependencies
+	info_it = info.find("dependencies");
+
+	if (info_it != info.end())
+	{
+		if (info_it.value().type() == json::value_t::array)
+		{
+			for (const auto& dep_json : info_it.value())
+			{
+				auto dep = get_dependency(dep_json);
+
+				if (dep.first)
+					mod->dependencies.push_back(dep.second);
+			}
+		}
+	}
+
+	// description
+	info_it = info.find("description");
+
+	if (info_it != info.end())
+		mod->description = info_it.value();
+
+	// full name
+	info_it = info.find("title");
+
+	if (info_it != info.end())
+		mod->full_name = info_it.value();
+	else
+		throw std::runtime_error("Mod: " + mod->code_name + "; Missing info.json parameter: 'title'");
+
+	// homepage
+	info_it = info.find("homepage");
+
+	if (info_it != info.end())
+		mod->homepage = info_it.value();
+
+	// version
+	info_it = info.find("version");
+
+	std::string version_string;
+
+	if (info_it != info.end())
+	{
+		version_string = info_it.value();
+		mod->version = get_version(version_string);
+	}
+	else
+		throw std::runtime_error("Mod: " + mod->code_name + "; Missing info.json parameter: 'version'");
+
+	// Validation - mod directory name
+	fs::path expected1 = mod->code_name;
+	fs::path expected2 = mod->code_name + "_" + version_string;
+	fs::path expected3 = mod->code_name + "_" + version_string + ".zip";
+
+	fs::path given = mod_path.filename();
+
+	if (given != expected1 && given != expected2 && given != expected3)
+		throw std::runtime_error("Path " + given.string() + " does not match the expected " + expected1.string() + " / " + expected2.string() + " / " + expected3.string() + ".");
+
+	// Add path template
+	appdata_fs->add_path_template("__" + mod->code_name + "__", mod_fs->get_current_path());
+
+	// Look for thumbnail
+	if (mod_fs->exists(mod_path / "thumbnail.png"))
+	{
+		mod->thumbnail = new agl::Allegro5Image(mod_fs->get_correct_path(mod_path / "thumbnail.png").string());
+	}
+	else
+	{
+		mod->thumbnail = agl::loaded_images["missing-preview"];
+		mod->has_thumbnail = false;
+	}
+
+	// Analyze scenarios
+	if (mod_fs->exists(mod_path / "scenarios"))
+	{
+		Scenario new_scenario;
+
+
+		for (const auto& scenario : mod_fs->get_files_in_directory(mod_path / "scenarios"))
+		{
+			if (scenario.is_directory())
+			{
+				analyze_scenario(scenario.path(), &new_scenario, mod_fs);
+				scenarios.insert({ new_scenario.name, new_scenario });
+			}
+		}
+	}
+}
+
+void App::analyze_scenario(const fs::path& scenario_path, Scenario* scenario, art::FileSystem* mod_fs)
+{
+	scenario->name = scenario_path.filename().string();
+
+	scenario->is_local = mod_fs == local_fs;
+
+	scenario->path = mod_fs->get_correct_path(scenario_path);
+
+	scenario->dict = new art::CfgDictionary;
+	scenario->dict->set_filesystem(mod_fs);
+	scenario->dict->set_dict_path_function(std::bind(&App::get_locale_paths, this, std::placeholders::_1, std::placeholders::_2));
+
+	if (mod_fs->exists(scenario_path / "locale"))
+		scenario->dict->add_locale_path(scenario->path / "locale");
+
+	scenario->dict->set_active_language("en");
+
+	if (mod_fs->exists(scenario->path / "preview.png"))
+		scenario->preview = new agl::Allegro5Image((scenario->path / "preview.png").string());
+	else
+	{
+		scenario->has_preview = false;
+		scenario->preview = agl::loaded_images["missing-preview"];
+	}
+}
+
+version_t App::get_version(const std::string& version_str) const
+{
+	version_t version;
+
+	std::string number_str;
+	int insert_to = 0;
+
+	for (const char c : version_str)
+	{
+		if (c >= '0' || c <= '9')
+			number_str.push_back(c);
+		else if (c == '.')
+		{
+			if (number_str.empty() || insert_to == 3)
+				throw std::runtime_error("Invalid version string '" + version_str + "'.");
+
+			int num = std::stoi(number_str);
+
+			if (num < 0 || num > 255)
+				throw std::runtime_error("Invalid version string '" + version_str + "'.");
+
+			version[insert_to] = (char)num;
+			number_str.clear();
+			insert_to++;
+		}
+		else
+			throw std::runtime_error("Invalid version string '" + version_str + "'.");
+	}
+
+	if (version.empty())
+		throw std::runtime_error("Invalid version string '" + version_str + "'.");
+
+	return version;
+}
+
+std::pair<bool, std::tuple<std::string, version_t, char>> App::get_dependency(const json& dep_json)
+{
+	std::string name;
+	version_t version;
+	char spec_mask = 0;
+
+	bool is_valid = true;
+	auto it = dep_json.find("name");
+
+	if (it != dep_json.end())
+		name = it.value();
+	else
+		is_valid = false;
+
+	it = dep_json.find("version");
+
+	if (it != dep_json.end())
+		version = get_version(it.value());
+	else
+		is_valid = false;
+
+	it = dep_json.find("specification");
+
+	if (it != dep_json.end())
+	{
+		for (const char c : (std::string)it.value())
+		{
+			switch (c)
+			{
+			case '<':
+				spec_mask |= MOD_DEP_LESS;
+				break;
+
+			case '>':
+				spec_mask |= MOD_DEP_GREATER;
+				break;
+
+			case '=':
+				spec_mask |= MOD_DEP_EQUAL;
+				break;
+
+			case '!':
+				spec_mask |= MOD_DEP_CONFLICT;
+				break;
+
+			case '?':
+				spec_mask |= MOD_DEP_OPTIONAL;
+				break;
+			}
+		}
+	}
+	else
+		is_valid = false;
+	
+	return { is_valid, {name, version, spec_mask} };
 }
  
 void App::quit()
@@ -448,7 +809,7 @@ void App::initialize_agl()
 {
 	agl::debug::init();
 
-	segoeUI_bold = new agl::Allegro5Font("core/fonts/segoeuib.ttf", { 18, 24, 27, 36, 56 });
+	segoeUI_bold = new agl::Allegro5Font("core/fonts/segoeuib.ttf", { 14, 18, 24, 27, 36, 56 });
 	agl::set_default_font(segoeUI_bold);
 
 	event_handler = new agl::Allegro5EventHandler;

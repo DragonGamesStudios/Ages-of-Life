@@ -1,2 +1,5 @@
 ﻿  Dictionary.cpp
+  KeyboardEventManager.cpp
+  MainEventManager.cpp
+  Generowanie kodu...
   AOLRenderingToolset.vcxproj -> C:\AOL\x64\Debug\AOLRenderingToolset.lib

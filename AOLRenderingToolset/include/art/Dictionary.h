@@ -48,10 +48,15 @@ namespace art
 		std::string get_raw(const std::string& key) const;
 		void set_filesystem(FileSystem* fsys);
 		std::string format(const LocalisedString& s, bool localised_expected = false) const;
+		bool has_key(const std::string& key) const;
+		bool has_key(const std::string& group, const std::string& key) const;
 
 		virtual void load_dictionary_file(const fs::path& path) = 0;
 		void reload_dictionary();
+		void copy_dictionary(Dictionary* dictionary);
 		
 		void set_label_key(agl::builtins::Label* lbl, const LocalisedString& key);
+
+		const std::map<std::string, std::map<std::string, std::string>>& get_dict() const;
 	};
 }

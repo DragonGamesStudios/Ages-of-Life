@@ -11,8 +11,6 @@ LuaModExecutor::LuaModExecutor()
 	l_script = 0;
 	l_game = 0;
 
-	mod_order = 0;
-
 	fs = 0;
 }
 
@@ -101,11 +99,11 @@ LuaError LuaModExecutor::get_last_error() const
 	return last_error;
 }
 
-void LuaModExecutor::set_mod_order(const std::vector<std::string>* order)
+void LuaModExecutor::set_mod_order(const std::vector<std::string>& order)
 {
 	mod_order = order;
 
-	for (auto mod_it = mod_order->begin(); mod_it != mod_order->end(); mod_it++)
+	for (auto mod_it = mod_order.begin(); mod_it != mod_order.end(); mod_it++)
 	{
 		auto new_state = luaL_newstate();
 
@@ -152,7 +150,7 @@ void LuaModExecutor::run_on_load()
 	l_savesystem->set_active(true);
 	l_remote->set_active(true);
 
-	for (auto mod_it = mod_order->begin(); mod_it != mod_order->end(); mod_it++)
+	for (auto mod_it = mod_order.begin(); mod_it != mod_order.end(); mod_it++)
 	{
 		l_script->run_on_load(mod_states[*mod_it]);
 	}
@@ -161,13 +159,13 @@ void LuaModExecutor::run_on_load()
 	l_remote->set_active(false);
 }
 
-void LuaModExecutor::run_on_configuration_changed(const std::map<std::string, std::string>& old_conf, const std::map<std::string, std::string>& new_conf)
+void LuaModExecutor::run_on_configuration_changed(const std::map<std::string, version_t>& old_conf, const std::map<std::string, version_t>& new_conf)
 {
 	l_remote->set_active(true);
 	l_savesystem->set_active(true);
 	l_game->set_active(true);
 
-	for (auto mod_it = mod_order->begin(); mod_it != mod_order->end(); mod_it++)
+	for (auto mod_it = mod_order.begin(); mod_it != mod_order.end(); mod_it++)
 	{
 		auto old_it = old_conf.find(*mod_it);
 
@@ -184,7 +182,7 @@ void LuaModExecutor::run_on_ready()
 	l_remote->set_active(true);
 	l_game->set_active(true);
 
-	for (auto mod_it = mod_order->begin(); mod_it != mod_order->end(); mod_it++)
+	for (auto mod_it = mod_order.begin(); mod_it != mod_order.end(); mod_it++)
 	{
 		l_script->run_on_ready(mod_states[*mod_it]);
 	}
@@ -199,7 +197,7 @@ void LuaModExecutor::run_on_save()
 	l_savesystem->set_active(true);
 	l_game->set_active(true);
 
-	for (auto mod_it = mod_order->begin(); mod_it != mod_order->end(); mod_it++)
+	for (auto mod_it = mod_order.begin(); mod_it != mod_order.end(); mod_it++)
 	{
 		l_script->run_on_save(mod_states[*mod_it]);
 	}
@@ -216,7 +214,7 @@ void LuaModExecutor::raise_event(const GameEvent& e)
 
 	l_script->prepare_event(e);
 	
-	for (auto mod_it = mod_order->begin(); mod_it != mod_order->end(); mod_it++)
+	for (auto mod_it = mod_order.begin(); mod_it != mod_order.end(); mod_it++)
 	{
 		l_script->raise_event(mod_states[*mod_it]);
 	}

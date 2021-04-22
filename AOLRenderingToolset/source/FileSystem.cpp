@@ -38,6 +38,16 @@ namespace art
 		return false;
 	}
 
+	bool FileSystem::enter_dir(const fs::path& path)
+	{
+		if (exists(path))
+		{
+			current_path = get_correct_path(path);
+			return true;
+		}
+		return false;
+	}
+
 	std::string FileSystem::get_directory() const
 	{
 		return current_path.filename().string();

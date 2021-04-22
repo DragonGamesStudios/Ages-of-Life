@@ -1,2 +1,0 @@
-C:\AOL\x64\Debug\ARTAllegro5Backend.pdb
-C:\AOL\ARTAllegro5Backend\x64\Debug\ARTAllegro5Backend.pdb

@@ -15,12 +15,12 @@ namespace art
 	std::string Dictionary::get_format_arg(std::string::iterator& c, const std::vector<std::string>& format_args) const
 	{
 		std::string passed;
-		std::string number_str;
+		std::string number_str = "";
 		int number_int = 0;
 		int underscores = 0;
 		bool read_number = false;
 
-		while (number_str.empty() && underscores != 2)
+		while (number_str.empty() || underscores != 2)
 		{
 			passed.push_back(*c);
 
@@ -54,10 +54,13 @@ namespace art
 			c++;
 		}
 
+		if (number_str.empty())
+			return passed;
+
 		number_int = std::stoi(number_str);
 
-		if (number_int < 0 || number_int >= format_args.size())
-			return "Undefined argument: __" + number_str + "__";
+		if (number_int < 1 || number_int >= format_args.size() - 1)
+			return passed;
 
 		return format_args.at(number_int);
 	}
@@ -120,6 +123,12 @@ namespace art
 		for (; c != key.end(); c++)
 		{
 			value.push_back(*c);
+		}
+
+		if (value.empty())
+		{
+			value = group;
+			group.clear();
 		}
 
 		if (!group.empty())
@@ -233,6 +242,17 @@ namespace art
 		return formatted.str();
 	}
 
+	bool Dictionary::has_key(const std::string& key) const
+	{
+		return has_key("", key);
+	}
+
+	bool Dictionary::has_key(const std::string& group, const std::string& key) const
+	{
+		const auto& dict_group = dict.at(group);
+		return dict_group.find(key) != dict_group.end();
+	}
+
 	void Dictionary::reload_dictionary()
 	{
 		dict.clear();
@@ -247,6 +267,19 @@ namespace art
 		}
 	}
 
+	void Dictionary::copy_dictionary(Dictionary* dictionary)
+	{
+		for (const auto& [group, tab] : dictionary->get_dict())
+		{
+			auto insert_into = dict.insert({ group, {} }).first->second;
+
+			for (const auto& [key, value] : tab)
+			{
+				insert_into.insert({ key, value });
+			}
+		}
+	}
+
 	void Dictionary::set_label_key(agl::builtins::Label* lbl, const LocalisedString& key)
 	{
 		registered_labels.insert(lbl);
@@ -254,6 +287,11 @@ namespace art
 		keys[lbl] = key;
 
 		lbl->set_text(format(key), false);
+	}
+
+	const std::map<std::string, std::map<std::string, std::string>>& Dictionary::get_dict() const
+	{
+		return dict;
 	}
 
 	LocalisedString::LocalisedString(std::initializer_list<LocalisedString> initializers)

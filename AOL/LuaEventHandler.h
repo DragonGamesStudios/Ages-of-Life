@@ -1,6 +1,7 @@
 #pragma once
 #include "LuaModule.h"
 #include "events/GameEvent.h"
+#include "confvers.h"
 
 #include <map>
 #include <string>
@@ -30,7 +31,7 @@ public:
 	void prepare_state(lua_State* L);
 
 	void run_on_load(lua_State* L);
-	void run_on_configuration_changed(const std::map<std::string, std::string>& configuration, bool was_changed, lua_State* L);
+	void run_on_configuration_changed(const std::map<std::string, version_t>& configuration, bool was_changed, lua_State* L);
 	void run_on_ready(lua_State* L);
 	void run_on_save(lua_State* L);
 

@@ -15,8 +15,15 @@ c:\aol\aol\x64\debug\gui.obj
 c:\aol\aol\x64\debug\game.obj
 c:\aol\aol\x64\debug\gameevent.obj
 c:\aol\aol\x64\debug\app.obj
+c:\aol\aol\x64\debug\createguis.obj
 c:\aol\aol\x64\debug\setting.obj
 c:\aol\aol\x64\debug\gameobject.obj
+c:\aol\x64\debug\aol.exe
+c:\aol\x64\debug\aol.ilk
+c:\aol\x64\debug\aol.pdb
 c:\aol\aol\x64\debug\aol.tlog\cl.command.1.tlog
 c:\aol\aol\x64\debug\aol.tlog\cl.read.1.tlog
 c:\aol\aol\x64\debug\aol.tlog\cl.write.1.tlog
+c:\aol\aol\x64\debug\aol.tlog\link.command.1.tlog
+c:\aol\aol\x64\debug\aol.tlog\link.read.1.tlog
+c:\aol\aol\x64\debug\aol.tlog\link.write.1.tlog

@@ -21,7 +21,7 @@ namespace agl
 
 	Allegro5Image::~Allegro5Image()
 	{
-		if (maintain_bitmap)
+		if (maintain_bitmap && bitmap)
 		{
 			al_destroy_bitmap(bitmap);
 			bitmap = NULL;

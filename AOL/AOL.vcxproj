@@ -176,6 +176,7 @@
   <ItemGroup>
     <ClCompile Include="builtins\GameObject.cpp" />
     <ClCompile Include="builtins\Setting.cpp" />
+    <ClCompile Include="confvers.cpp" />
     <ClCompile Include="createguis.cpp" />
     <ClCompile Include="App.cpp" />
     <ClCompile Include="events\GameEvent.cpp" />
@@ -199,6 +200,7 @@
     <ClInclude Include="builtins\builtins.h" />
     <ClInclude Include="builtins\GameObject.h" />
     <ClInclude Include="builtins\Setting.h" />
+    <ClInclude Include="confvers.h" />
     <ClInclude Include="events\GameEvent.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="gui.h" />
