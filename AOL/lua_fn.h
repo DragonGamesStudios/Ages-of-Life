@@ -3,6 +3,7 @@
 
 #include <nlohmann/json.hpp>
 #include <art/FileSystem.h>
+#include <art/Dictionary.h>
 
 #include <set>
 #include <deque>
@@ -61,3 +62,21 @@ struct LuaError
 	std::string message;
 	std::string traceback;
 };
+
+// Table operations
+// Errors:
+// 1 - Invalid type
+// 2 - Field not found
+// 3 - Array element incorrect type
+
+int luatab_get_string(lua_State* L, const std::string& key, std::string* value);
+int luatab_get_localised_string(lua_State* L, const std::string& key, art::LocalisedString* value);
+int luatab_convert_boolean(lua_State* L, const std::string& key, bool* value);
+int luatab_get_int64(lua_State* L, const std::string& key, std::int_fast64_t* value);
+int luatab_get_ld(lua_State* L, const std::string& key, long double* value);
+int luatab_get_int64_array(lua_State* L, const std::string& key, std::vector<std::int_fast64_t>* value, int* errpos);
+int luatab_get_ld_array(lua_State* L, const std::string& key, std::vector<long double>* value, int* errpos);
+int luatab_get_string_array(lua_State* L, const std::string& key, std::vector<std::string>* value, int* errpos);
+
+// Localised string
+art::LocalisedString lua_get_localised_string(lua_State* L, int index, bool& is_valid);

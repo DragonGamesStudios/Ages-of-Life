@@ -3,11 +3,14 @@
 #include <string>
 #include <functional>
 
+#include "..\lua_fn.h"
+
 struct LuaGameObjectPrototype
 {
-private:
+	LuaGameObjectPrototype(lua_State* L);
+
 	std::string name;
 
-public:
-	static const std::uint_fast64_t class_id = 0;
+	bool is_valid;
+	std::string error;
 };

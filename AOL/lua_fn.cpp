@@ -602,3 +602,282 @@ int generic_error_handler(lua_State* L)
 
 	return 1;
 }
+
+int luatab_get_string(lua_State* L, const std::string& key, std::string* value)
+{
+	// Get the value
+	lua_pushstring(L, key.c_str());
+	lua_rawget(L, -2);
+	
+	if (lua_isnil(L, -1))
+	{
+		lua_pop(L, 1);
+		return 2;
+	}
+	else if (lua_type(L, -1) != LUA_TSTRING)
+	{
+		lua_pop(L, 1);
+		return 1;
+	}
+
+	*value = lua_tostring(L, -1);
+	lua_pop(L, 1);
+
+	return 0;
+}
+
+int luatab_get_localised_string(lua_State* L, const std::string& key, art::LocalisedString* value)
+{
+	// Get the value
+	lua_pushstring(L, key.c_str());
+	lua_rawget(L, -2);
+
+	if (lua_isnil(L, -1))
+	{
+		lua_pop(L, 1);
+		return 2;
+	}
+	
+	bool valid = true;
+
+	*value = lua_get_localised_string(L, -1, valid);
+
+	lua_pop(L, 1);
+
+	if (!valid)
+		return 1;
+
+	return 0;
+}
+
+int luatab_convert_boolean(lua_State* L, const std::string& key, bool* value)
+{
+	// Get the value
+	lua_pushstring(L, key.c_str());
+	lua_rawget(L, -2);
+
+	if (lua_isnil(L, -1))
+	{
+		lua_pop(L, 1);
+		return 2;
+	}
+
+	*value = lua_toboolean(L, -1);
+	lua_pop(L, 1);
+
+	return 0;
+}
+
+int luatab_get_int64(lua_State* L, const std::string& key, std::int_fast64_t* value)
+{
+	// Get the value
+	lua_pushstring(L, key.c_str());
+	lua_rawget(L, -2);
+
+	if (lua_isnil(L, -1))
+	{
+		lua_pop(L, 1);
+		return 2;
+	}
+	else if (lua_type(L, -1) != LUA_TNUMBER)
+	{
+		lua_pop(L, 1);
+		return 1;
+	}
+
+	*value = lua_tointeger(L, -1);
+
+	// Pop
+	lua_pop(L, 1);
+
+	return 0;
+}
+
+int luatab_get_ld(lua_State* L, const std::string& key, long double* value)
+{
+	// Get the value
+	lua_pushstring(L, key.c_str());
+	lua_rawget(L, -2);
+
+	if (lua_isnil(L, -1))
+	{
+		lua_pop(L, 1);
+		return 2;
+	}
+	else if (lua_type(L, -1) != LUA_TNUMBER)
+	{
+		lua_pop(L, 1);
+		return 1;
+	}
+
+	*value = lua_tonumber(L, -1);
+
+	// Pop
+	lua_pop(L, 1);
+
+	return 0;
+}
+
+int luatab_get_int64_array(lua_State* L, const std::string& key, std::vector<std::int_fast64_t>* value, int* errpos)
+{
+	// Get the value
+	lua_pushstring(L, key.c_str());
+	lua_rawget(L, -2);
+
+	if (lua_isnil(L, -1))
+	{
+		lua_pop(L, 1);
+		return 2;
+	}
+	else if (lua_type(L, -1) != LUA_TTABLE)
+	{
+		lua_pop(L, 1);
+		return 1;
+	}
+
+	// Iterate
+	auto length = lua_rawlen(L, -1);
+
+	for (int i = 0; i < length; i++)
+	{
+		lua_rawgeti(L, -1, i);
+
+		if (lua_type(L, -1) != LUA_TNUMBER)
+		{
+			lua_pop(L, 2);
+			*errpos = i;
+			return 3;
+		}
+
+		value->push_back(lua_tointeger(L, -1));
+		lua_pop(L, 1);
+	}
+
+	lua_pop(L, 1);
+
+	return 0;
+}
+
+int luatab_get_ld_array(lua_State* L, const std::string& key, std::vector<long double>* value, int* errpos)
+{
+	// Get the value
+	lua_pushstring(L, key.c_str());
+	lua_rawget(L, -2);
+
+	if (lua_isnil(L, -1))
+	{
+		lua_pop(L, 1);
+		return 2;
+	}
+	else if (lua_type(L, -1) != LUA_TTABLE)
+	{
+		lua_pop(L, 1);
+		return 1;
+	}
+
+	// Iterate
+	auto length = lua_rawlen(L, -1);
+
+	for (int i = 0; i < length; i++)
+	{
+		lua_rawgeti(L, -1, i);
+
+		if (lua_type(L, -1) != LUA_TNUMBER)
+		{
+			lua_pop(L, 2);
+			*errpos = i;
+			return 3;
+		}
+
+		value->push_back(lua_tonumber(L, -1));
+		lua_pop(L, 1);
+	}
+
+	lua_pop(L, 1);
+
+	return 0;
+}
+
+int luatab_get_string_array(lua_State* L, const std::string& key, std::vector<std::string>* value, int* errpos)
+{
+	// Get the value
+	lua_pushstring(L, key.c_str());
+	lua_rawget(L, -2);
+
+	if (lua_isnil(L, -1))
+	{
+		lua_pop(L, 1);
+		return 2;
+	}
+	else if (lua_type(L, -1) != LUA_TTABLE)
+	{
+		lua_pop(L, 1);
+		return 1;
+	}
+
+	// Iterate
+	auto length = lua_rawlen(L, -1);
+
+	for (int i = 0; i < length; i++)
+	{
+		lua_rawgeti(L, -1, i);
+
+		if (lua_type(L, -1) != LUA_TSTRING)
+		{
+			lua_pop(L, 2);
+			*errpos = i;
+			return 3;
+		}
+
+		value->push_back(lua_tostring(L, -1));
+		lua_pop(L, 1);
+	}
+
+	lua_pop(L, 1);
+
+	return 0;
+}
+
+art::LocalisedString lua_get_localised_string(lua_State* L, int index, bool& is_valid)
+{
+	std::vector<art::LocalisedString> localised_vector;
+
+	switch (lua_type(L, index))
+	{
+	case LUA_TSTRING:
+		return (std::string)lua_tostring(L, index);
+
+	case LUA_TNUMBER:
+		if (lua_isinteger(L, -1))
+			return (long long)lua_tointeger(L, index);
+		else
+			return (long double)lua_tonumber(L, index);
+
+	case LUA_TTABLE:
+		// Get length
+		lua_pushvalue(L, index);
+
+		auto length = lua_rawlen(L, -1);
+
+		// Iterate
+		for (int i = 0; i < length; i++)
+		{
+			lua_rawgeti(L, -1, i);
+
+			localised_vector.push_back(lua_get_localised_string(L, -1, is_valid));
+
+			lua_pop(L, 1);
+		}
+
+		// Pop
+		lua_pop(L, 1);
+
+		return localised_vector;
+
+	default:
+		is_valid = false;
+		break;
+	}
+
+	return art::LocalisedString();
+}

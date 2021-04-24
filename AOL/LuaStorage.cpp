@@ -9,8 +9,6 @@ LuaStorage::LuaStorage()
 {
 	storage = 0;
 	builtin_prototypes = {
-		{"game-object", LuaGameObjectPrototype::class_id},
-		{"setting", LuaSettingPrototype::class_id}
 	};
 }
 
@@ -65,13 +63,6 @@ bool LuaStorage::load_prototype(lua_State* L)
 	{
 		switch (type_it->second)
 		{
-		case LuaGameObjectPrototype::class_id:
-			std::cout << "Registering game-object";
-			break;
-
-		case LuaSettingPrototype::class_id:
-			std::cout << "Registering setting";
-			break;
 		}
 	}
 

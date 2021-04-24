@@ -31,6 +31,12 @@
     <Filter Include="Events">
       <UniqueIdentifier>{23f86720-447d-468e-89dd-4bc2db4bdd51}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Builtins\GameObject\Base">
+      <UniqueIdentifier>{bae64ff2-184d-403e-b0a7-9d1cc3227654}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BuiltinsImplementation\GameObject\Base">
+      <UniqueIdentifier>{633e83c8-843f-48a6-9a5d-6d4f9849280c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -56,9 +62,6 @@
     </ClCompile>
     <ClCompile Include="builtins\GameObject.cpp">
       <Filter>BuiltinsImplementation</Filter>
-    </ClCompile>
-    <ClCompile Include="builtins\Setting.cpp">
-      <Filter>BuiltinsImplementation\GameObject</Filter>
     </ClCompile>
     <ClCompile Include="LuaStorage.cpp">
       <Filter>Pliki źródłowe</Filter>
@@ -93,6 +96,12 @@
     <ClCompile Include="confvers.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
+    <ClCompile Include="builtins\Setting.cpp">
+      <Filter>BuiltinsImplementation\GameObject\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="builtins\Base.cpp">
+      <Filter>BuiltinsImplementation\GameObject</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allegrolib.h">
@@ -118,9 +127,6 @@
     </ClInclude>
     <ClInclude Include="builtins\builtins.h">
       <Filter>Builtins</Filter>
-    </ClInclude>
-    <ClInclude Include="builtins\Setting.h">
-      <Filter>Builtins\GameObject</Filter>
     </ClInclude>
     <ClInclude Include="LuaStorage.h">
       <Filter>Lua API</Filter>
@@ -157,6 +163,12 @@
     </ClInclude>
     <ClInclude Include="confvers.h">
       <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+    <ClInclude Include="builtins\Setting.h">
+      <Filter>Builtins\GameObject\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="builtins\Base.h">
+      <Filter>Builtins\GameObject</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
