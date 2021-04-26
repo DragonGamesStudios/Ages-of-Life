@@ -1,0 +1,1 @@
+remote.call("core-inter", "test", "\nthat should work\n")

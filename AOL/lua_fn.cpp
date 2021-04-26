@@ -841,6 +841,7 @@ int luatab_get_string_array(lua_State* L, const std::string& key, std::vector<st
 art::LocalisedString lua_get_localised_string(lua_State* L, int index, bool& is_valid)
 {
 	std::vector<art::LocalisedString> localised_vector;
+	lua_Unsigned length = 0;
 
 	switch (lua_type(L, index))
 	{
@@ -857,7 +858,7 @@ art::LocalisedString lua_get_localised_string(lua_State* L, int index, bool& is_
 		// Get length
 		lua_pushvalue(L, index);
 
-		auto length = lua_rawlen(L, -1);
+		length = lua_rawlen(L, -1);
 
 		// Iterate
 		for (int i = 0; i < length; i++)

@@ -1,24 +1,7 @@
-﻿  GameObject.cpp
-  Setting.cpp
-  confvers.cpp
-  createguis.cpp
-  App.cpp
-  GameEvent.cpp
-  Game.cpp
-  gui.cpp
-  LuaEventHandler.cpp
-  LuaGameScript.cpp
-  LuaModExecutor.cpp
-  LuaModLoader.cpp
-  LuaModule.cpp
-  LuaRemote.cpp
-  LuaSaveSystem.cpp
-  LuaStorage.cpp
-  lua_fn.cpp
-  main.cpp
-  Storage.cpp
+﻿  lua_fn.cpp
   Trwa generowanie kodu
-  Previous IPDB not found, fall back to full compilation.
-  All 9440 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  1321 of 9445 functions (14.0%) were compiled, the rest were copied from previous compilation.
+    9 functions were new in current compilation
+    952 functions had inline decision re-evaluated but remain unchanged
   Zakończono generowanie kodu
   AOL.vcxproj -> C:\AOL\x64\Release\AOL.exe
