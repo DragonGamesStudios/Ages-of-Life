@@ -32,7 +32,7 @@ namespace agl::builtins
 
 		void set_allowed_buttons(int buttons);
 
-		void set_click_function(std::function<void(const Event&, Button*)> fn);
+		virtual void set_click_function(std::function<void(const Event&, Button*)> fn);
 		void set_hover_gained_function(std::function<void(const Event&, Button*)> fn);
 		void set_hover_lost_function(std::function<void(const Event&, Button*)> fn);
 

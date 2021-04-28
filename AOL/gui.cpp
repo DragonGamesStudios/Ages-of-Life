@@ -1056,7 +1056,7 @@ NewGameGui::NewGameGui(agl::Gui* gui, int screenw, int screenh, art::Dictionary*
 
 	create_buttons(
 		{ {"gui-element.general"}, {"gui-element.scenario"}, {"gui-element.scenario-options"}, {"gui-element.create"} },
-		{ &general_section_btn, &scenario_section_btn, &create_btn, &scenario_options_section_btn },
+		{ &general_section_btn, &scenario_section_btn, &scenario_options_section_btn, &create_btn },
 		dict
 	);
 }

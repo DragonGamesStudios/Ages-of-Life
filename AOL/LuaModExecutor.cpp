@@ -56,7 +56,10 @@ bool LuaModExecutor::run_mod(const std::string& mod)
 		fs->enter_dir(mod);
 
 		if (!fs->exists("control.lua"))
+		{
+			fs->exit();
 			return true;
+		}
 
 		auto mod_state = mod_states[mod];
 

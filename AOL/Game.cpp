@@ -43,6 +43,8 @@ bool Game::load(art::FileSystem* appdata_fs, art::FileSystem* local_fs, const st
 	// control.lua
 	mod_executor->prepare_control();
 
+	appdata_fs->enter_dir((std::filesystem::path)"mods");
+
 	for (auto mod_it = m_order.begin(); mod_it != m_order.end(); mod_it++)
 	{
 		auto mod = *mod_it;
@@ -57,6 +59,8 @@ bool Game::load(art::FileSystem* appdata_fs, art::FileSystem* local_fs, const st
 		if (mod == "core" || mod == "base")
 			mod_executor->register_filesystem(appdata_fs);
 	}
+
+	appdata_fs->exit();
 
 	mod_executor->unprepare_control();
 

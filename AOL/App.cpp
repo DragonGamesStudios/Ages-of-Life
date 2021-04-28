@@ -5,10 +5,10 @@
 #include <agl/events.h>
 
 #define MOD_DEP_CONFLICT 0b1
-#define MOD_DEP_OPTIONAL 0b01
-#define MOD_DEP_EQUAL 0b001
-#define MOD_DEP_GREATER 0b0001
-#define MOD_DEP_LESS 0b00001
+#define MOD_DEP_OPTIONAL 0b10
+#define MOD_DEP_EQUAL 0b100
+#define MOD_DEP_GREATER 0b1000
+#define MOD_DEP_LESS 0b10000
 
 agl::Color black(0, 0, 0);
 agl::Color loading_screen_bg(20, 20, 20);
@@ -270,8 +270,12 @@ void App::create_game(const std::string& name, long long seed)
 
 	mod_loader->begin_stage(LoaderStage::STAGE_NEW_GAME);
 
+	appdata_fs->enter_dir((fs::path)"mods");
+
 	for (const auto& file : to_run[LoaderStage::STAGE_NEW_GAME])
 		run_file_in_mods(file);
+
+	appdata_fs->exit();
 
 	mod_loader->end_stage();
 
@@ -463,25 +467,100 @@ void App::load()
 	Mod base;
 	analyze_mod("base", &base, local_fs);
 
-	loaded_mods.insert({ "code", core });
+	core.ordered = true;
+	base.ordered = true;
+
+	loaded_mods.insert({ "core", core });
 	loaded_mods.insert({ "base", base });
 
-	Mod new_mod;
 	appdata_fs->enter_dir((fs::path)"mods");
 
 	for (const auto& path : appdata_fs->get_files_in_directory("."))
 	{
-		analyze_mod(path.path(), &new_mod, appdata_fs);
-		loaded_mods.insert({ new_mod.code_name, new_mod });
+		if (path.is_directory())
+		{
+			Mod new_mod;
+			if (analyze_mod(path.path(), &new_mod, appdata_fs))
+				loaded_mods.insert({ new_mod.code_name, new_mod });
+		}
 	}
+
+	// Mod list
+	load_mod_list();
+	write_mod_list();
 
 	// Mod ordering stage
 	ordered_mods.push_back("core");
+	ordered_mods.push_back("base");
 
-	for (const auto& [_, mod] : loaded_mods)
+	std::set<Mod*> mod_alp;
+
+	for (auto& [_, mod] : loaded_mods)
 	{
-		if (mod.code_name != "core")
-			ordered_mods.push_back(mod.code_name);
+		mod_alp.insert(&mod);
+	}
+
+	// Codes
+	// 0 - can be loaded
+	// 1 - dependency unavailable/conflict (cannot load the mod at all)
+	// 2 - dependency not yet available
+
+	int operations = 1;
+	bool can_be_loaded = false;
+
+	// Delete unsatisfiable
+	for (auto mod = mod_alp.begin(); mod != mod_alp.end();)
+	{
+		auto current = mod++;
+
+		if (((*current)->aol_version[0] != AOL_VERSION[0] && (*current)->aol_version[1] != AOL_VERSION[1]) || !(*current)->should_load)
+		{
+			mod_alp.erase(current);
+			continue;
+		}
+
+		for (const auto& dep : (*current)->dependencies)
+		{
+			// If unsatisfiable, delete
+			if (!dependency_satisfied(dep))
+				mod_alp.erase(current);
+		}
+	}
+
+	// Delete to avoid reordering them
+	mod_alp.erase(&loaded_mods.at("core"));
+	mod_alp.erase(&loaded_mods.at("base"));
+
+	// Order
+	while (operations)
+	{
+		operations = 0;
+
+		for (auto mod = mod_alp.begin(); mod != mod_alp.end();)
+		{
+			auto current = mod++;
+			can_be_loaded = true;
+
+			for (const auto& dep : (*current)->dependencies)
+			{
+				auto mod_it = loaded_mods.find(std::get<0>(dep));
+
+				if (mod_it != loaded_mods.end() && ((std::get<2>(dep) & MOD_DEP_CONFLICT) == 0) && !mod_it->second.ordered)
+				{
+					can_be_loaded = false;
+					break;
+				}
+			}
+
+			if (can_be_loaded)
+			{
+				ordered_mods.push_back((*current)->code_name);
+				(*current)->ordered = true;
+				mod_alp.erase(current);
+				operations++;
+				break;
+			}
+		}
 	}
 
 	for (const auto& [_, mod] : loaded_mods)
@@ -549,14 +628,14 @@ void App::run_file_in_mods(const std::string& file_name)
 	}
 }
 
-void App::analyze_mod(const fs::path& mod_path, Mod* mod, art::FileSystem* mod_fs)
+bool App::analyze_mod(const fs::path& mod_path, Mod* mod, art::FileSystem* mod_fs)
 {
 	json info;
 	auto info_f = mod_fs->open_file(mod_path / "info.json");
 
 	if (!info_f.good())
 	{
-		return;
+		return false;
 	}
 
 	info_f >> info;
@@ -675,14 +754,16 @@ void App::analyze_mod(const fs::path& mod_path, Mod* mod, art::FileSystem* mod_f
 		{
 			if (scenario.is_directory())
 			{
-				analyze_scenario(scenario.path(), &new_scenario, mod_fs);
-				scenarios.insert({ new_scenario.name, new_scenario });
+				if (analyze_scenario(scenario.path(), &new_scenario, mod_fs))
+					scenarios.insert({ new_scenario.name, new_scenario });
 			}
 		}
 	}
+
+	return true;
 }
 
-void App::analyze_scenario(const fs::path& scenario_path, Scenario* scenario, art::FileSystem* mod_fs)
+bool App::analyze_scenario(const fs::path& scenario_path, Scenario* scenario, art::FileSystem* mod_fs)
 {
 	scenario->name = scenario_path.filename().string();
 
@@ -706,18 +787,20 @@ void App::analyze_scenario(const fs::path& scenario_path, Scenario* scenario, ar
 		scenario->has_preview = false;
 		scenario->preview = agl::loaded_images["missing-preview"];
 	}
+
+	return true;
 }
 
 version_t App::get_version(const std::string& version_str) const
 {
-	version_t version;
+	version_t version = { 0, 0, 0 };
 
 	std::string number_str;
 	int insert_to = 0;
 
 	for (const char c : version_str)
 	{
-		if (c >= '0' || c <= '9')
+		if (c >= '0' && c <= '9')
 			number_str.push_back(c);
 		else if (c == '.')
 		{
@@ -729,13 +812,24 @@ version_t App::get_version(const std::string& version_str) const
 			if (num < 0 || num > 255)
 				throw std::runtime_error("Invalid version string '" + version_str + "'.");
 
-			version[insert_to] = (char)num;
+			version[insert_to] = (unsigned char)num;
 			number_str.clear();
 			insert_to++;
 		}
 		else
 			throw std::runtime_error("Invalid version string '" + version_str + "'.");
 	}
+
+	// Last char
+	if (number_str.empty() || insert_to == 3)
+		throw std::runtime_error("Invalid version string '" + version_str + "'.");
+
+	int num = std::stoi(number_str);
+
+	if (num < 0 || num > 255)
+		throw std::runtime_error("Invalid version string '" + version_str + "'.");
+
+	version[insert_to] = (unsigned char)num;
 
 	if (version.empty())
 		throw std::runtime_error("Invalid version string '" + version_str + "'.");
@@ -798,6 +892,81 @@ std::pair<bool, std::tuple<std::string, version_t, char>> App::get_dependency(co
 		is_valid = false;
 	
 	return { is_valid, {name, version, spec_mask} };
+}
+
+bool App::dependency_satisfied(const std::tuple<std::string, version_t, char>& dep)
+{
+	bool version_correct = false;
+
+	// Get version dependency specification
+	const Mod& mod = loaded_mods.at(std::get<0>(dep));
+	char dep_spec = std::get<2>(dep);
+	version_t dep_vers = std::get<1>(dep);
+
+	if (dep_spec & MOD_DEP_OPTIONAL)
+		return true;
+
+	if (dep_spec & MOD_DEP_EQUAL)
+		version_correct |= (dep_vers == mod.version);
+
+	if (dep_spec & MOD_DEP_GREATER)
+		version_correct |= (mod.version > dep_vers);
+
+	if (dep_spec & MOD_DEP_LESS)
+		version_correct |= (mod.version < dep_vers);
+
+	version_correct &= mod.should_load;
+
+	if (dep_spec & MOD_DEP_CONFLICT)
+		return !version_correct;
+
+	return version_correct;
+}
+
+void App::load_mod_list()
+{
+	auto f = appdata_fs->open_file((fs::path)"mod_list.json");
+	
+	if (f.is_open())
+	{
+		json mod_list;
+		f >> mod_list;
+
+		for (auto element : mod_list.items())
+		{
+			auto mod_it = loaded_mods.find(element.value()["name"]);
+
+			if (mod_it != loaded_mods.end())
+				mod_it->second.should_load = element.value()["enabled"];
+		}
+
+
+		f.close();
+	}
+}
+
+void App::write_mod_list()
+{
+	auto f = appdata_fs->open_ofile((fs::path)"mod_list.json");
+
+	if (f.is_open())
+	{
+		json mod_list;
+
+		for (const auto& [key, value] : loaded_mods)
+		{
+			json new_mod = {
+				{ "name", value.code_name },
+				{ "enabled", value.should_load }
+			};
+
+			mod_list.push_back(new_mod);
+		}
+
+		f << mod_list;
+	}
+
+	f.close();
 }
  
 void App::quit()

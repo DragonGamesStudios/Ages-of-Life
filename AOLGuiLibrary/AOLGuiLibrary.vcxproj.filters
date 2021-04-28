@@ -69,6 +69,9 @@
     <ClCompile Include="source\TextInput.cpp">
       <Filter>builtins</Filter>
     </ClCompile>
+    <ClCompile Include="source\agl\builtins\CheckBox.cpp">
+      <Filter>builtins</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\agl\builtins\Button.h">
@@ -123,6 +126,9 @@
       <Filter>builtins</Filter>
     </ClInclude>
     <ClInclude Include="include\agl\builtins\TextInput.h">
+      <Filter>builtins</Filter>
+    </ClInclude>
+    <ClInclude Include="include\agl\builtins\CheckBox.h">
       <Filter>builtins</Filter>
     </ClInclude>
   </ItemGroup>

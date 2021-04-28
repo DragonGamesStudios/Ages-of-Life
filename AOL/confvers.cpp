@@ -1,5 +1,30 @@
 #include "confvers.h"
 
+bool operator<(const version_t& v1, const version_t& v2)
+{
+	return v1[0] < v2[0] || (v1[0] == v2[0] && (v1[1] < v2[1] || (v1[1] == v2[1] && v1[2] < v2[2])));
+}
+
+bool operator>(const version_t& v1, const version_t& v2)
+{
+	return v1[0] > v2[0] || (v1[0] == v2[0] && (v1[1] > v2[1] || (v1[1] == v2[1] && v1[2] > v2[2])));
+}
+
+bool operator==(const version_t& v1, const version_t& v2)
+{
+	return v1[0] == v2[0] && v1[1] == v2[1] && v1[2] == v2[2];
+}
+
+bool operator<=(const version_t& v1, const version_t& v2)
+{
+	return v1 == v2 || v1 < v2;
+}
+
+bool operator>=(const version_t& v1, const version_t& v2)
+{
+	return v1 == v2 || v1 > v2;
+}
+
 void save_configuration(std::ofstream& of, const std::map<std::string, version_t>& config)
 {
 	if (!of.is_open())
@@ -31,7 +56,7 @@ void save_base_data(std::ofstream& of, const std::string& scenario_name, const s
 void load_base_data(std::ifstream& f, version_t& aol_version, std::string& scenario_name, std::map<std::string, version_t>& mod_config)
 {
 	for (int i = 0; i < 3; i++)
-		f.read(&aol_version[0], 1);
+		f.read(reinterpret_cast<char*>(&aol_version[0]), 1);
 
 	char c = 0;
 	f.get(c);

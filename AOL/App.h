@@ -30,6 +30,8 @@ struct Mod
 	std::string contact;
 	agl::Image* thumbnail;
 	bool has_thumbnail = true;
+	bool should_load = true;
+	bool ordered = false;
 };
 
 class App {
@@ -114,10 +116,13 @@ protected:
 
 	void load();
 	void run_file_in_mods(const std::string& file_name);
-	void analyze_mod(const fs::path& mod_path, Mod* mod, art::FileSystem* mod_fs);
-	void analyze_scenario(const fs::path& scenario_path, Scenario* scenario, art::FileSystem* mod_fs);
+	bool analyze_mod(const fs::path& mod_path, Mod* mod, art::FileSystem* mod_fs);
+	bool analyze_scenario(const fs::path& scenario_path, Scenario* scenario, art::FileSystem* mod_fs);
 	version_t get_version(const std::string& version_str) const;
 	std::pair<bool, std::tuple<std::string, version_t, char>> get_dependency(const json& dep_json);
+	bool dependency_satisfied(const std::tuple<std::string, version_t, char>& dep);
+	void load_mod_list();
+	void write_mod_list();
 
 	void enable_debug(const agl::Event& e);
 	void shortcut_capture(agl::Event e);
